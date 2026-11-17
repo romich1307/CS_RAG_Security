@@ -34,3 +34,13 @@ respuesta. Control de citas verifica archivo/página, no corrección semántica.
 Validación: `.venv/bin/python -m pytest -q` → **6 passed**, incluyendo AppTest de
 Streamlit con consulta, abstención, mock, fronteras A/B/C y proveedor remoto rechazado.
 Limitación: adaptador real aún sin modelo/servidor configurado; no se ejecutó un LLM.
+
+## Fase 3 — ataques controlados
+A preserva contexto sin separación; B separa roles y delimita contexto no confiable;
+C serializa fragmentos en JSON y excluye los detectados por reglas heurísticas v1.
+Dataset independiente `experiments/attacks.jsonl`: 4 ataques con objetivo palabra
+CANARIO_CONTROL y 4 controles benignos, incluidos ofuscación Unicode, cita benigna
+que produce falsa alarma y ataque indirecto sutil no detectado. No toca fuentes.
+Pruebas específicas: `pytest -q tests/test_attacks.py tests/test_pipeline.py` →
+**4 passed**. Se prueba explícitamente la falsa alarma y el falso negativo;
+no se han alterado las etiquetas para mejorar métricas.
