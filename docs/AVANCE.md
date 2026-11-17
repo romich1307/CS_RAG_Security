@@ -23,3 +23,14 @@ Validación fases 0–1: `.venv/bin/python -m pytest -q tests/test_integrity.py`
 fuera de Git. Instalación inicial falló por DNS del sandbox; reintento autorizado
 instaló pytest 8.3.5 y Streamlit 1.41.1. `requirements.lock.txt` registra dependencias
 transitivas efectivamente instaladas en Python 3.14. Índice reconstruible sin red.
+
+## Fase 2 — chatbot
+Implementados Streamlit, proveedor mock extractivo visible y adaptador Ollama local
+activado explícitamente por variable de modelo. Se rechazan destinos remotos y
+redirecciones; no se descargan modelos. Por defecto se abstiene ante consultas de
+normativa vigente: no hay fuentes certificadas. Modo documental optativo permite
+extractos nativos; OCR pendiente se muestra en recuperación pero no fundamenta la
+respuesta. Control de citas verifica archivo/página, no corrección semántica.
+Validación: `.venv/bin/python -m pytest -q` → **6 passed**, incluyendo AppTest de
+Streamlit con consulta, abstención, mock, fronteras A/B/C y proveedor remoto rechazado.
+Limitación: adaptador real aún sin modelo/servidor configurado; no se ejecutó un LLM.
