@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cs-rag-security"
+version = "0.1.0"
+description = "Prototipo experimental RAG UNSA offline"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.5"]
+ui = ["streamlit==1.41.1"]
+
+[project.scripts]
+unsa-rag = "cs_rag_security.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = ["corpus: requiere corpus privado local"]
