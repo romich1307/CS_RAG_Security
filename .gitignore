@@ -24,3 +24,6 @@ dist/
 /results/offline_20261117/
 /results/offline_20261117_completa/
 /results/offline_20261117_v2/
+
+# Instrucciones locales de desarrollo
+/INSTRUCCIONES_CODEX_CS_RAG_Security.md
