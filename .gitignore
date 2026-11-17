@@ -1,0 +1,18 @@
+
+# Corpus UNSA original y datos procesados
+/data/corpus_unsa/
+
+# Base de datos vectorial
+/data/chroma/
+/data/vector_db/
+
+# Entorno y claves
+.venv/
+.env
+.env.*
+!.env.example
+
+# Archivos temporales
+__pycache__/
+*.pyc
+.pytest_cache/
