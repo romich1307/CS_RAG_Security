@@ -64,3 +64,24 @@ Comandos: `python -m cs_rag_security.cli evaluate --output results/<nombre_nuevo
 Validación ampliada: `PYTHONPATH=src .venv/bin/python -m pytest -q` → **9 passed**:
 pareado de hits, separación ASR/mock, citas inválidas y no sobrescritura de corridas.
 Pendiente batería real: no hay LLM configurado, no se consumen APIs ni se baja modelo.
+
+## Fase 5 — documentación y reproducción
+Añadidos README con instalación Linux sin sudo, arquitectura, metodología/fórmulas,
+amenazas, límites jurídicos/OCR y evidencias CLI reducidas sin texto PDF. Scripts
+run_checks.sh y benchmark.sh; workflow GitHub Actions para Python 3.14 con tests
+sin corpus privado. CI está preparado, aún no ejecutado en GitHub (sin push).
+Comprobación equivalente local: pytest -m 'not corpus' → **8 passed, 1 deselected**.
+`pip check`: **No broken requirements found**. Consulta documental CLI: mock visible,
+recupera RCU-0161-2021.pdf p. 3; consulta de matrícula vigente: abstención. Hashes del
+código src coinciden con el manifiesto final. `git diff --check` sin errores.
+
+Estado: prototipo offline, interfaz, tres defensas y experimentos reproducibles
+implementados. PDF, OCR y gold conservados sin modificaciones; índice privado y
+corpus excluidos de Git. Rama local feature/rag-mvp, commits descriptivos por etapa.
+Sin push, sin APIs pagadas ni modelos descargados.
+
+Pendientes externos/científicos: configurar y ejecutar modelo local real; registrar
+digest/versión del servidor y hardware; ampliar ataques y validar en conjuntos
+independientes; revisión humana OCR, fidelidad semántica y vigencia; incorporar los
+tres textos ausentes solo tras obtener fuentes verificadas. No se atribuye eficacia
+de defensa frente a LLM con los resultados mock disponibles.

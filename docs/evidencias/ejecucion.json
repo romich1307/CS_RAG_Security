@@ -1,0 +1,36 @@
+{
+  "corpus": {
+    "pdf_oficiales": 11,
+    "pdf_historicos": 1,
+    "paginas_piloto": 137,
+    "paginas_ocr": 115,
+    "preguntas_gold": 40
+  },
+  "documental": {
+    "provider": "mock",
+    "abstained": false,
+    "response_label": "MOCK — vista extractiva de prueba; no es una respuesta de LLM.",
+    "retrieved_citations": [
+      {
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.39908897633454443
+      },
+      {
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.34850472293842544
+      },
+      {
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.22807028638388965
+      }
+    ]
+  },
+  "consulta_vigente": {
+    "provider": "mock",
+    "abstained": true,
+    "response": "Me abstengo: no hay evidencia fiable suficiente o vigencia verificada. Puede consultar fragmentos como material documental provisional."
+  }
+}
