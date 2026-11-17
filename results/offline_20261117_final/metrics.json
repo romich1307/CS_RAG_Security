@@ -1,0 +1,203 @@
+{
+  "A_sin_defensa": {
+    "provider": "mock",
+    "n": 48,
+    "detector_diagnostic": {
+      "recall": {
+        "numerator": 3,
+        "denominator": 4,
+        "value": 0.75
+      },
+      "fpr": {
+        "numerator": 1,
+        "denominator": 4,
+        "value": 0.25
+      }
+    },
+    "detector_applied": false,
+    "asr_all": {
+      "numerator": null,
+      "denominator": 4,
+      "value": null
+    },
+    "asr_retrieved": {
+      "numerator": null,
+      "denominator": 4,
+      "value": null
+    },
+    "attacks_not_retrieved": 0,
+    "mock_marker_emission_diagnostic": {
+      "numerator": 4,
+      "denominator": 4,
+      "value": 1.0
+    },
+    "retrieval_hit_at_k": {
+      "numerator": 34,
+      "denominator": 40,
+      "value": 0.85
+    },
+    "answer_exact_pilot": {
+      "numerator": null,
+      "denominator": 40,
+      "value": null
+    },
+    "answer_accuracy_current_law": {
+      "value": null,
+      "denominator": 0,
+      "reason": "gold sin vigencia certificada"
+    },
+    "abstention_pilot": {
+      "numerator": 1,
+      "denominator": 40,
+      "value": 0.025
+    },
+    "mean_pipeline_seconds": {
+      "value": 0.00032078112504526263,
+      "denominator": 48
+    },
+    "latency_by_kind": {
+      "gold": {
+        "value": 0.00036874375002753367,
+        "denominator": 40
+      },
+      "synthetic": {
+        "value": 8.096800013390748e-05,
+        "denominator": 8
+      }
+    }
+  },
+  "B_defensa_basica": {
+    "provider": "mock",
+    "n": 48,
+    "detector_diagnostic": {
+      "recall": {
+        "numerator": 3,
+        "denominator": 4,
+        "value": 0.75
+      },
+      "fpr": {
+        "numerator": 1,
+        "denominator": 4,
+        "value": 0.25
+      }
+    },
+    "detector_applied": false,
+    "asr_all": {
+      "numerator": null,
+      "denominator": 4,
+      "value": null
+    },
+    "asr_retrieved": {
+      "numerator": null,
+      "denominator": 4,
+      "value": null
+    },
+    "attacks_not_retrieved": 0,
+    "mock_marker_emission_diagnostic": {
+      "numerator": 4,
+      "denominator": 4,
+      "value": 1.0
+    },
+    "retrieval_hit_at_k": {
+      "numerator": 34,
+      "denominator": 40,
+      "value": 0.85
+    },
+    "answer_exact_pilot": {
+      "numerator": null,
+      "denominator": 40,
+      "value": null
+    },
+    "answer_accuracy_current_law": {
+      "value": null,
+      "denominator": 0,
+      "reason": "gold sin vigencia certificada"
+    },
+    "abstention_pilot": {
+      "numerator": 1,
+      "denominator": 40,
+      "value": 0.025
+    },
+    "mean_pipeline_seconds": {
+      "value": 0.0002992156666626518,
+      "denominator": 48
+    },
+    "latency_by_kind": {
+      "gold": {
+        "value": 0.00034028384998237017,
+        "denominator": 40
+      },
+      "synthetic": {
+        "value": 9.387475006406021e-05,
+        "denominator": 8
+      }
+    }
+  },
+  "C_defensa_propuesta": {
+    "provider": "mock",
+    "n": 48,
+    "detector_diagnostic": {
+      "recall": {
+        "numerator": 3,
+        "denominator": 4,
+        "value": 0.75
+      },
+      "fpr": {
+        "numerator": 1,
+        "denominator": 4,
+        "value": 0.25
+      }
+    },
+    "detector_applied": true,
+    "asr_all": {
+      "numerator": null,
+      "denominator": 4,
+      "value": null
+    },
+    "asr_retrieved": {
+      "numerator": null,
+      "denominator": 4,
+      "value": null
+    },
+    "attacks_not_retrieved": 0,
+    "mock_marker_emission_diagnostic": {
+      "numerator": 1,
+      "denominator": 4,
+      "value": 0.25
+    },
+    "retrieval_hit_at_k": {
+      "numerator": 34,
+      "denominator": 40,
+      "value": 0.85
+    },
+    "answer_exact_pilot": {
+      "numerator": null,
+      "denominator": 40,
+      "value": null
+    },
+    "answer_accuracy_current_law": {
+      "value": null,
+      "denominator": 0,
+      "reason": "gold sin vigencia certificada"
+    },
+    "abstention_pilot": {
+      "numerator": 1,
+      "denominator": 40,
+      "value": 0.025
+    },
+    "mean_pipeline_seconds": {
+      "value": 0.00030144377088466473,
+      "denominator": 48
+    },
+    "latency_by_kind": {
+      "gold": {
+        "value": 0.000345694700081367,
+        "denominator": 40
+      },
+      "synthetic": {
+        "value": 8.018912490115326e-05,
+        "denominator": 8
+      }
+    }
+  }
+}

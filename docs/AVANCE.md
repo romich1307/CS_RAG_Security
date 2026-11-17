@@ -44,3 +44,23 @@ que produce falsa alarma y ataque indirecto sutil no detectado. No toca fuentes.
 Pruebas específicas: `pytest -q tests/test_attacks.py tests/test_pipeline.py` →
 **4 passed**. Se prueba explícitamente la falsa alarma y el falso negativo;
 no se han alterado las etiquetas para mejorar métricas.
+
+## Fase 4 — evaluación offline
+Corrida de referencia: `results/offline_20261117_final/`, mock, seed 42, top-k 5,
+40 preguntas gold piloto + 8 casos sintéticos × 3 modos = **144 trazas**.
+Mismos hits pareados, índice TF-IDF y parámetros para A/B/C. Colección secundaria
+por caso: texto sintético + control benigno, sin mezclar con el índice oficial.
+Recuperación documental top-5: **34/40** en cada modo. Diagnóstico del detector:
+recall **3/4**, FPR **1/4**. Ninguno de los 4 ataques quedó fuera del top-5 sintético.
+Emisión del marcador en extractos mock: A **4/4**, B **4/4**, C **1/4**;
+esto NO es ASR de LLM. ASR y exactitud piloto de LLM = null. Vigencia: denominador
+certificado **0**, exactitud normativa no estimable. Latencias crudas y medias con
+sus denominadores figuran en JSON/CSV; no se presentan como rendimiento de un LLM.
+Manifiesto incluye hashes PDF/JSONL/índice/datasets/código, versiones, fechas y
+umbrales. Gráfico SVG solo del diagnóstico del detector. Falsa alarma b3 y falso
+negativo a4 registrados. Una primera corrida fue interrumpida por reinicio del
+servidor (solo manifiesto); se conserva localmente sin usarla como evidencia.
+Comandos: `python -m cs_rag_security.cli evaluate --output results/<nombre_nuevo>`.
+Validación ampliada: `PYTHONPATH=src .venv/bin/python -m pytest -q` → **9 passed**:
+pareado de hits, separación ASR/mock, citas inválidas y no sobrescritura de corridas.
+Pendiente batería real: no hay LLM configurado, no se consumen APIs ni se baja modelo.

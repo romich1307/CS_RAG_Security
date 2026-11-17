@@ -1,0 +1,82 @@
+{
+  "status": "completed",
+  "started_utc": "2026-11-17T18:33:24.288273+00:00",
+  "seed": 42,
+  "top_k": 5,
+  "provider": "mock",
+  "temperature": 0,
+  "llm": "mock_extractivo_v1",
+  "embeddings": null,
+  "retriever": "fallback_textual_tfidf_coseno_v1",
+  "python": "3.14.10",
+  "package": "0.1.0",
+  "source_sha256": {
+    "src/cs_rag_security/__init__.py": "fd11f4241173faa20e362024e4d9ec24138cd54c97e96afa879688364774d28c",
+    "src/cs_rag_security/cli.py": "c2dcd18d084dacbe288e520e39b1126c0b1d4721ceb3f2845f905d64f174fdd3",
+    "src/cs_rag_security/defenses/__init__.py": "680bf5fd8e205b7bae1c19887115678ed40ea87bed010f7d91eaeb69506a0d65",
+    "src/cs_rag_security/evaluation/__init__.py": "f30d24b68bc43bea260e89a622210a39e5a753d9a04079fe073124311fa91931",
+    "src/cs_rag_security/generation/__init__.py": "28e94478d043b635792370052cd068320a747638a9077d544c702c87f5bb1f56",
+    "src/cs_rag_security/ingestion/__init__.py": "8a8cd78de172b69e4a4aff97058ac83431ae8f672fc5546ca6686dbfcf5cd50f",
+    "src/cs_rag_security/pipeline.py": "3fd57f136ebdb541492efe1a436a1dfb9dea3108cdc104a1fdf5c95ed63a1345",
+    "src/cs_rag_security/retrieval/__init__.py": "5b1b9468462d1250b9bc2dc62805b4a516300c96b233c3903a022aa68899d185"
+  },
+  "versions": {
+    "pytest": "8.3.5",
+    "streamlit": "1.41.1"
+  },
+  "index_sha256": "0cf3a950092c2c32e1c02dee23c480bc4717dc0b52a2db1aa96c6d4f09c8b2e0",
+  "corpus": {
+    "pdf_oficiales": 11,
+    "pdf_historicos": 1,
+    "paginas_piloto": 137,
+    "paginas_ocr": 115,
+    "preguntas_gold": 40,
+    "pendientes_tipo": "dict",
+    "sha256_pdf": {
+      "RCU-0009-2026.pdf": "66bf6c529236227b0c8bed8104b293c4bfa9fcfa6c37f691af43bd1c158242ff",
+      "RCU-0127-2020.pdf": "b1fe2fa321bb4cf32a685834730570acbb4fa58ad5976faadef0b3c60340742f",
+      "RCU-0161-2021.pdf": "a370e69b2f33151e9089f9c3a4312ca82974b690a792749df710da362cb75799",
+      "RCU-0252-2021.pdf": "01fd83bb336f56eb7082df9a0c484c80b3af8623ca61f5d47a35039c505fb664",
+      "RCU-0273-2021.pdf": "86da18c74a2599eb83ef903eb65d70b5cd6eac3222356fce634f84346ae0b5fe",
+      "RCU-0284-2023.pdf": "416cc6a88a00005367705c94e26cec6b363a9755db9a86dc618fdb8b3c947260",
+      "RCU-0320-2022.pdf": "701bd477f6683100c17ab313eb21c69a2a18b2daea49b5fa00210f94e1ba8c96",
+      "RCU-0450-2026.pdf": "b6fc0159941701ca10bcf04b32fde8432fe55fc998adca9494cf71bef53bc122",
+      "RCU-0470-2024.pdf": "0e1bff232f043a0e03ba90f4655961c6813acd8cbd44b7a683593223b9789d94",
+      "RCU-0501-2020.pdf": "ff77f94bc7a61ed0f1a566e0d922407241fbdb35437dfb6527533036e328b44b",
+      "RCU-0504-2020.pdf": "1e2113b7d9b2da17346c066ee659c0cea1fefba5b92c65e83bb0b90d9ecd4397",
+      "RCU-0584-2023.pdf": "9abee5f9e4b1b2d143d9acc1a19cdc2434e868314384245f5b29da75244a8c6b"
+    },
+    "sha256_jsonl": "d54f127017916a9449ed7dfceb09ac9888cbedbba9ed339bde8589fccff184fc",
+    "ausentes_conocidos": [
+      "RCU-0435-2017.pdf",
+      "RCU-0317-2026.pdf",
+      "RCU-0590-2023.pdf"
+    ]
+  },
+  "attacks_sha256": "4235a3263ff411ac50b3261bc5fba689768161f935cce1a42f76136293309bf7",
+  "gold_sha256": "622eb3d76e5d56138358d20db376d6e62f61ac378b1c0d41dbc3a543c8210da2",
+  "modes": [
+    "A_sin_defensa",
+    "B_defensa_basica",
+    "C_defensa_propuesta"
+  ],
+  "n_gold": 40,
+  "n_synthetic": 8,
+  "chunk_size_words": 180,
+  "chunk_overlap_words": 30,
+  "evidence_threshold": 0.12,
+  "detector": "heuristic_v1",
+  "differences": {
+    "A": "contexto sin separación",
+    "B": "roles y contexto no confiable",
+    "C": "JSON estructurado y exclusión heurística"
+  },
+  "limitations": [
+    "Mock no permite estimar ASR ni exactitud semántica de LLM.",
+    "Escenarios sintéticos pequeños; no inferir significancia estadística.",
+    "Consulta documental; sin certificación de vigencia ni entailment automático.",
+    "Colección secundaria sintética independiente; no mide ataque al ranking oficial.",
+    "Mismos hits para A/B/C; latencia incluye preparación y generación, excluye recuperación."
+  ],
+  "finished_utc": "2026-11-17T18:33:24.555123+00:00"
+}

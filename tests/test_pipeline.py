@@ -36,3 +36,12 @@ def test_local_provider_no_implicit_remote(monkeypatch):
         generate([], [], 'local')
     with pytest.raises(ValueError):
         generate([], [], 'paid')
+
+
+def test_real_adapter_output_citations_must_belong_to_context(monkeypatch):
+    import cs_rag_security.pipeline as pipeline
+    idx = Index([hit()])
+    monkeypatch.setattr(pipeline, 'generate', lambda *a: 'Requisito inventado [inexistente.pdf p. 999]')
+    assert answer(idx, 'evaluación', provider='local', documental=True)['abstained']
+    monkeypatch.setattr(pipeline, 'generate', lambda *a: 'Según el documento [demo.pdf p. 1]')
+    assert not answer(idx, 'evaluación', provider='local', documental=True)['abstained']
