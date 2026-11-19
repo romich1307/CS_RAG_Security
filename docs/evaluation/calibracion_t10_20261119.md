@@ -2,7 +2,7 @@
 
 Fecha de ejecución, 19 de noviembre de 2026. Continuación de la preparación del 18 de noviembre. Rúbrica aplicada, versión 0.2 propuesta.
 
-El [cotejo de las 15 preguntas](cotejo_t10_20261119.md) permite concretar qué información es esencial y qué páginas respaldan cada referencia. Los siguientes ejercicios son variaciones redactadas para comprobar los criterios. Su origen es una preparación asistida por Codex, pendiente de revisión por León y Romina.
+El [cotejo de las 15 preguntas](cotejo_t10_20261119.md) permite concretar qué información es esencial y qué páginas respaldan cada referencia. Los siguientes ejercicios son variaciones redactadas para comprobar los criterios. Son ejemplos hipotéticos de aplicación de la rúbrica, pendientes de validación por León y Romina.
 
 ## Ejercicios de discusión
 
