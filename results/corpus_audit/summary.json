@@ -1,0 +1,1046 @@
+{
+  "version_auditoria": "1.0",
+  "politica": "solo lectura; validacion estructural, no legal ni semantica",
+  "conteos": {
+    "pdf": 12,
+    "pdf_oficial": 11,
+    "pdf_historico": 1,
+    "pdf_sha256_coincidentes": 12,
+    "entradas_baseline": 12,
+    "documentos_metadatos": 14,
+    "registros_extraccion": 12,
+    "preguntas_gold": 40,
+    "registros_validacion": 40,
+    "incidencias_error": 0,
+    "incidencias_advertencia": 1,
+    "incidencias_informativas": 2
+  },
+  "integridad": [
+    {
+      "archivo": "data/corpus_unsa/01B_Historicos/RCU-0252-2021.pdf",
+      "estado": "coincide",
+      "sha256": "01fd83bb336f56eb7082df9a0c484c80b3af8623ca61f5d47a35039c505fb664"
+    },
+    {
+      "archivo": "data/corpus_unsa/01_Corpus_Oficial/RCU-0009-2026.pdf",
+      "estado": "coincide",
+      "sha256": "66bf6c529236227b0c8bed8104b293c4bfa9fcfa6c37f691af43bd1c158242ff"
+    },
+    {
+      "archivo": "data/corpus_unsa/01_Corpus_Oficial/RCU-0127-2020.pdf",
+      "estado": "coincide",
+      "sha256": "b1fe2fa321bb4cf32a685834730570acbb4fa58ad5976faadef0b3c60340742f"
+    },
+    {
+      "archivo": "data/corpus_unsa/01_Corpus_Oficial/RCU-0161-2021.pdf",
+      "estado": "coincide",
+      "sha256": "a370e69b2f33151e9089f9c3a4312ca82974b690a792749df710da362cb75799"
+    },
+    {
+      "archivo": "data/corpus_unsa/01_Corpus_Oficial/RCU-0273-2021.pdf",
+      "estado": "coincide",
+      "sha256": "86da18c74a2599eb83ef903eb65d70b5cd6eac3222356fce634f84346ae0b5fe"
+    },
+    {
+      "archivo": "data/corpus_unsa/01_Corpus_Oficial/RCU-0284-2023.pdf",
+      "estado": "coincide",
+      "sha256": "416cc6a88a00005367705c94e26cec6b363a9755db9a86dc618fdb8b3c947260"
+    },
+    {
+      "archivo": "data/corpus_unsa/01_Corpus_Oficial/RCU-0320-2022.pdf",
+      "estado": "coincide",
+      "sha256": "701bd477f6683100c17ab313eb21c69a2a18b2daea49b5fa00210f94e1ba8c96"
+    },
+    {
+      "archivo": "data/corpus_unsa/01_Corpus_Oficial/RCU-0450-2026.pdf",
+      "estado": "coincide",
+      "sha256": "b6fc0159941701ca10bcf04b32fde8432fe55fc998adca9494cf71bef53bc122"
+    },
+    {
+      "archivo": "data/corpus_unsa/01_Corpus_Oficial/RCU-0470-2024.pdf",
+      "estado": "coincide",
+      "sha256": "0e1bff232f043a0e03ba90f4655961c6813acd8cbd44b7a683593223b9789d94"
+    },
+    {
+      "archivo": "data/corpus_unsa/01_Corpus_Oficial/RCU-0501-2020.pdf",
+      "estado": "coincide",
+      "sha256": "ff77f94bc7a61ed0f1a566e0d922407241fbdb35437dfb6527533036e328b44b"
+    },
+    {
+      "archivo": "data/corpus_unsa/01_Corpus_Oficial/RCU-0504-2020.pdf",
+      "estado": "coincide",
+      "sha256": "1e2113b7d9b2da17346c066ee659c0cea1fefba5b92c65e83bb0b90d9ecd4397"
+    },
+    {
+      "archivo": "data/corpus_unsa/01_Corpus_Oficial/RCU-0584-2023.pdf",
+      "estado": "coincide",
+      "sha256": "9abee5f9e4b1b2d143d9acc1a19cdc2434e868314384245f5b29da75244a8c6b"
+    }
+  ],
+  "metadatos": [
+    {
+      "id": "RCU-0009-2026",
+      "pdf": "rcu-0009-2026.pdf",
+      "situacion": "presente",
+      "archivo_en_paquete_declarado": "01_Corpus_Oficial/RCU-0009-2026.pdf",
+      "estado_inclusion_rag": "piloto_recuperacion_condicionada",
+      "vigencia_declarada": {
+        "estado": "verificacion_juridica_pendiente",
+        "advertencia": "No usar para responder artículos completos del Reglamento de Matrícula: PDF escaneado. También deja sin efecto RCU-0033-2025, según ficha oficial."
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": false
+    },
+    {
+      "id": "RCU-0127-2020",
+      "pdf": "rcu-0127-2020.pdf",
+      "situacion": "presente",
+      "archivo_en_paquete_declarado": "01_Corpus_Oficial/RCU-0127-2020.pdf",
+      "estado_inclusion_rag": "piloto_recuperacion_condicionada",
+      "vigencia_declarada": {
+        "estado": "verificacion_juridica_pendiente",
+        "advertencia": "NO es el reglamento de matrícula original: aprueba modificatorias a RCU-0435-2017. Buscar texto base para consultas normativas completas."
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": false
+    },
+    {
+      "id": "RCU-0161-2021",
+      "pdf": "rcu-0161-2021.pdf",
+      "situacion": "presente",
+      "archivo_en_paquete_declarado": "01_Corpus_Oficial/RCU-0161-2021.pdf",
+      "estado_inclusion_rag": "piloto_recuperacion_condicionada",
+      "vigencia_declarada": {
+        "estado": "verificacion_juridica_pendiente",
+        "advertencia": "Contenido extraíble, pero verificar posibles reformas posteriores antes de afirmar vigencia actual."
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": false
+    },
+    {
+      "id": "RCU-0252-2021",
+      "pdf": "rcu-0252-2021.pdf",
+      "situacion": "presente",
+      "archivo_en_paquete_declarado": "01B_Historicos/RCU-0252-2021.pdf",
+      "estado_inclusion_rag": "historico_excluir_recuperacion_actual",
+      "vigencia_declarada": {
+        "estado": "verificacion_juridica_pendiente",
+        "advertencia": "La RCU-0273-2021 dejó esta resolución sin efecto. Conservar como antecedente histórico, no como regla vigente."
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": false
+    },
+    {
+      "id": "RCU-0273-2021",
+      "pdf": "rcu-0273-2021.pdf",
+      "situacion": "presente",
+      "archivo_en_paquete_declarado": "01_Corpus_Oficial/RCU-0273-2021.pdf",
+      "estado_inclusion_rag": "piloto_recuperacion_condicionada",
+      "vigencia_declarada": {
+        "estado": "verificacion_juridica_pendiente",
+        "advertencia": "La disminución aplica al total de créditos exigidos en planes 2017; declara que el reglamento de extracurriculares queda como RCU-0504-2020."
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": false
+    },
+    {
+      "id": "RCU-0284-2023",
+      "pdf": "rcu-0284-2023.pdf",
+      "situacion": "presente",
+      "archivo_en_paquete_declarado": "01_Corpus_Oficial/RCU-0284-2023.pdf",
+      "estado_inclusion_rag": "piloto_recuperacion_condicionada",
+      "vigencia_declarada": {
+        "estado": "verificacion_juridica_pendiente",
+        "advertencia": "Solo páginas 1-2 tienen texto extraíble; páginas 3-6 (directiva) requieren OCR o transcripción verificada."
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": true
+    },
+    {
+      "id": "RCU-0320-2022",
+      "pdf": "rcu-0320-2022.pdf",
+      "situacion": "presente",
+      "archivo_en_paquete_declarado": "01_Corpus_Oficial/RCU-0320-2022.pdf",
+      "estado_inclusion_rag": "piloto_recuperacion_condicionada",
+      "vigencia_declarada": {
+        "estado": "verificacion_juridica_pendiente",
+        "advertencia": "Modifica el artículo 4 para indicar prácticas como actividades curriculares, eliminando la frase sobre requisitos obligatorios de graduación."
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": false
+    },
+    {
+      "id": "RCU-0450-2026",
+      "pdf": "rcu-0450-2026.pdf",
+      "situacion": "presente",
+      "archivo_en_paquete_declarado": "01_Corpus_Oficial/RCU-0450-2026.pdf",
+      "estado_inclusion_rag": "piloto_recuperacion_condicionada",
+      "vigencia_declarada": {
+        "estado": "verificacion_juridica_pendiente",
+        "advertencia": "Documento de 73 páginas escaneadas. Es de alta prioridad para OCR. Según registro oficial, reemplaza RCU-0157-2025."
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": false
+    },
+    {
+      "id": "RCU-0470-2024",
+      "pdf": "rcu-0470-2024.pdf",
+      "situacion": "presente",
+      "archivo_en_paquete_declarado": "01_Corpus_Oficial/RCU-0470-2024.pdf",
+      "estado_inclusion_rag": "piloto_recuperacion_condicionada",
+      "vigencia_declarada": {
+        "estado": "verificacion_juridica_pendiente",
+        "advertencia": "PDF escaneado. Verificar compatibilidad y precedencia frente al reglamento general 2026."
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": false
+    },
+    {
+      "id": "RCU-0501-2020",
+      "pdf": "rcu-0501-2020.pdf",
+      "situacion": "presente",
+      "archivo_en_paquete_declarado": "01_Corpus_Oficial/RCU-0501-2020.pdf",
+      "estado_inclusion_rag": "piloto_recuperacion_condicionada",
+      "vigencia_declarada": {
+        "estado": "verificacion_juridica_pendiente",
+        "advertencia": "PDF escaneado. El artículo 4 debe consultarse junto con su modificación RCU-0320-2022."
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": false
+    },
+    {
+      "id": "RCU-0504-2020",
+      "pdf": "rcu-0504-2020.pdf",
+      "situacion": "presente",
+      "archivo_en_paquete_declarado": "01_Corpus_Oficial/RCU-0504-2020.pdf",
+      "estado_inclusion_rag": "piloto_recuperacion_condicionada",
+      "vigencia_declarada": {
+        "estado": "verificacion_juridica_pendiente",
+        "advertencia": "RCU-0252-2021 fue dejada sin efecto por RCU-0273-2021; distinguir créditos extracurriculares de total de créditos del plan 2017."
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": false
+    },
+    {
+      "id": "RCU-0584-2023",
+      "pdf": "rcu-0584-2023.pdf",
+      "situacion": "presente",
+      "archivo_en_paquete_declarado": "01_Corpus_Oficial/RCU-0584-2023.pdf",
+      "estado_inclusion_rag": "piloto_recuperacion_condicionada",
+      "vigencia_declarada": {
+        "estado": "verificacion_juridica_pendiente",
+        "advertencia": "PDF escaneado. Resolución incluida en la colección institucional de grados/títulos."
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": false
+    },
+    {
+      "id": "RCU-0317-2026",
+      "pdf": "rcu-0317-2026.pdf",
+      "situacion": "no_encontrado_inclusion_no_confirmada",
+      "archivo_en_paquete_declarado": null,
+      "estado_inclusion_rag": "pendiente_descarga_no_incluido",
+      "vigencia_declarada": {
+        "estado": "modificaciones_posteriores_no_descartadas",
+        "advertencia": "Ficha y PDF público verificados; no se incorporó copia local al ZIP"
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": null
+    },
+    {
+      "id": "RCU-0590-2023",
+      "pdf": "rcu-0590-2023.pdf",
+      "situacion": "no_encontrado_inclusion_no_confirmada",
+      "archivo_en_paquete_declarado": null,
+      "estado_inclusion_rag": "pendiente_descarga_no_incluido",
+      "vigencia_declarada": {
+        "estado": "modificaciones_posteriores_no_descartadas",
+        "advertencia": "Ficha y PDF público verificados; no se incorporó copia local al ZIP"
+      },
+      "no_certificado_vigente": true,
+      "apto_para_rag_con_restricciones": null
+    }
+  ],
+  "extraccion": [
+    {
+      "archivo": "rcu-0009-2026.pdf",
+      "paginas_reportadas": 4,
+      "paginas_ocr": 4,
+      "paginas_pdf_texto": 0,
+      "paginas_ocr_error": 0,
+      "paginas_ocr_vacias": [],
+      "chars_total": 13106
+    },
+    {
+      "archivo": "rcu-0127-2020.pdf",
+      "paginas_reportadas": 8,
+      "paginas_ocr": 8,
+      "paginas_pdf_texto": 0,
+      "paginas_ocr_error": 0,
+      "paginas_ocr_vacias": [
+        8
+      ],
+      "chars_total": 17321
+    },
+    {
+      "archivo": "rcu-0161-2021.pdf",
+      "paginas_reportadas": 6,
+      "paginas_ocr": 0,
+      "paginas_pdf_texto": 6,
+      "paginas_ocr_error": 0,
+      "paginas_ocr_vacias": [],
+      "chars_total": 15830
+    },
+    {
+      "archivo": "rcu-0252-2021.pdf",
+      "paginas_reportadas": 3,
+      "paginas_ocr": 0,
+      "paginas_pdf_texto": 3,
+      "paginas_ocr_error": 0,
+      "paginas_ocr_vacias": [],
+      "chars_total": 8005
+    },
+    {
+      "archivo": "rcu-0273-2021.pdf",
+      "paginas_reportadas": 2,
+      "paginas_ocr": 0,
+      "paginas_pdf_texto": 2,
+      "paginas_ocr_error": 0,
+      "paginas_ocr_vacias": [],
+      "chars_total": 7089
+    },
+    {
+      "archivo": "rcu-0284-2023.pdf",
+      "paginas_reportadas": 6,
+      "paginas_ocr": 4,
+      "paginas_pdf_texto": 2,
+      "paginas_ocr_error": 0,
+      "paginas_ocr_vacias": [],
+      "chars_total": 14151
+    },
+    {
+      "archivo": "rcu-0320-2022.pdf",
+      "paginas_reportadas": 3,
+      "paginas_ocr": 0,
+      "paginas_pdf_texto": 3,
+      "paginas_ocr_error": 0,
+      "paginas_ocr_vacias": [],
+      "chars_total": 10013
+    },
+    {
+      "archivo": "rcu-0450-2026.pdf",
+      "paginas_reportadas": 73,
+      "paginas_ocr": 73,
+      "paginas_pdf_texto": 0,
+      "paginas_ocr_error": 0,
+      "paginas_ocr_vacias": [],
+      "chars_total": 168361
+    },
+    {
+      "archivo": "rcu-0470-2024.pdf",
+      "paginas_reportadas": 10,
+      "paginas_ocr": 10,
+      "paginas_pdf_texto": 0,
+      "paginas_ocr_error": 0,
+      "paginas_ocr_vacias": [],
+      "chars_total": 29212
+    },
+    {
+      "archivo": "rcu-0501-2020.pdf",
+      "paginas_reportadas": 11,
+      "paginas_ocr": 11,
+      "paginas_pdf_texto": 0,
+      "paginas_ocr_error": 0,
+      "paginas_ocr_vacias": [],
+      "chars_total": 28195
+    },
+    {
+      "archivo": "rcu-0504-2020.pdf",
+      "paginas_reportadas": 9,
+      "paginas_ocr": 0,
+      "paginas_pdf_texto": 9,
+      "paginas_ocr_error": 0,
+      "paginas_ocr_vacias": [],
+      "chars_total": 24488
+    },
+    {
+      "archivo": "rcu-0584-2023.pdf",
+      "paginas_reportadas": 5,
+      "paginas_ocr": 5,
+      "paginas_pdf_texto": 0,
+      "paginas_ocr_error": 0,
+      "paginas_ocr_vacias": [],
+      "chars_total": 19814
+    }
+  ],
+  "preguntas": [
+    {
+      "id": "GQ001",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        3
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ002",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        3
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ003",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        3
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ004",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        3
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ005",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        4
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ006",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        4
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ007",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        4
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ008",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        4
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ009",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        4
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ010",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        4
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ011",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        5
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ012",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        5
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ013",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        5
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ014",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        5
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ015",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        5
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ016",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        5
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ017",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        6
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ018",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0161-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        6
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ019",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        4
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ020",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        4
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ021",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        6
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ022",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        6
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ023",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        6
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ024",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        6
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ025",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        6
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ026",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        7
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ027",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        7
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ028",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        7
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ029",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        7
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ030",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        8
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ031",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        8
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ032",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        8
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ033",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        8
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ034",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        9
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ035",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0504-2020.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        9
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ036",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0273-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        2
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ037",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0273-2021.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        2
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ038",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0320-2022.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        2
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ039",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0320-2022.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        2
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    },
+    {
+      "id": "GQ040",
+      "tipo": "respuesta_corta",
+      "fuentes_pdf_detectadas": [
+        "rcu-0284-2023.pdf"
+      ],
+      "paginas_numericas_detectadas": [
+        2
+      ],
+      "referencias_ausentes": [],
+      "apta_recuperacion_declarada": true,
+      "apta_vigencia_declarada": false,
+      "estado_validacion_declarado": "fuente_y_pagina_disponibles_sin_certificacion_de_vigencia",
+      "tiene_validacion_registrada": true,
+      "cita_contrastada_con_pdf": false
+    }
+  ],
+  "incidencias": [
+    {
+      "severidad": "informativa",
+      "categoria": "metadatos",
+      "elemento": "RCU-0317-2026",
+      "detalle": "Registro sin PDF local; comprobar si fue excluido o está pendiente, no asumir pérdida."
+    },
+    {
+      "severidad": "informativa",
+      "categoria": "metadatos",
+      "elemento": "RCU-0590-2023",
+      "detalle": "Registro sin PDF local; comprobar si fue excluido o está pendiente, no asumir pérdida."
+    },
+    {
+      "severidad": "advertencia",
+      "categoria": "ocr",
+      "elemento": "rcu-0127-2020.pdf",
+      "detalle": "1 páginas OCR vacías según el resumen."
+    }
+  ],
+  "limitaciones": [
+    "Los hashes verifican identidad de bytes, no vigencia normativa.",
+    "La calidad real del OCR no queda certificada por el resumen de extracción; requiere cotejar páginas.",
+    "Los números de página provienen de campos explícitos de las fuentes, sin confirmar su contenido.",
+    "No se verificó la veracidad de las respuestas de referencia contra el PDF.",
+    "Los metadatos de vigencia son declaraciones: falta contrastarlos con fuentes oficiales vigentes.",
+    "No se modifica el corpus, las preguntas ni la baseline."
+  ]
+}
