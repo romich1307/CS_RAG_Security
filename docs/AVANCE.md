@@ -85,3 +85,17 @@ digest/versión del servidor y hardware; ampliar ataques y validar en conjuntos
 independientes; revisión humana OCR, fidelidad semántica y vigencia; incorporar los
 tres textos ausentes solo tras obtener fuentes verificadas. No se atribuye eficacia
 de defensa frente a LLM con los resultados mock disponibles.
+
+## Avance de León — 19 de noviembre de 2026
+
+Se continuó T10, cuya preparación de rúbrica y plantilla se había realizado el
+18 de noviembre. Con el paquete de Romina se verificaron los hashes de cinco PDF
+y se hizo un cotejo textual y visual asistido de las 15 preguntas. Trece referencias
+tienen respaldo confirmado, GQ030 necesita las páginas 7 y 8 y GQ040 presenta una
+diferencia de denominación entre la resolución y su anexo. La rúbrica 0.2 y los
+criterios propuestos quedan para revisión de León y Romina. Registro en
+[cotejo T10](evaluation/cotejo_t10_20261119.md).
+
+
+T12 sigue pendiente de respuestas reales del LLM. Estos cambios documentan el
+avance del 19 de noviembre y la continuación del pendiente de T10 del día 18.
