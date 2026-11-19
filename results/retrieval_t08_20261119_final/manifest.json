@@ -1,0 +1,150 @@
+{
+  "status": "completed",
+  "task": "T08",
+  "scope": "retrieval_only_no_llm_generation",
+  "started_utc": "2026-11-19T16:34:18.208932+00:00",
+  "finished_utc": "2026-11-19T16:35:00.321383+00:00",
+  "python": "3.12.14",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "hardware": {
+    "cpu": "12th Gen Intel(R) Core(TM) i5-12500H",
+    "logical_cpus": 16,
+    "ram_bytes": 16782307328,
+    "device": "CPUExecutionProvider",
+    "onnx_threads": 4
+  },
+  "versions": {
+    "numpy": "2.5.5",
+    "onnxruntime": "1.32.0",
+    "tokenizers": "0.23.3",
+    "psutil": "7.2.2"
+  },
+  "corpus": {
+    "pdf_oficiales": 11,
+    "pdf_historicos": 1,
+    "paginas_piloto": 137,
+    "paginas_ocr": 115,
+    "preguntas_gold": 40,
+    "pendientes_tipo": "dict",
+    "sha256_pdf": {
+      "RCU-0009-2026.pdf": "66bf6c529236227b0c8bed8104b293c4bfa9fcfa6c37f691af43bd1c158242ff",
+      "RCU-0127-2020.pdf": "b1fe2fa321bb4cf32a685834730570acbb4fa58ad5976faadef0b3c60340742f",
+      "RCU-0161-2021.pdf": "a370e69b2f33151e9089f9c3a4312ca82974b690a792749df710da362cb75799",
+      "RCU-0252-2021.pdf": "01fd83bb336f56eb7082df9a0c484c80b3af8623ca61f5d47a35039c505fb664",
+      "RCU-0273-2021.pdf": "86da18c74a2599eb83ef903eb65d70b5cd6eac3222356fce634f84346ae0b5fe",
+      "RCU-0284-2023.pdf": "416cc6a88a00005367705c94e26cec6b363a9755db9a86dc618fdb8b3c947260",
+      "RCU-0320-2022.pdf": "701bd477f6683100c17ab313eb21c69a2a18b2daea49b5fa00210f94e1ba8c96",
+      "RCU-0450-2026.pdf": "b6fc0159941701ca10bcf04b32fde8432fe55fc998adca9494cf71bef53bc122",
+      "RCU-0470-2024.pdf": "0e1bff232f043a0e03ba90f4655961c6813acd8cbd44b7a683593223b9789d94",
+      "RCU-0501-2020.pdf": "ff77f94bc7a61ed0f1a566e0d922407241fbdb35437dfb6527533036e328b44b",
+      "RCU-0504-2020.pdf": "1e2113b7d9b2da17346c066ee659c0cea1fefba5b92c65e83bb0b90d9ecd4397",
+      "RCU-0584-2023.pdf": "9abee5f9e4b1b2d143d9acc1a19cdc2434e868314384245f5b29da75244a8c6b"
+    },
+    "sha256_jsonl": "d54f127017916a9449ed7dfceb09ac9888cbedbba9ed339bde8589fccff184fc",
+    "ausentes_conocidos": [
+      "RCU-0435-2017.pdf",
+      "RCU-0317-2026.pdf",
+      "RCU-0590-2023.pdf"
+    ]
+  },
+  "gold_sha256": "622eb3d76e5d56138358d20db376d6e62f61ac378b1c0d41dbc3a543c8210da2",
+  "protocol_sha256": "945a2ff1f7af0ae0b6d66f386d4a405c8422ee1c9dcad62c477c6f48a187f50a",
+  "protocol": {
+    "task": "T08",
+    "frozen_before_semantic_execution": true,
+    "date": "2026-11-19",
+    "corpus": "UNSA_Corpus_RAG_Depurado_2026-11-17",
+    "primary_question_ids": [
+      "GQ004",
+      "GQ006",
+      "GQ012",
+      "GQ016",
+      "GQ017",
+      "GQ023",
+      "GQ027",
+      "GQ034",
+      "GQ035",
+      "GQ036",
+      "GQ037",
+      "GQ038",
+      "GQ039"
+    ],
+    "selection_basis": "13 preguntas con respaldo confirmado en el cotejo documental asistido de T10, commit 7924ae6; revisión humana del equipo pendiente.",
+    "excluded_from_primary": {
+      "GQ030": "La referencia recibida omite página 7; necesita páginas 7 y 8.",
+      "GQ040": "Discrepancia UM-SA/UM-DSA entre resolución y anexo."
+    },
+    "secondary_scope": "Las 40 preguntas originales se reportan como exploratorias, sin declarar validación humana completa ni vigencia actual.",
+    "chunk_size_words": 180,
+    "chunk_overlap_words": 30,
+    "top_k": [
+      1,
+      3,
+      5
+    ],
+    "latency_repeats": 5,
+    "warmup_queries_per_method": 3,
+    "seed": 42,
+    "onnx_threads": 4,
+    "model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "model_revision": "e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
+    "model_variant": "onnx/model_quint8_avx2.onnx",
+    "model_max_tokens": 128,
+    "decision_rule": "Comparar aciertos, fallos, latencia y tamaño; no cambiar el modelo para mejorar esta muestra ni declarar superioridad general."
+  },
+  "n_chunks": 2284,
+  "n_questions": 40,
+  "model": {
+    "model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "revision": "e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
+    "onnx_file": "onnx/model_quint8_avx2.onnx",
+    "max_length": 128,
+    "pooling": "attention_mask_mean",
+    "normalize": "l2",
+    "quantization": "quint8_avx2",
+    "license": "apache-2.0",
+    "files_sha256": {
+      "onnx/model_quint8_avx2.onnx": "98a01d88b7de996cdea58c32ca71208c09968d143798814b2ea09d3439dc334f",
+      "tokenizer.json": "2c3387be76557bd40970cec13153b3bbf80407865484b209e655e5e4729076b8",
+      "config.json": "6300193cb75e01cf80c96decef7187dfb33094d97cc1490b7ead6ff134476e4e",
+      "sentence_bert_config.json": "70f4448f31320443fe3557cacea5abf2dcc4915dda8c80646bec9f3bb0aa5a1f",
+      "1_Pooling/config.json": "4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23",
+      "README.md": "1e98ea05b0de579fcaad3d625b62ea55647142ed674d5f5ebf1440e4bbbb6f23"
+    },
+    "files_bytes": {
+      "onnx/model_quint8_avx2.onnx": 118453870,
+      "tokenizer.json": 9081518,
+      "config.json": 645,
+      "sentence_bert_config.json": 53,
+      "1_Pooling/config.json": 190,
+      "README.md": 3888
+    },
+    "source": "https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/tree/e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
+  },
+  "model_manifest_sha256": "e6551235b270408630ed9e371bfdff100f329d119336ad9f904c4a07cc431dcf",
+  "model_directory_name": "minilm-multilingual-int8",
+  "reuse_index": false,
+  "semantic_comparison": "executed",
+  "truncated_chunks": {
+    "numerator": 77,
+    "denominator": 2284,
+    "value": 0.03371278458844133
+  },
+  "source_sha256": {
+    "scripts\\retrieval_benchmark.py": "6d8f7ecf1e6e08e9bb845d107205051e2ce7dcf682f38073c3f6cbf53ae21377",
+    "src\\cs_rag_security\\retrieval\\__init__.py": "6b537bc3a790a1e85940bfcd380f964574d41a6f10a2c4bb104d2e101e6860d7",
+    "src\\cs_rag_security\\retrieval\\semantico.py": "81030248754dab37cf472fdaa7fe7e7c877f81a5464a0b175ef7d2b484d1819b",
+    "src\\cs_rag_security\\ingestion\\__init__.py": "0b9f03767e858f7a6e7b3b5365849db82ae346f059b65abd47b5450cdb18a308",
+    "pyproject.toml": "f8dafc33d6ff17df8802dd13db0a1ec63efb78b16835f7aac7303f5ff18bfd9f"
+  },
+  "limitations": [
+    "La muestra primaria consta de 13 preguntas con cotejo asistido; revisión humana del equipo pendiente.",
+    "Las 40 preguntas son un análisis exploratorio; GQ030 y GQ040 conservan incidencias conocidas.",
+    "Los dos métodos reciben los mismos fragmentos; MiniLM trunca a 128 tokens y se informa cuántos.",
+    "TF-IDF descarta puntuaciones no positivas; el semántico devuelve sus cinco vecinos.",
+    "Hit@k exige al menos una fuente documento/página; no mide exactitud del LLM ni vigencia actual.",
+    "115 páginas OCR conservan revisión pendiente. Un modelo, una máquina y una corrida de construcción.",
+    "La latencia incluye vectorizar la consulta y buscar; excluye carga e indexación. Cinco repeticiones por pregunta.",
+    "Los tamaños de artefactos usan formatos distintos; los pesos del modelo se informan por separado."
+  ]
+}

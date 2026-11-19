@@ -1,0 +1,20 @@
+{
+  "fallback_textual_tfidf_coseno_v1": {
+    "hit_at_1": {
+      "numerator": 10,
+      "denominator": 13,
+      "value": 0.7692307692307693
+    },
+    "hit_at_3": {
+      "numerator": 13,
+      "denominator": 13,
+      "value": 1.0
+    },
+    "hit_at_5": {
+      "numerator": 13,
+      "denominator": 13,
+      "value": 1.0
+    },
+    "mean_search_seconds": 0.0006780461542523251
+  }
+}

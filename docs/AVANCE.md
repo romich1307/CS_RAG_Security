@@ -85,3 +85,17 @@ digest/versión del servidor y hardware; ampliar ataques y validar en conjuntos
 independientes; revisión humana OCR, fidelidad semántica y vigencia; incorporar los
 tres textos ausentes solo tras obtener fuentes verificadas. No se atribuye eficacia
 de defensa frente a LLM con los resultados mock disponibles.
+
+## León — T08, 19 de noviembre de 2026
+
+Comparación textual y semántica ejecutada sobre las mismas 137 páginas oficiales
+y 2.284 fragmentos. Se fijó el protocolo antes de medir: 13 preguntas cotejadas como
+muestra primaria y las 40 originales como análisis exploratorio. MiniLM multilingüe
+cuantizado se ejecutó localmente con ONNX, sin generar respuestas ni consumir API.
+
+Ambos métodos obtienen 11/13 en top-5 primario. En el análisis exploratorio TF-IDF
+obtiene 34/40 y MiniLM 30/40. Se conserva TF-IDF como predeterminado y MiniLM como
+alternativa opcional. Se guardaron latencias repetidas, tamaño de índices, versiones,
+hashes, errores y reproducción. T08 queda implementada y medida para revisión.
+Véase [benchmark T08](evaluation/benchmark_recuperacion.md). La vigencia, el OCR
+pendiente y la evaluación humana de respuestas reales conservan sus propios límites.
