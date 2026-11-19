@@ -30,7 +30,9 @@ def run(args):
     gold = [q for q in read_json(gold_path)['preguntas'] if q.get('apta_para_evaluar_recuperacion_documental_piloto')]
     manifest = {'status': 'running', 'started_utc': datetime.now(timezone.utc).isoformat(), 'seed': 42,
                 'top_k': args.top_k, 'provider': args.provider, 'temperature': 0,
-                'llm': os.environ.get('RAG_LOCAL_MODEL') if args.provider == 'local' else 'mock_extractivo_v1',
+                'llm': (os.environ.get('RAG_LOCAL_MODEL') if args.provider == 'local'
+                        else (os.environ.get('RAG_API_MODEL') if args.provider == 'api'
+                              else 'mock_extractivo_v1')),
                 'embeddings': None, 'retriever': idx.method, 'python': platform.python_version(),
                 'package': importlib.metadata.version('cs-rag-security'),
                 'source_sha256': {str(p): digest(p) for p in sorted(Path('src').rglob('*.py'))},

@@ -19,10 +19,17 @@ def answer(index, question, mode='C_defensa_propuesta', provider='mock', k=5, do
                 (documental or h.get('normativa_actual_verificada', False))]
     abstain = not reliable
     response = 'Me abstengo: no hay evidencia fiable suficiente o vigencia verificada. Puede consultar fragmentos como material documental provisional.'
+    generation_metadata = None
     if reliable:
         # Conserva las mismas fronteras de seguridad y metadatos de las tres variantes.
         _, messages, _ = prepare(question, reliable, mode)
-        response = generate(messages, reliable, provider, seed)
+        gen = generate(messages, reliable, provider, seed, True)
+        if isinstance(gen, dict):
+            response = gen.get('text', '')
+            generation_metadata = gen.get('metadata')
+        else:
+            response = str(gen)
+            generation_metadata = None
         if provider != 'mock':
             allowed = {(h['archivo_pdf'], str(h['pagina_pdf'])) for h in reliable}
             citations = re.findall(r'\[([^\[\]]+\.pdf) p\. (\d+)\]', response)
@@ -33,4 +40,5 @@ def answer(index, question, mode='C_defensa_propuesta', provider='mock', k=5, do
             'documental': documental, 'abstained': abstain, 'warnings': WARNINGS,
             'retrieved': retrieved, 'accepted_ids': [h['chunk_id'] for h in reliable], 'detector_log': log,
             'seconds': time.perf_counter() - start, 'seed': seed, 'top_k': k,
-            'retriever': index.method, 'citation_validation': 'solo pertenencia; no certifica entailment'}
+            'retriever': index.method, 'citation_validation': 'solo pertenencia; no certifica entailment',
+            'generation_metadata': generation_metadata}
