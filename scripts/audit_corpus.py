@@ -115,6 +115,33 @@ def truthy(value) -> bool:
     return value is True or (isinstance(value, str) and value.strip().casefold() in {"si", "sí", "true", "1", "yes"}) or value == 1
 
 
+def declared_in_package(value) -> bool:
+    """Reconoce tanto una marca afirmativa como una ruta PDF declarada."""
+    if truthy(value):
+        return True
+    if not isinstance(value, str):
+        return False
+    return basename(value).lower().endswith(".pdf")
+
+
+def metadata_status(document: dict, pdf_by_name: dict) -> tuple[str, bool, str]:
+    """Clasifica una entrada sin consultar el sistema de archivos (testeable)."""
+    name = next((x for x in (
+        pdf_identifier(document.get("archivo_pdf")),
+        pdf_identifier(document.get("archivo_local")),
+        pdf_identifier(document.get("archivo_en_paquete")),
+        pdf_identifier(document.get("id")),
+    ) if x), "")
+    present = bool(name and name in pdf_by_name)
+    declared = declared_in_package(document.get("archivo_en_paquete"))
+    situation = (
+        "presente" if present else
+        "no_encontrado_declarado_incluido" if declared else
+        "no_encontrado_inclusion_no_confirmada"
+    )
+    return name, present, situation
+
+
 def record_ids(records: list[dict], name: str, issues: list) -> dict:
     id_counts = Counter(str(r.get("id", "")).strip() for r in records)
     for identifier, total in id_counts.items():
@@ -198,12 +225,9 @@ def run_audit() -> dict:
     doc_meta = []
     mapped_meta = Counter()
     for document in documents:
-        name = next((x for x in (pdf_identifier(document.get("archivo_pdf")), pdf_identifier(document.get("archivo_local")), pdf_identifier(document.get("id"))) if x), "")
-        present = bool(name and name in pdf_by_name)
+        name, present, situation = metadata_status(document, pdf_by_name)
         if present:
             mapped_meta[name] += 1
-        expected_in_package = truthy(document.get("archivo_en_paquete"))
-        situation = "presente" if present else ("no_encontrado_declarado_incluido" if expected_in_package else "no_encontrado_inclusion_no_confirmada")
         doc_meta.append({
             "id": document.get("id"), "pdf": name or None, "situacion": situation,
             "archivo_en_paquete_declarado": document.get("archivo_en_paquete"),
@@ -359,6 +383,10 @@ def generate_markdown(result: dict) -> str:
         lines.append("| `{}` | {} | {} | {} | {} |".format(
             row["archivo"], row.get("paginas_reportadas", "—"),
             row.get("paginas_ocr_error", "—"), row.get("paginas_ocr_vacias", "—"), row.get("chars_total", "—")))
+    lines += ["", "## Evidencia de revisión manual", "",
+              "La evidencia manual se guarda por separado: regenerar este informe no la modifica.", "",
+              "- [Verificación visual de RCU-0127-2020, página 8](evidencias/revision_visual_rcu_0127_2020_p8.md)",
+              "- [Validación textual piloto de 15 preguntas gold](VALIDACION_GOLD_PILOTO.md)", ""]
     lines += ["", "## Preguntas de referencia", "",
               f"Se encontraron **{c['preguntas_gold']}** preguntas y **{c['registros_validacion']}** entradas de validación.",
               "El informe revisa estructura, IDs y posibles referencias ausentes; **no valida** la respuesta contra el contenido del PDF.", "",
@@ -372,7 +400,7 @@ def generate_markdown(result: dict) -> str:
         lines.append("| — | — | — | Sin incidencias automáticas detectadas. |")
     lines += ["", "## Limitaciones y siguientes pasos", ""]
     lines.extend(f"- {description}" for description in result["limitaciones"])
-    lines += ["", "**Revisión humana pendiente:** contrastar PDF/páginas citadas, posibles errores de OCR, relaciones normativas y una muestra de 10–15 preguntas para calibrar la rúbrica T10.", ""]
+    lines += ["", "**Revisión humana pendiente:** cotejo independiente de los PDF y páginas citadas, vigencia y relaciones normativas. La muestra piloto de 15 preguntas ya tiene una validación textual preliminar documentada; GQ030 sigue pendiente de completar su referencia antes de usarla en T10.", ""]
     return "\n".join(lines)
 
 

@@ -4,6 +4,8 @@ from pathlib import Path
 
 from scripts.audit_corpus import (
     generate_markdown,
+    declared_in_package,
+    metadata_status,
     page_numbers,
     pdf_identifier,
     referenced_pdf_names,
@@ -37,3 +39,23 @@ def test_generate_markdown_minimo():
     report = generate_markdown(result)
     assert 'Auditoría del corpus UNSA' in report
     assert 'x.pdf' in report
+    assert 'evidencias/revision_visual_rcu_0127_2020_p8.md' in report
+    assert 'VALIDACION_GOLD_PILOTO.md' in report
+
+
+def test_pdf_declarado_mediante_ruta_pero_ausente():
+    documento = {
+        "id": "RCU-0999-2026",
+        "archivo_en_paquete": "01_Corpus_Oficial/RCU-0999-2026.pdf",
+    }
+    assert declared_in_package(documento["archivo_en_paquete"])
+    nombre, presente, situacion = metadata_status(documento, {})
+    assert nombre == "rcu-0999-2026.pdf"
+    assert presente is False
+    assert situacion == "no_encontrado_declarado_incluido"
+
+
+def test_pdf_sin_inclusion_confirmada_no_es_un_error_de_perdida():
+    documento = {"id": "RCU-0998-2026", "archivo_en_paquete": "no"}
+    assert not declared_in_package(documento["archivo_en_paquete"])
+    assert metadata_status(documento, {})[2] == "no_encontrado_inclusion_no_confirmada"

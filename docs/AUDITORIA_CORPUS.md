@@ -76,6 +76,14 @@ Los valores proceden del resumen de extracción, no de una nueva inspección vis
 | `rcu-0504-2020.pdf` | 9 | 0 | [] | 24488 |
 | `rcu-0584-2023.pdf` | 5 | 0 | [] | 19814 |
 
+## Evidencia de revisión manual
+
+La evidencia manual se guarda por separado: regenerar este informe no la modifica.
+
+- [Verificación visual de RCU-0127-2020, página 8](evidencias/revision_visual_rcu_0127_2020_p8.md)
+- [Validación textual piloto de 15 preguntas gold](VALIDACION_GOLD_PILOTO.md)
+
+
 ## Preguntas de referencia
 
 Se encontraron **40** preguntas y **40** entradas de validación.
@@ -98,14 +106,4 @@ El informe revisa estructura, IDs y posibles referencias ausentes; **no valida**
 - Los metadatos de vigencia son declaraciones: falta contrastarlos con fuentes oficiales vigentes.
 - No se modifica el corpus, las preguntas ni la baseline.
 
-**Revisión humana pendiente:** contrastar PDF/páginas citadas, posibles errores de OCR, relaciones normativas y una muestra de 10–15 preguntas para calibrar la rúbrica T10.
-
-## Verificación visual de RCU-0127-2020, página 8
-
-- **Documento:** RCU-0127-2020.pdf.
-- **Página física:** 8 de 8.
-- **Hallazgo automático:** página reportada sin texto OCR.
-- **Verificación visual:** la página muestra únicamente el número impreso 213; el resto está en blanco.
-- **Impacto:** no se observa pérdida de contenido normativo relevante.
-- **Decisión:** no requiere repetir OCR. Se conserva la advertencia automática como registro de trazabilidad.
-- **Estado:** revisado visualmente; sin incidencia normativa identificada en esta página.
+**Revisión humana pendiente:** cotejo independiente de los PDF y páginas citadas, vigencia y relaciones normativas. La muestra piloto de 15 preguntas ya tiene una validación textual preliminar documentada; GQ030 sigue pendiente de completar su referencia antes de usarla en T10.
