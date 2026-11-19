@@ -99,3 +99,13 @@ El informe revisa estructura, IDs y posibles referencias ausentes; **no valida**
 - No se modifica el corpus, las preguntas ni la baseline.
 
 **Revisión humana pendiente:** contrastar PDF/páginas citadas, posibles errores de OCR, relaciones normativas y una muestra de 10–15 preguntas para calibrar la rúbrica T10.
+
+## Verificación visual de RCU-0127-2020, página 8
+
+- **Documento:** RCU-0127-2020.pdf.
+- **Página física:** 8 de 8.
+- **Hallazgo automático:** página reportada sin texto OCR.
+- **Verificación visual:** la página muestra únicamente el número impreso 213; el resto está en blanco.
+- **Impacto:** no se observa pérdida de contenido normativo relevante.
+- **Decisión:** no requiere repetir OCR. Se conserva la advertencia automática como registro de trazabilidad.
+- **Estado:** revisado visualmente; sin incidencia normativa identificada en esta página.
