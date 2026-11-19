@@ -2,6 +2,7 @@
 import hashlib
 import json
 from pathlib import Path
+from cs_rag_security.ingestion.normativa import context_relations, excluded_ids, official_path
 
 
 def digest(path):
@@ -14,14 +15,19 @@ def read_json(path):
 
 def load_pages(root):
     root = Path(root)
-    docs = {d['id']: d for d in read_json(root / '04_Metadatos/documents.json')['documentos']}
+    documents = read_json(root / '04_Metadatos/documents.json')['documentos']
+    docs = {d['id']: d for d in documents}
+    if len(docs) != len(documents):
+        raise ValueError('ID de documento duplicado')
+    relations = read_json(root / '04_Metadatos/relaciones_normativas.json')['relaciones_conocidas_no_exhaustivas']
+    blocked = excluded_ids(documents, relations)
     seen = set()
     pages = []
     source = root / '05_Texto_Procesado/paginas_rag_piloto.jsonl'
     for line in source.read_text(encoding='utf-8').splitlines():
         p = json.loads(line)
         d = docs[p['documento_id']]
-        if not d.get('archivo_en_paquete', '').startswith('01_Corpus_Oficial/') or d.get('usar_como_norma_vigente') is False:
+        if not official_path(d.get('archivo_en_paquete')) or d['id'] in blocked:
             raise ValueError('Página histórica, externa o sin archivo oficial')
         key = (p['documento_id'], p['pagina_pdf'])
         if key in seen or type(p['pagina_pdf']) is not int or not 1 <= p['pagina_pdf'] <= d['archivo_local']['paginas_pdf']:
@@ -35,8 +41,9 @@ def load_pages(root):
         seen.add(key)
         pages.append({**p, 'estado_normativo': d['vigencia']['estado'],
                       'fecha_resolucion': d['fecha_resolucion'], 'aviso_uso': d['vigencia']['advertencia'],
-                      'origen': 'oficial_piloto', 'normativa_actual_verificada': False})
-    expected = {(d['id'], n) for d in docs.values() if d.get('archivo_en_paquete', '').startswith('01_Corpus_Oficial/')
+                      'origen': 'oficial_piloto', 'normativa_actual_verificada': False,
+                      'relaciones_normativas': context_relations(d['id'], relations)})
+    expected = {(d['id'], n) for d in docs.values() if official_path(d.get('archivo_en_paquete')) and d['id'] not in blocked
                 for n in range(1, d['archivo_local']['paginas_pdf'] + 1)}
     if seen != expected:
         raise ValueError('Cobertura de páginas incompleta')

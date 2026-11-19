@@ -1,0 +1,91 @@
+{
+  "status": "completed",
+  "task": "T06",
+  "timestamp_utc": "2026-11-19T16:30:06.350524+00:00",
+  "provider": "mock",
+  "scope": "integridad_y_reglas_documentales_sin_medicion_de_eficacia_LLM",
+  "corpus": {
+    "pdf_oficiales": 11,
+    "pdf_historicos": 1,
+    "paginas_piloto": 137,
+    "paginas_ocr": 115,
+    "preguntas_gold": 40,
+    "pendientes_tipo": "dict",
+    "sha256_pdf": {
+      "RCU-0009-2026.pdf": "66bf6c529236227b0c8bed8104b293c4bfa9fcfa6c37f691af43bd1c158242ff",
+      "RCU-0127-2020.pdf": "b1fe2fa321bb4cf32a685834730570acbb4fa58ad5976faadef0b3c60340742f",
+      "RCU-0161-2021.pdf": "a370e69b2f33151e9089f9c3a4312ca82974b690a792749df710da362cb75799",
+      "RCU-0252-2021.pdf": "01fd83bb336f56eb7082df9a0c484c80b3af8623ca61f5d47a35039c505fb664",
+      "RCU-0273-2021.pdf": "86da18c74a2599eb83ef903eb65d70b5cd6eac3222356fce634f84346ae0b5fe",
+      "RCU-0284-2023.pdf": "416cc6a88a00005367705c94e26cec6b363a9755db9a86dc618fdb8b3c947260",
+      "RCU-0320-2022.pdf": "701bd477f6683100c17ab313eb21c69a2a18b2daea49b5fa00210f94e1ba8c96",
+      "RCU-0450-2026.pdf": "b6fc0159941701ca10bcf04b32fde8432fe55fc998adca9494cf71bef53bc122",
+      "RCU-0470-2024.pdf": "0e1bff232f043a0e03ba90f4655961c6813acd8cbd44b7a683593223b9789d94",
+      "RCU-0501-2020.pdf": "ff77f94bc7a61ed0f1a566e0d922407241fbdb35437dfb6527533036e328b44b",
+      "RCU-0504-2020.pdf": "1e2113b7d9b2da17346c066ee659c0cea1fefba5b92c65e83bb0b90d9ecd4397",
+      "RCU-0584-2023.pdf": "9abee5f9e4b1b2d143d9acc1a19cdc2434e868314384245f5b29da75244a8c6b"
+    },
+    "sha256_jsonl": "d54f127017916a9449ed7dfceb09ac9888cbedbba9ed339bde8589fccff184fc",
+    "ausentes_conocidos": [
+      "RCU-0435-2017.pdf",
+      "RCU-0317-2026.pdf",
+      "RCU-0590-2023.pdf"
+    ]
+  },
+  "n_chunks": 2284,
+  "excluded_document_ids": [
+    "RCU-0252-2021"
+  ],
+  "historical_pages_in_current_index": 0,
+  "uncertified_current_query_abstained": true,
+  "documentary_mock_query_answered": true,
+  "stale_index_controls": [
+    {
+      "mode": "A_sin_defensa",
+      "documental": false,
+      "blocked": true
+    },
+    {
+      "mode": "A_sin_defensa",
+      "documental": true,
+      "blocked": true
+    },
+    {
+      "mode": "B_defensa_basica",
+      "documental": false,
+      "blocked": true
+    },
+    {
+      "mode": "B_defensa_basica",
+      "documental": true,
+      "blocked": true
+    },
+    {
+      "mode": "C_defensa_propuesta",
+      "documental": false,
+      "blocked": true
+    },
+    {
+      "mode": "C_defensa_propuesta",
+      "documental": true,
+      "blocked": true
+    }
+  ],
+  "input_sha256": {
+    "documents.json": "ea20a4d5e87c6a43d551d92fcb650701fe6a5091d6607309986a1c086ed8f923",
+    "relaciones_normativas.json": "aa5110b4536ffaf30b262e00ca8bcbda12ac58b1472adab38086c96fd7d850f8",
+    "descargas_pendientes.json": "2660f224bf09a8f426d79c8b47a3f693474d9b9f25578b87e376ae15a0c261e7"
+  },
+  "source_sha256": {
+    "scripts\\validate_normative_policy.py": "9a6d2c40c7f4342ce2d1e5125900ece6b49149f1d65d78d0dc0baaadea1ff00f",
+    "src\\cs_rag_security\\ingestion\\__init__.py": "7dd11050c4ef26811876f79d89dee3aabae842059a9e40c5cd165a131e4535fb",
+    "src\\cs_rag_security\\ingestion\\normativa.py": "d805913b0e22c8c1d3551e36c072f40809677078b9d46de304299f1992420a19",
+    "src\\cs_rag_security\\pipeline.py": "bfc83cd713c05569d8387f336dc0172c1c30a2a4f027665f34d0c4eaae114880"
+  },
+  "limitations": [
+    "Vigencia actual no certificada.",
+    "115 páginas OCR conservan revisión pendiente.",
+    "RCU-0435-2017, RCU-0317-2026 y RCU-0590-2023 no están en el paquete.",
+    "Las comprobaciones de consulta usan mock; no miden calidad ni seguridad de un LLM."
+  ]
+}
