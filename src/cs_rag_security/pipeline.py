@@ -25,17 +25,30 @@ def answer(index, question, mode='C_defensa_propuesta', provider='mock', k=5, do
         _, messages, _ = prepare(question, reliable, mode)
         gen = generate(messages, reliable, provider, seed, True)
         if isinstance(gen, dict):
-            response = gen.get('text', '')
+            raw_text = gen.get('text')
+            response = raw_text if isinstance(raw_text, str) else (str(raw_text) if raw_text is not None else '')
             generation_metadata = gen.get('metadata')
         else:
-            response = str(gen)
+            response = str(gen) if gen is not None else ''
             generation_metadata = None
         if provider != 'mock':
-            allowed = {(h['archivo_pdf'], str(h['pagina_pdf'])) for h in reliable}
-            citations = re.findall(r'\[([^\[\]]+\.pdf) p\. (\d+)\]', response)
-            if not citations or any(c not in allowed for c in citations):
-                response = 'Me abstengo: la salida del modelo carece de citas válidas del contexto.'
+            is_refusal = bool(generation_metadata and (
+                generation_metadata.get('refusal') or
+                generation_metadata.get('finish_reason') in ('refusal', 'content_filter')
+            ))
+            if is_refusal:
+                refusal_msg = generation_metadata.get('refusal') if generation_metadata else None
+                response = f'Me abstengo: el modelo rechazó la consulta ({refusal_msg}).' if refusal_msg else 'Me abstengo: el modelo rechazó la consulta.'
                 abstain = True
+            elif not response.strip():
+                response = 'Me abstengo: el modelo no devolvió contenido.'
+                abstain = True
+            else:
+                allowed = {(h['archivo_pdf'], str(h['pagina_pdf'])) for h in reliable}
+                citations = re.findall(r'\[([^\[\]]+\.pdf) p\. (\d+)\]', response)
+                if not citations or any(c not in allowed for c in citations):
+                    response = 'Me abstengo: la salida del modelo carece de citas válidas del contexto.'
+                    abstain = True
     return {'question': question, 'response': response, 'provider': provider, 'mode': mode,
             'documental': documental, 'abstained': abstain, 'warnings': WARNINGS,
             'retrieved': retrieved, 'accepted_ids': [h['chunk_id'] for h in reliable], 'detector_log': log,

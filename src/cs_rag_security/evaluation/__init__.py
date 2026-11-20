@@ -74,7 +74,8 @@ def run(args):
                          'retrieved_ids': '|'.join(h['chunk_id'] for h in hits),
                          'accepted_ids': '|'.join(res['accepted_ids']), 'retrieval_hit': '',
                          'answer_exact_pilot': None if args.provider == 'mock' else '',
-                         'answer_accuracy_current_law': None})
+                         'answer_accuracy_current_law': None,
+                         'generation_metadata': res.get('generation_metadata')})
     for q in gold:
         hits = idx.search(q['pregunta'], args.top_k)
         correct = any(h['documento_id'] == f['documento_id'] and h['pagina_pdf'] == f['pagina_pdf'] for h in hits for f in q['fuentes'])
@@ -89,7 +90,8 @@ def run(args):
                          'detector_log': json.dumps(res['detector_log'], ensure_ascii=False),
                          'retrieved_ids': '|'.join(h['chunk_id'] for h in hits),
                          'accepted_ids': '|'.join(res['accepted_ids']), 'retrieval_hit': correct,
-                         'answer_exact_pilot': exact, 'answer_accuracy_current_law': None})
+                         'answer_exact_pilot': exact, 'answer_accuracy_current_law': None,
+                         'generation_metadata': res.get('generation_metadata')})
     attacks = [c for c in cases if c['attack']]
     benign = [c for c in cases if not c['attack']]
     detector_metrics = {'recall': fraction(sum(detect(c['text'])['suspicious'] for c in attacks), len(attacks)),
@@ -119,7 +121,17 @@ def run(args):
     (out / 'metrics.json').write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding='utf-8')
     (out / 'traces.json').write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding='utf-8')
     with (out / 'traces.csv').open('w', encoding='utf-8', newline='') as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
+        csv_rows = []
+        for r in rows:
+            cr = dict(r)
+            if isinstance(cr.get('generation_metadata'), (dict, list)):
+                cr['generation_metadata'] = json.dumps(cr['generation_metadata'], ensure_ascii=False)
+            elif cr.get('generation_metadata') is None:
+                cr['generation_metadata'] = ''
+            csv_rows.append(cr)
+        w = csv.DictWriter(f, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(csv_rows)
     # Gráfico SVG estático sin dependencia adicional; solo diagnóstico del detector.
     recall = detector_metrics['recall']['value'] or 0
     fpr = detector_metrics['fpr']['value'] or 0

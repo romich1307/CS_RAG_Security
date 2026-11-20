@@ -40,13 +40,16 @@ def generate(messages, hits, provider='mock', seed=42, return_metadata=False):
         with opener.open(Request(url, data=data, headers={'Content-Type': 'application/json'}), timeout=90) as response:
             body = json.load(response)
             latency = time.perf_counter() - start_t
-            text = body['message']['content']
+            msg = body.get('message') or {}
+            raw_content = msg.get('content')
+            text = raw_content if isinstance(raw_content, str) else ''
             if return_metadata:
                 metadata = {
                     'provider': 'local',
-                    'model': body.get('model', model),
+                    'model': body.get('model') or model,
                     'parameters': {'temperature': 0, 'seed': seed},
-                    'latency_seconds': latency
+                    'latency_seconds': latency,
+                    'latency': latency
                 }
                 return {'text': text, 'metadata': metadata}
             return text
@@ -97,22 +100,41 @@ def generate(messages, hits, provider='mock', seed=42, return_metadata=False):
         choices = body.get('choices')
         if not choices or not isinstance(choices, list):
             raise ValueError('Formato de respuesta no reconocido del proveedor API')
-        text = choices[0].get('message', {}).get('content', '')
+        first_choice = choices[0] if isinstance(choices[0], dict) else {}
+        message = first_choice.get('message')
+        if not isinstance(message, dict):
+            message = {}
+        raw_content = message.get('content')
+        refusal = message.get('refusal') or first_choice.get('refusal')
+        finish_reason = first_choice.get('finish_reason')
+        if isinstance(raw_content, str):
+            text = raw_content
+        elif isinstance(refusal, str):
+            text = refusal
+        else:
+            text = ''
         if return_metadata:
             metadata = {
                 'provider': 'api',
                 'model': body.get('model') or model,
                 'parameters': {'temperature': 0, 'seed': seed},
-                'latency_seconds': latency
+                'latency_seconds': latency,
+                'latency': latency
             }
             if body.get('system_fingerprint'):
                 metadata['system_fingerprint'] = body['system_fingerprint']
+            if finish_reason:
+                metadata['finish_reason'] = finish_reason
+            if refusal:
+                metadata['refusal'] = refusal
             usage = body.get('usage')
             if isinstance(usage, dict):
-                metadata['usage'] = {
+                tokens_data = {
                     k: usage[k] for k in ('prompt_tokens', 'completion_tokens', 'total_tokens')
                     if k in usage and isinstance(usage[k], (int, float))
                 }
+                metadata['usage'] = tokens_data
+                metadata['tokens'] = tokens_data
             return {'text': text, 'metadata': metadata}
         return text
 

@@ -239,3 +239,174 @@ def test_pipeline_integration_with_api_provider(monkeypatch):
     res_bad = answer(idx, 'evaluación', provider='api', documental=True)
     assert res_bad['abstained']
     assert 'carece de citas válidas' in res_bad['response']
+
+
+def test_api_provider_null_content_no_typeerror(monkeypatch):
+    monkeypatch.setenv('RAG_API_KEY', 'test-key')
+    monkeypatch.setenv('RAG_API_MODEL', 'gpt-4o-mini')
+
+    class MockNullOpener:
+        def open(self, req, timeout=60):
+            payload = {
+                'id': 'chatcmpl-null',
+                'model': 'gpt-4o-mini',
+                'choices': [{'finish_reason': 'stop', 'message': {'role': 'assistant', 'content': None}}]
+            }
+            return _mock_http_response(payload)
+
+    import cs_rag_security.generation as gen_mod
+    monkeypatch.setattr(gen_mod, 'build_opener', lambda *a, **kw: MockNullOpener())
+
+    # Direct generate call returns string, not None, without TypeError
+    gen_res = generate([{'role': 'user', 'content': 'test'}], [], provider='api', return_metadata=True)
+    assert isinstance(gen_res, dict)
+    assert isinstance(gen_res['text'], str)
+    assert gen_res['text'] == ''
+
+    # Pipeline integration: no TypeError, clean abstention, no invented answer
+    import cs_rag_security.pipeline as pipeline
+    hit = {
+        'chunk_id': 'test:1', 'archivo_pdf': 'demo.pdf', 'pagina_pdf': 1,
+        'texto': 'Evaluación académica', 'ocr_revision_manual_pendiente': False,
+        'normativa_actual_verificada': False, 'score': 1.0
+    }
+    idx = Index([hit])
+    ans = answer(idx, 'evaluación', provider='api', documental=True)
+    assert ans['abstained'] is True
+    assert ans['response'] == 'Me abstengo: el modelo no devolvió contenido.'
+    assert ans['generation_metadata']['model'] == 'gpt-4o-mini'
+
+
+def test_api_provider_empty_content_abstains_cleanly(monkeypatch):
+    monkeypatch.setenv('RAG_API_KEY', 'test-key')
+    monkeypatch.setenv('RAG_API_MODEL', 'gpt-4o-mini')
+
+    class MockEmptyOpener:
+        def open(self, req, timeout=60):
+            payload = {
+                'id': 'chatcmpl-empty',
+                'model': 'gpt-4o-mini',
+                'choices': [{'finish_reason': 'stop', 'message': {'role': 'assistant', 'content': '   '}}]
+            }
+            return _mock_http_response(payload)
+
+    import cs_rag_security.generation as gen_mod
+    monkeypatch.setattr(gen_mod, 'build_opener', lambda *a, **kw: MockEmptyOpener())
+
+    import cs_rag_security.pipeline as pipeline
+    hit = {
+        'chunk_id': 'test:1', 'archivo_pdf': 'demo.pdf', 'pagina_pdf': 1,
+        'texto': 'Evaluación académica', 'ocr_revision_manual_pendiente': False,
+        'normativa_actual_verificada': False, 'score': 1.0
+    }
+    idx = Index([hit])
+    ans = answer(idx, 'evaluación', provider='api', documental=True)
+    assert ans['abstained'] is True
+    assert ans['response'] == 'Me abstengo: el modelo no devolvió contenido.'
+
+
+def test_api_provider_model_refusal_field(monkeypatch):
+    monkeypatch.setenv('RAG_API_KEY', 'test-key')
+    monkeypatch.setenv('RAG_API_MODEL', 'gpt-4o-mini')
+
+    class MockRefusalOpener:
+        def open(self, req, timeout=60):
+            payload = {
+                'id': 'chatcmpl-refusal',
+                'model': 'gpt-4o-mini',
+                'choices': [{
+                    'finish_reason': 'refusal',
+                    'message': {
+                        'role': 'assistant',
+                        'content': None,
+                        'refusal': 'No puedo procesar consultas normativas sin verificar.'
+                    }
+                }]
+            }
+            return _mock_http_response(payload)
+
+    import cs_rag_security.generation as gen_mod
+    monkeypatch.setattr(gen_mod, 'build_opener', lambda *a, **kw: MockRefusalOpener())
+
+    gen_res = generate([{'role': 'user', 'content': 'test'}], [], provider='api', return_metadata=True)
+    assert gen_res['text'] == 'No puedo procesar consultas normativas sin verificar.'
+    assert gen_res['metadata']['refusal'] == 'No puedo procesar consultas normativas sin verificar.'
+    assert gen_res['metadata']['finish_reason'] == 'refusal'
+
+    import cs_rag_security.pipeline as pipeline
+    hit = {
+        'chunk_id': 'test:1', 'archivo_pdf': 'demo.pdf', 'pagina_pdf': 1,
+        'texto': 'Evaluación académica', 'ocr_revision_manual_pendiente': False,
+        'normativa_actual_verificada': False, 'score': 1.0
+    }
+    idx = Index([hit])
+    ans = answer(idx, 'evaluación', provider='api', documental=True)
+    assert ans['abstained'] is True
+    assert 'rechazó la consulta' in ans['response']
+    assert 'No puedo procesar consultas normativas sin verificar.' in ans['response']
+
+
+def test_api_provider_model_refusal_finish_reason_without_text(monkeypatch):
+    monkeypatch.setenv('RAG_API_KEY', 'test-key')
+    monkeypatch.setenv('RAG_API_MODEL', 'gpt-4o-mini')
+
+    class MockRefusalNoTextOpener:
+        def open(self, req, timeout=60):
+            payload = {
+                'id': 'chatcmpl-refusal-notext',
+                'model': 'gpt-4o-mini',
+                'choices': [{
+                    'finish_reason': 'refusal',
+                    'message': {'role': 'assistant', 'content': None}
+                }]
+            }
+            return _mock_http_response(payload)
+
+    import cs_rag_security.generation as gen_mod
+    monkeypatch.setattr(gen_mod, 'build_opener', lambda *a, **kw: MockRefusalNoTextOpener())
+
+    import cs_rag_security.pipeline as pipeline
+    hit = {
+        'chunk_id': 'test:1', 'archivo_pdf': 'demo.pdf', 'pagina_pdf': 1,
+        'texto': 'Evaluación académica', 'ocr_revision_manual_pendiente': False,
+        'normativa_actual_verificada': False, 'score': 1.0
+    }
+    idx = Index([hit])
+    ans = answer(idx, 'evaluación', provider='api', documental=True)
+    assert ans['abstained'] is True
+    assert ans['response'] == 'Me abstengo: el modelo rechazó la consulta.'
+
+
+def test_distinguish_refusals_and_abstentions_from_technical_errors(monkeypatch):
+    monkeypatch.setenv('RAG_API_KEY', 'test-key')
+    monkeypatch.setenv('RAG_API_MODEL', 'gpt-4o-mini')
+
+    hit = {
+        'chunk_id': 'test:1', 'archivo_pdf': 'demo.pdf', 'pagina_pdf': 1,
+        'texto': 'Evaluación académica', 'ocr_revision_manual_pendiente': False,
+        'normativa_actual_verificada': False, 'score': 1.0
+    }
+    idx = Index([hit])
+    import cs_rag_security.generation as gen_mod
+
+    # 1. Negativa/abstención normal del modelo (HTTP 200 con negativa): NO lanza excepción técnica
+    class NormalRefusalOpener:
+        def open(self, req, timeout=60):
+            return _mock_http_response({
+                'id': 'chatcmpl-refusal',
+                'model': 'gpt-4o-mini',
+                'choices': [{'finish_reason': 'refusal', 'message': {'role': 'assistant', 'content': None, 'refusal': 'Rechazado'}}]
+            })
+
+    monkeypatch.setattr(gen_mod, 'build_opener', lambda *a, **kw: NormalRefusalOpener())
+    ans_normal = answer(idx, 'evaluación', provider='api', documental=True)
+    assert ans_normal['abstained'] is True
+
+    # 2. Error técnico (HTTP 401): SÍ lanza RuntimeError técnico
+    class TechErrorOpener:
+        def open(self, req, timeout=60):
+            raise urllib.error.HTTPError(req.full_url, 401, 'Unauthorized', {}, None)
+
+    monkeypatch.setattr(gen_mod, 'build_opener', lambda *a, **kw: TechErrorOpener())
+    with pytest.raises(RuntimeError, match=r'Error HTTP del proveedor API \(401\)'):
+        answer(idx, 'evaluación', provider='api', documental=True)
