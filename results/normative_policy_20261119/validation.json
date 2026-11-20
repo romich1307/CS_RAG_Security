@@ -1,7 +1,7 @@
 {
   "status": "completed",
   "task": "T06",
-  "timestamp_utc": "2026-11-19T16:30:06.350524+00:00",
+  "timestamp_utc": "2026-11-20T09:38:06.051412+00:00",
   "provider": "mock",
   "scope": "integridad_y_reglas_documentales_sin_medicion_de_eficacia_LLM",
   "corpus": {
@@ -76,11 +76,12 @@
     "relaciones_normativas.json": "aa5110b4536ffaf30b262e00ca8bcbda12ac58b1472adab38086c96fd7d850f8",
     "descargas_pendientes.json": "2660f224bf09a8f426d79c8b47a3f693474d9b9f25578b87e376ae15a0c261e7"
   },
+  "source_hash_format": "UTF-8 with LF line endings",
   "source_sha256": {
-    "scripts\\validate_normative_policy.py": "9a6d2c40c7f4342ce2d1e5125900ece6b49149f1d65d78d0dc0baaadea1ff00f",
-    "src\\cs_rag_security\\ingestion\\__init__.py": "7dd11050c4ef26811876f79d89dee3aabae842059a9e40c5cd165a131e4535fb",
-    "src\\cs_rag_security\\ingestion\\normativa.py": "d805913b0e22c8c1d3551e36c072f40809677078b9d46de304299f1992420a19",
-    "src\\cs_rag_security\\pipeline.py": "bfc83cd713c05569d8387f336dc0172c1c30a2a4f027665f34d0c4eaae114880"
+    "scripts/validate_normative_policy.py": "b2857ed5a5192278228a1e471d2c1497391bf36abdb371658376a0c4f7064b46",
+    "src/cs_rag_security/ingestion/__init__.py": "194d631ccea962fc48f428d9a6937f0dba4f25a0f06fec0d415019ce817bf52e",
+    "src/cs_rag_security/ingestion/normativa.py": "d805913b0e22c8c1d3551e36c072f40809677078b9d46de304299f1992420a19",
+    "src/cs_rag_security/pipeline.py": "e8f1dd094c578c8c16e4b14c3ac1d7e9dfa44d03d78183e3a7ed6e897c04f4af"
   },
   "limitations": [
     "Vigencia actual no certificada.",

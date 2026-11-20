@@ -19,7 +19,7 @@ Las páginas son físicas del PDF. El texto extraído se contrastó con las imá
 | RCU-0127-2020, pp. 1 y 7; relaciones del inventario | Modificatoria del reglamento de matrícula aprobado por RCU-0435-2017. La tercera disposición final consta en p. 7. | El texto base de 2017 sigue faltando. La modificatoria no se presenta como cobertura completa de matrícula. |
 | RCU-0009-2026, pp. 3–4, parte resolutiva | Deroga la tercera disposición final del capítulo VIII y deja sin efecto RCU-0033-2025; forma parte de RCU-0435-2017 y RCU-0127-2020. | El alcance es la disposición identificada. No excluir por completo RCU-0127-2020 ni afirmar que toda matrícula quedó derogada. |
 | RCU-0161-2021, p. 2, numerales 1–3 | Aprueba evaluación por competencias y deroga los reglamentos de RCU-0276-2016 y RCU-0207-2019. | Registrar esos antecedentes sin incorporarlos como normativa actual. |
-| RCU-0284-2023, p. 2 y anexo pp. 3–4 | Aprueba reconocimiento de créditos; hay diferencia UM-SA/UM-DSA entre resolución y anexo. | Mantener la incidencia de denominación para revisión de citas. No alterar el PDF ni el gold. |
+| RCU-0284-2023, p. 2 y anexo pp. 3–4 | Aprueba la Directiva N.º 003-2023-UM-DSA sobre reconocimiento de créditos. La resolución y el anexo coinciden en la denominación. | La p. 2 respalda la identificación de la directiva. |
 
 El archivo de relaciones original se declara no exhaustivo. Los restantes documentos del inventario conservan sus advertencias y su estado sin certificación de vigencia; su presencia en la colección oficial no demuestra por sí sola aplicabilidad actual.
 
@@ -28,7 +28,7 @@ El archivo de relaciones original se declara no exhaustivo. Los restantes docume
 1. Solo admitir rutas directas del directorio oficial y rechazar rutas históricas, externas o con componentes de ascenso.
 2. Excluir RCU-0252-2021 por identificador, incluso si unos metadatos posteriores la clasifican incorrectamente como oficial.
 3. Excluir documentos marcados para no usar como norma vigente y relaciones que expresamente dejan sin efecto la resolución completa. Una derogación parcial no elimina el documento entero.
-4. Conservar en los fragmentos las relaciones declaradas del documento. Los textos base y modificatorios siguen siendo documentos separados, con su procedencia.
+4. Conservar en los fragmentos las relaciones declaradas y el valor de `usar_como_norma_vigente` del documento. Los textos base y modificatorios mantienen su procedencia.
 5. Mantener normativa_actual_verificada en false. Una consulta actual sin evidencia certificada se abstiene; el modo documental permite consultar fuentes compatibles con los controles de OCR.
 6. Bloquear también la resolución histórica en el pipeline si aparece en un índice antiguo. Se conserva la trazabilidad de recuperación, pero el fragmento no se acepta para generación.
 7. Reconstruir los índices después de incorporar cambios normativos o reglas nuevas. La modificación de metadatos no transforma por sí sola un índice ya guardado.
@@ -43,15 +43,15 @@ El script de validación audita los archivos reales, construye los fragmentos, c
 - 2.284 fragmentos reconstruidos.
 - Consulta actual sin certificación: abstención; consulta documental de evaluación: respuesta extractiva mock.
 - 6/6 controles de índice antiguo bloquean RCU-0252-2021: tres modos A/B/C, con y sin consulta documental.
-- Las pruebas incluyen metadatos erróneos, derogación total frente a parcial, persistencia de relaciones y rutas no oficiales.
+- Las pruebas incluyen un índice mixto donde se recuperan un fragmento oficial y uno marcado como histórico. Solo el oficial se acepta para generar la respuesta.
 
 Estas comprobaciones prueban reglas de datos y flujo del programa. No constituyen medición de eficacia ni exactitud de un LLM.
 
-Desde la raíz del proyecto, con el paquete depurado en data/corpus_unsa:
+En Linux, desde la raíz del proyecto y con el paquete depurado en data/corpus_unsa:
 
-    python scripts/validate_normative_policy.py --corpus data/corpus_unsa --output results/nueva_validacion_t06
+    PYTHONPATH=src python scripts/validate_normative_policy.py --corpus data/corpus_unsa --output results/nueva_validacion_t06
 
-El directorio de salida debe ser nuevo. Para las pruebas, instalar el proyecto con sus dependencias dev y ui y ejecutar python -m pytest.
+El directorio de salida debe ser nuevo. El informe guarda rutas relativas con `/` y hashes del código en UTF-8 con finales de línea LF. Los hashes del corpus se calculan sobre los bytes originales. Para ejecutar las pruebas, instala las dependencias dev y ui y ejecuta `PYTHONPATH=src python -m pytest`.
 
 ## Pendientes documentales expresamente conservados
 

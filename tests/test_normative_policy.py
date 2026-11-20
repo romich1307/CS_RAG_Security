@@ -1,12 +1,13 @@
 import json
-from pathlib import Path
+from hashlib import sha256
 
 import pytest
 
-from cs_rag_security.ingestion import load_pages
+from cs_rag_security.ingestion import chunks, load_pages
 from cs_rag_security.ingestion.normativa import excluded_ids, official_path
 from cs_rag_security.pipeline import answer
 from cs_rag_security.retrieval import Index
+from scripts.validate_normative_policy import source_digest
 
 
 def fixture_corpus(tmp_path, document_id='RCU-0504-2020', relations=None):
@@ -62,6 +63,30 @@ def test_stale_index_cannot_send_known_historical_rule_to_generation(documental)
     result = answer(Index([historical]), 'evaluación', documental=documental)
     assert result['abstained'] and result['accepted_ids'] == []
     assert 'MOCK' not in result['response']
+
+
+def test_mixed_index_accepts_official_fragment_and_blocks_excluded_one(tmp_path):
+    official, = chunks(load_pages(fixture_corpus(tmp_path)))
+    assert official['usar_como_norma_vigente'] is True
+    historical = {**official, 'documento_id': 'RCU-0999-2017',
+                  'archivo_pdf': 'RCU-0999-2017.pdf', 'chunk_id': 'historical:1',
+                  'usar_como_norma_vigente': False}
+    index = Index([historical, official])
+    result = answer(index, 'evaluación académica', documental=True)
+    assert {hit['chunk_id'] for hit in result['retrieved']} == {historical['chunk_id'], official['chunk_id']}
+    assert result['accepted_ids'] == [official['chunk_id']]
+    assert not result['abstained']
+    assert official['archivo_pdf'] in result['response']
+    assert historical['archivo_pdf'] not in result['response']
+
+
+def test_source_digest_matches_git_bytes_with_lf_or_crlf(tmp_path):
+    path = tmp_path / 'source.py'
+    path.write_bytes(b'# example\nx = 1\n')
+    expected = sha256(path.read_bytes()).hexdigest()
+    assert source_digest(path) == expected
+    path.write_bytes(b'# example\r\nx = 1\r\n')
+    assert source_digest(path) == expected
 
 
 @pytest.mark.parametrize('path', ['01B_Historicos/x.pdf', '01_Corpus_Oficial/../01B_Historicos/x.pdf',

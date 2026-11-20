@@ -42,6 +42,7 @@ def load_pages(root):
         pages.append({**p, 'estado_normativo': d['vigencia']['estado'],
                       'fecha_resolucion': d['fecha_resolucion'], 'aviso_uso': d['vigencia']['advertencia'],
                       'origen': 'oficial_piloto', 'normativa_actual_verificada': False,
+                      'usar_como_norma_vigente': d.get('usar_como_norma_vigente'),
                       'relaciones_normativas': context_relations(d['id'], relations)})
     expected = {(d['id'], n) for d in docs.values() if official_path(d.get('archivo_en_paquete')) and d['id'] not in blocked
                 for n in range(1, d['archivo_local']['paginas_pdf'] + 1)}

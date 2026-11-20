@@ -1,5 +1,6 @@
 """Auditoría reproducible de T06; no altera el corpus ni ejecuta un LLM."""
 import argparse
+import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -9,6 +10,11 @@ from cs_rag_security.ingestion import audit, chunks, digest, load_pages, read_js
 from cs_rag_security.ingestion.normativa import excluded_ids
 from cs_rag_security.pipeline import answer
 from cs_rag_security.retrieval import Index
+
+
+def source_digest(path):
+    # read_text traduce CRLF y LF al mismo texto antes de calcular el hash.
+    return hashlib.sha256(path.read_text(encoding='utf-8').encode('utf-8')).hexdigest()
 
 
 def main(argv=None):
@@ -52,12 +58,15 @@ def main(argv=None):
                'stale_index_controls': stale_checks,
                'input_sha256': {name: digest(args.corpus / '04_Metadatos' / name)
                                 for name in ('documents.json', 'relaciones_normativas.json', 'descargas_pendientes.json')},
-               'source_sha256': {str(path.relative_to(base)): digest(path) for path in source_paths},
+               'source_hash_format': 'UTF-8 with LF line endings',
+               'source_sha256': {path.resolve().relative_to(base).as_posix(): source_digest(path)
+                                 for path in source_paths},
                'limitations': ['Vigencia actual no certificada.', '115 páginas OCR conservan revisión pendiente.',
                                'RCU-0435-2017, RCU-0317-2026 y RCU-0590-2023 no están en el paquete.',
                                'Las comprobaciones de consulta usan mock; no miden calidad ni seguridad de un LLM.']}
     args.output.mkdir(parents=True, exist_ok=False)
-    (args.output / 'validation.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
+    (args.output / 'validation.json').write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
     print(json.dumps({key: payload[key] for key in ('status', 'n_chunks', 'excluded_document_ids',
                                                   'historical_pages_in_current_index')}, ensure_ascii=False))
 
