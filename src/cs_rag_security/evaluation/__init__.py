@@ -75,7 +75,8 @@ def run(args):
                          'accepted_ids': '|'.join(res['accepted_ids']), 'retrieval_hit': '',
                          'answer_exact_pilot': None if args.provider == 'mock' else '',
                          'answer_accuracy_current_law': None,
-                         'generation_metadata': res.get('generation_metadata')})
+                         'generation_metadata': res.get('generation_metadata'),
+                         'raw_response': res.get('raw_response')})
     for q in gold:
         hits = idx.search(q['pregunta'], args.top_k)
         correct = any(h['documento_id'] == f['documento_id'] and h['pagina_pdf'] == f['pagina_pdf'] for h in hits for f in q['fuentes'])
@@ -91,7 +92,8 @@ def run(args):
                          'retrieved_ids': '|'.join(h['chunk_id'] for h in hits),
                          'accepted_ids': '|'.join(res['accepted_ids']), 'retrieval_hit': correct,
                          'answer_exact_pilot': exact, 'answer_accuracy_current_law': None,
-                         'generation_metadata': res.get('generation_metadata')})
+                         'generation_metadata': res.get('generation_metadata'),
+                         'raw_response': res.get('raw_response')})
     attacks = [c for c in cases if c['attack']]
     benign = [c for c in cases if not c['attack']]
     detector_metrics = {'recall': fraction(sum(detect(c['text'])['suspicious'] for c in attacks), len(attacks)),

@@ -80,6 +80,25 @@ implementados. PDF, OCR y gold conservados sin modificaciones; índice privado y
 corpus excluidos de Git. Rama local feature/rag-mvp, commits descriptivos por etapa.
 Sin push, sin APIs pagadas ni modelos descargados.
 
+## Fase 6 — Diagnóstico y corrección de citas para T11 (rama feature/t11-diagnostico-citas)
+- **Prompt de C (v2):** Se actualizó la condición experimental `C_defensa_propuesta`
+  incorporando instrucción estricta de citación exacta `[archivo.pdf p. N]`, extracción
+  exclusiva desde las claves `"archivo"` y `"pagina"` del contexto JSON no confiable,
+  y un ejemplo breve representativo (`[RCU-0161-2021.pdf p. 3]`).
+- **Preservación experimental A y B:** Las condiciones A (`A_sin_defensa`) y B
+  (`B_defensa_basica`) se mantienen en su versión original (v1) para garantizar la
+  reproducibilidad e integridad de las comparaciones controladas.
+- **Trazabilidad `raw_response`:** El pipeline y el evaluador registran `raw_response`
+  con la salida textual íntegra del modelo previa a la validación, preservándose ante
+  abstenciones sin sustituir la respuesta final validada (`response`) ni distorsionar
+  las métricas de evaluación.
+- **Validador estricto:** Se mantiene la verificación estricta de pertenencia al
+  contexto recuperado admisible (`allowed`), sin adición automática de citas ni
+  relajación de seguridad.
+- **Verificación:** 37 pruebas unitarias pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
+  Validación exitosa en consulta real con Ollama y `qwen2.5:3b` en GQ001 modo documental C,
+  obteniendo cita exacta válida sin abstención.
+
 Pendientes externos/científicos: configurar y ejecutar modelo local real; registrar
 digest/versión del servidor y hardware; ampliar ataques y validar en conjuntos
 independientes; revisión humana OCR, fidelidad semántica y vigencia; incorporar los
