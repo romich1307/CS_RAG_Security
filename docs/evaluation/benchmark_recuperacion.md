@@ -6,7 +6,7 @@ Se compararon recuperación textual y embeddings multilingües el 19 de noviembr
 
 Se utilizaron las mismas 137 páginas oficiales del paquete depurado y los mismos 2.284 fragmentos de 180 palabras con solapamiento de 30. La resolución histórica no forma parte del índice. Los hashes del corpus coinciden con el baseline. Los PDF, OCR y gold se conservan sin modificaciones.
 
-El [protocolo](../../experiments/retrieval_protocol.json) fija una muestra primaria de 13 preguntas con cotejo documental asistido en T10 y un análisis exploratorio de las 40 preguntas originales. GQ030 y GQ040 quedan fuera de la muestra primaria por incidencias documentales identificadas antes de medir. Las 27 preguntas restantes no se presentan como revisión humana completada. Las preguntas y respuestas gold no forman parte de los fragmentos.
+El [protocolo](../../experiments/retrieval_protocol.json) fija una muestra primaria de 13 preguntas con cotejo documental asistido en T10 y un análisis exploratorio de las 40 preguntas originales. La muestra primaria de la corrida excluyó GQ030 por una cita incompleta y GQ040 por una lectura que posteriormente se corrigió en T10. La p. 2 de RCU-0284-2023 sí respalda el identificador de la directiva en GQ040. La selección de 13 preguntas se conserva para interpretar la corrida original. Las 27 preguntas restantes no se presentan como revisión humana completada. Las preguntas y respuestas gold no forman parte de los fragmentos.
 
 Se comparó el TF-IDF/coseno existente con el modelo multilingüe sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2, revisión e8f8c211226b894fcb81acc59f3b34ba3efd5f42 y archivo onnx/model_quint8_avx2.onnx. Es un encoder de 384 dimensiones con mean pooling enmascarado y normalización L2. Los vecinos se buscan por coseno exacto en una matriz local; no se requiere Docker ni una base de datos externa.
 
@@ -28,7 +28,7 @@ Hit@k cuenta preguntas con al menos una fuente documento/página entre los k fra
 | TF-IDF/coseno | 20/40 | 28/40 | 34/40 | 5.192 | 6.345 | 200 |
 | MiniLM ONNX quint8 | 15/40 | 28/40 | 30/40 | 8.269 | 11.703 | 200 |
 
-Las referencias originales de GQ030 y GQ040 conservan sus incidencias en esta tabla. Se reporta para comparación con el baseline histórico, sin convertir sus etiquetas de disponibilidad en certificación de vigencia o revisión exhaustiva.
+Este análisis incluye GQ030 y GQ040 con las referencias originales del conjunto de 40 preguntas. El protocolo y el manifiesto documentan la selección aplicada el 19 de noviembre. Una corrida posterior debe generar su propio manifiesto.
 
 ## Costes y condiciones
 
@@ -59,7 +59,7 @@ Los identificadores, páginas y posiciones están en [retrieval.csv](../../resul
 
 ## Decisión del recuperador
 
-Se mantiene TF-IDF como predeterminado: empata en top-5 de la muestra primaria, obtiene más aciertos top-5 en el análisis exploratorio y presenta menor latencia y coste de preparación. MiniLM queda implementado como alternativa opcional y reproducible; mejora algunos rankings, pero esta corrida no justifica reemplazar el baseline ni afirmar superioridad general.
+TF-IDF sigue siendo el recuperador de la CLI y del chatbot. Empató en top-5 de la muestra primaria, obtuvo más aciertos top-5 en el análisis exploratorio y requirió menos tiempo de consulta y preparación. MiniLM se ejecuta únicamente mediante el script del benchmark T08. Si se incorpora en el futuro a la CLI o al chatbot, habrá que calibrar su umbral de relevancia con un conjunto de validación antes de usarlo en el pipeline.
 
 Un enfoque híbrido puede estudiarse con otra evaluación independiente. No se ajustó un híbrido ni se seleccionaron modelos adicionales sobre estas mismas preguntas para mejorar las cifras.
 

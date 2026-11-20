@@ -94,8 +94,8 @@ muestra primaria y las 40 originales como análisis exploratorio. MiniLM multili
 cuantizado se ejecutó localmente con ONNX, sin generar respuestas ni consumir API.
 
 Ambos métodos obtienen 11/13 en top-5 primario. En el análisis exploratorio TF-IDF
-obtiene 34/40 y MiniLM 30/40. Se conserva TF-IDF como predeterminado y MiniLM como
-alternativa opcional. Se guardaron latencias repetidas, tamaño de índices, versiones,
+obtiene 34/40 y MiniLM 30/40. La CLI y el chatbot siguen usando TF-IDF. MiniLM
+se ejecuta solo en el benchmark. Se guardaron latencias repetidas, tamaño de índices, versiones,
 hashes, errores y reproducción. T08 queda implementada y medida para revisión.
 Véase [benchmark T08](evaluation/benchmark_recuperacion.md). La vigencia, el OCR
 pendiente y la evaluación humana de respuestas reales conservan sus propios límites.
