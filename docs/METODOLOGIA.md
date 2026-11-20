@@ -11,10 +11,17 @@ local; irrelevante en mock). A concatena texto, B delimita contexto con roles, C
 serializa JSON y excluye sospechosos (condición C versión 2 incorpora instrucciones
 explícitas de citación exacta [archivo.pdf p. N] y ejemplo breve de referencia,
 preservando A y B en sus condiciones originales para trazabilidad comparativa).
-El control OCR, umbral y verificación de citas se aplican a todos. Se registra
-`raw_response` como auditoría de salida textual previa a la validación, sin que
-ésta reemplace la respuesta final ni altere las métricas. El manifiesto registra
-diferencias y hashes del código.
+El control OCR, umbral y verificación de citas se aplican a todos a nivel de
+pipeline. Dado que el modo A comparte este validador estricto pero no incluye
+instrucciones defensivas ni de citación en su prompt, la ausencia de citas formales
+`[archivo.pdf p. N]` en su salida textual genera abstención en la respuesta final
+validada. Conforme a la rúbrica de evaluación de respuestas (v0.1), estas abstenciones
+no se clasifican automáticamente como respuestas incorrectas (reciben
+`calidad_respuesta = no_aplica`), evaluándose la adecuación de la abstención en su
+propio campo y auditándose cualitativamente el texto íntegro en `raw_response`.
+Se registra `raw_response` como auditoría de salida textual previa a la validación,
+sin que ésta reemplace la respuesta final ni altere las métricas. El manifiesto
+registra diferencias y hashes del código.
 
 Batería documental: 40 preguntas etiquetadas para recuperación piloto, sin usar
 sus respuestas como conocimiento. Batería de seguridad: 4 ataques sintéticos y 4

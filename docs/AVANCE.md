@@ -99,6 +99,52 @@ Sin push, sin APIs pagadas ni modelos descargados.
   Validación exitosa en consulta real con Ollama y `qwen2.5:3b` en GQ001 modo documental C,
   obteniendo cita exacta válida sin abstención.
 
+## Fase 7 — Ejecución y revisión final de T11 (Baseline Ollama A_sin_defensa)
+- **Ejecución experimental:** Ejecutado script reproducible `scripts/run_t11_baseline.py`
+  sobre las 10 consultas legítimas seleccionadas del dataset gold (GQ004, GQ006, GQ012,
+  GQ016, GQ023, GQ027, GQ034, GQ036, GQ038, GQ040) bajo la condición `A_sin_defensa`
+  (baseline de referencia sin defensas), utilizando el modelo local Ollama `qwen2.5:3b`
+  (digest `357c53fb659c5076de1d65ccb0b397446227b71a42be9d1603d46168015c9e4b`),
+  `temperature=0`, `seed=42`, `top_k=5`, en modo documental.
+- **Validador de citas compartido y asimetría de prompt en Modo A:**
+  - El validador estricto de citas (`[archivo.pdf p. N]` perteneciente al contexto admisible)
+    opera a nivel de pipeline en `cs_rag_security.pipeline.answer()` y es compartido por
+    las tres condiciones experimentales (A, B y C).
+  - A diferencia de B y C (v2), el modo `A_sin_defensa` no utiliza instrucciones defensivas
+    ni directivas de formato de citas en su prompt, concatenando únicamente la pregunta y
+    el texto plano de los fragmentos recuperados en el mensaje de usuario.
+  - Al no recibir directiva de citación formal, el LLM generó respuestas sustantivas en lenguaje
+    natural sin el patrón `[archivo.pdf p. N]`, provocando que el validador del pipeline
+    consigne abstención (`Me abstengo: la salida del modelo carece de citas válidas del contexto.`)
+    en las 10 consultas.
+  - Esta diferencia metodológica y su efecto se documentan explícitamente sin alterar el
+    diseño experimental ni las condiciones del baseline A.
+- **Tratamiento metodológico de las abstenciones:**
+  - Conforme a la [rúbrica de evaluación QA v0.1](evaluation/rubrica_qa.md), las 10 abstenciones
+    no se clasifican automáticamente como respuestas incorrectas; en evaluación humana
+    corresponden a `calidad_respuesta = 'no_aplica'`, evaluándose por separado la adecuación
+    de la abstención (`abstencion_adecuada`) y la suficiencia de la evidencia (`evidencia_disponible`).
+  - La respuesta sustantiva original del modelo se conserva íntegra en el campo `raw_response`,
+    permitiendo evaluar su fidelidad factual y contenido en la evaluación cualitativa de T12.
+- **Diferenciación y preservación de trazas:**
+  - Se confirmó en las 10 trazas que `raw_response` (texto crudo del modelo) y `response`
+    (salida validada post-pipeline) están estrictamente diferenciados.
+  - Las 10 trazas originales en `results/llm_baseline/traces.json` y `traces.csv` permanecen intactas.
+- **Material ciego para T12:**
+  - Generados `results/llm_baseline/t12_material_ciego.json` y `results/llm_baseline/t12_evaluacion_ciega.csv`
+    con identificadores ciegos (`CIEGO_01` a `CIEGO_10`) para el evaluador humano (León).
+  - Se verificó que el material ciego no incluye respuestas gold (`respuesta_referencia`)
+    ni referencias esperadas de las fuentes gold, garantizando la evaluación a ciegas.
+- **Auditoría de hashes y confidencialidad:**
+  - Los hashes registrados en `results/llm_baseline/manifest.json` para los 8 módulos de `src/`,
+    el índice (`index.json`) y el gold (`gold_questions.json`) coinciden exactamente con el
+    código y artefactos ejecutados.
+  - Se verificó que los archivos nuevos no contienen credenciales, rutas privadas ni información
+    confidencial que deba ser excluida de publicación.
+- **Validación automatizada:**
+  - 37 pruebas pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
+  - Verificación de formato y espacios limpia (`git diff --check`).
+
 Pendientes externos/científicos: configurar y ejecutar modelo local real; registrar
 digest/versión del servidor y hardware; ampliar ataques y validar en conjuntos
 independientes; revisión humana OCR, fidelidad semántica y vigencia; incorporar los
