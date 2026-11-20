@@ -90,11 +90,11 @@ de defensa frente a LLM con los resultados mock disponibles.
 
 Se continuó T10, cuya preparación de rúbrica y plantilla se había realizado el
 18 de noviembre. Con el paquete de Romina se verificaron los hashes de cinco PDF
-y se hizo un cotejo textual y visual asistido de las 15 preguntas. Trece referencias
-tienen respaldo confirmado, GQ030 necesita las páginas 7 y 8 y GQ040 presenta una
-diferencia de denominación entre la resolución y su anexo. La rúbrica 0.2 y los
-criterios propuestos quedan para revisión de León y Romina. Registro en
-[cotejo T10](evaluation/cotejo_t10_20261119.md).
+y se cotejaron las 15 preguntas mediante extracción de texto y revisión de páginas
+renderizadas. La revisión del 20 de noviembre confirmó el respaldo de 14 referencias.
+GQ040 está respaldada por la p. 2 de RCU-0284-2023. Para GQ030 se registraron las
+pp. 7–8 como evidencia necesaria para una cita completa. Los criterios de la rúbrica
+0.2 siguen sujetos a revisión. Véase el [cotejo T10](evaluation/cotejo_t10_20261119.md).
 
 
 T12 sigue pendiente de respuestas reales del LLM. Estos cambios documentan el

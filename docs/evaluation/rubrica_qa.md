@@ -50,8 +50,8 @@ La calidad semántica y la validez de citas se registran por separado. Una respu
 La primera aplicación documental de la rúbrica está registrada en [el cotejo T10](cotejo_t10_20261119.md) y [los ejercicios de calibración](calibracion_t10_20261119.md).
 
 - Una condición omitida puede justificar `parcial`. Afirmar que esa condición o una excepción no existe cambia el sentido y justifica `incorrecta`.
-- Una enumeración correcta puede tener respaldo `parcial` si la cita cubre solo algunos elementos. GQ030 requiere leer las páginas 7 y 8 para revisar todas las sanciones.
-- Las diferencias internas de denominación se registran como incidencias de fuente antes de puntuar una coincidencia estricta. En GQ040 se propone consultar la resolución y su anexo y revisar el criterio de aceptación con el equipo.
+- Una enumeración correcta puede tener respaldo `parcial` si la cita cubre solo algunos elementos. En GQ030, una enumeración correcta de todas las sanciones con cita exclusiva a la p. 8 recibe sustento `parcial`. Para respaldar la lista completa se requieren las pp. 7–8.
+- En GQ040, la p. 2 de RCU-0284-2023 respalda el identificador 003-2023-UM-DSA y el título de la directiva. El anexo confirma la denominación.
 
 ## Adecuación de la abstención
 
@@ -149,6 +149,6 @@ El comando `chat` imprime la salida del pipeline en JSON. La función `evaluatio
 ## Estado de este entregable
 
 - Rúbrica y plantilla preparadas el 18 de noviembre. Precisiones de la versión 0.2 propuestas el 19 de noviembre.
-- Cotejo asistido de las 15 preguntas realizado con los cinco PDF recibidos. Trece referencias tienen respaldo confirmado, GQ030 requiere ampliar páginas y GQ040 presenta una diferencia interna de denominación.
+- Cotejo asistido de las 15 preguntas realizado con los cinco PDF recibidos. La revisión del 20 de noviembre dejó 14 referencias confirmadas, incluida GQ040. GQ030 requiere las pp. 7–8 como evidencia de respaldo completo.
 - Primera aplicación documental de criterios realizada. Revisión de León y acuerdo con Romina pendientes antes de fijar las etiquetas de calibración.
 - Primera evaluación humana de respuestas reales (T12) pendiente de la corrida con LLM.
