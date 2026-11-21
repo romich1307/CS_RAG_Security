@@ -27,11 +27,17 @@ consultas de vigencia. El modo documental habilita consulta provisional nativa.
 Los controles de evidencia y pertenencia de citas son comunes a A/B/C: A carece del
 mecanismo experimental, pero mantiene estos controles del producto.
 
-`generation` implementa mock y adaptador local intercambiables mediante argumento.
-Los proveedores no reciben herramientas ni ejecutan código documental. El adaptador
-local usa IP loopback literal, sin proxies ni redirecciones; timeout de 90 segundos.
-Los mensajes JSON aíslan contenido mediante estructura, no crean una barrera formal
-contra un LLM. La comprobación de citas valida pertenencia al contexto, no entailment.
+`generation` implementa mock, adaptador local y proveedor API OpenAI-compatible
+intercambiables mediante argumento. Los proveedores no reciben herramientas ni
+ejecutan código documental. El adaptador local usa IP loopback literal, sin proxies
+ni redirecciones; timeout de 90 segundos. El proveedor API remoto exige HTTPS
+estricto en api.openai.com:443, prohíbe redirecciones, credenciales en la URL y
+destinos no autorizados para evitar fuga de credenciales; las claves se leen de
+variables de entorno y no se registran. Preserva identificador de modelo,
+parámetros, latencia (medida tras la lectura de respuesta) y uso de tokens cuando
+el proveedor los reporta. Los mensajes JSON aíslan contenido mediante estructura,
+no crean una barrera formal contra un LLM. La comprobación de citas valida
+pertenencia al contexto, no entailment.
 
 `evaluation` reutiliza exactamente los mismos hits por pregunta en A/B/C; usa el
 índice oficial para gold y una colección secundaria efímera por caso sintético.

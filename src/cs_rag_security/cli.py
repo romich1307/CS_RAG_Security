@@ -13,7 +13,7 @@ def main():
     p.add_argument('--question', default='¿Qué regula la evaluación por competencias?')
     p.add_argument('--top-k', type=int, default=5)
     p.add_argument('--mode', default='C_defensa_propuesta')
-    p.add_argument('--provider', choices=['mock', 'local'], default='mock')
+    p.add_argument('--provider', choices=['mock', 'local', 'api'], default='mock')
     p.add_argument('--documental', action='store_true')
     p.add_argument('--output', default='results/offline')
     args = p.parse_args()
