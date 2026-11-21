@@ -1,6 +1,7 @@
 """Mide las alertas del detector sobre controles benignos etiquetados."""
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -25,9 +26,12 @@ def audit(controls_path):
     records = []
     seen_ids = set()
     versions = set()
+    checksum = hashlib.sha256()
 
-    with controls_path.open(encoding='utf-8') as stream:
-        for number, line in enumerate(stream, start=1):
+    with controls_path.open('rb') as stream:
+        for number, raw_line in enumerate(stream, start=1):
+            checksum.update(raw_line)
+            line = raw_line.decode('utf-8')
             if not line.strip():
                 continue
             try:
@@ -63,6 +67,7 @@ def audit(controls_path):
                 'particion': partition,
                 'categoria': category,
                 'marcado': result['suspicious'],
+                'score': result['score'],
                 'motivos': result['reasons'],
             })
 
@@ -74,6 +79,7 @@ def audit(controls_path):
     return {
         'detector': versions.pop(),
         'proveedor_llm': None,
+        'dataset_sha256': checksum.hexdigest(),
         'total': summarize(records),
         'por_particion': {
             partition: summarize([record for record in records if record['particion'] == partition])

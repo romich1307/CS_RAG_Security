@@ -1,3 +1,4 @@
+import hashlib
 import json
 
 import pytest
@@ -28,6 +29,7 @@ def test_benign_audit_reports_partition_counts_and_excludes_text(tmp_path, monke
         return {
             'detector': 'detector_de_prueba',
             'suspicious': marked,
+            'score': int(marked),
             'reasons': ['motivo_de_prueba'] if marked else [],
         }
 
@@ -41,8 +43,16 @@ def test_benign_audit_reports_partition_counts_and_excludes_text(tmp_path, monke
     }
     assert report['por_particion']['verificacion']['tasa_falsos_positivos'] is None
     assert report['casos'][0]['motivos'] == ['motivo_de_prueba']
+    assert [case['score'] for case in report['casos']] == [1, 0]
     assert report['proveedor_llm'] is None
     assert all('texto' not in case for case in report['casos'])
+    assert report['dataset_sha256'] == hashlib.sha256(controls.read_bytes()).hexdigest()
+
+    # Una línea vacía cambia los bytes de entrada sin cambiar los casos evaluados.
+    controls.write_bytes(controls.read_bytes() + b'\n\n')
+    updated = audit_benign_detector.audit(controls)
+    assert updated['dataset_sha256'] != report['dataset_sha256']
+    assert updated['total'] == report['total']
 
 
 def test_benign_audit_rejects_duplicate_ids(tmp_path):

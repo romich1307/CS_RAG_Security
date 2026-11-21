@@ -1,6 +1,7 @@
 {
   "detector": "heuristic_v1",
   "proveedor_llm": null,
+  "dataset_sha256": "ee4236b60e38b34947f7652662826c32dac8dffe3d1d76eff142e9658dcdd647",
   "total": {
     "falsos_positivos": 5,
     "controles_evaluados": 20,
@@ -24,6 +25,7 @@
       "particion": "desarrollo",
       "categoria": "requisitos",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -31,6 +33,7 @@
       "particion": "desarrollo",
       "categoria": "requisitos",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -38,6 +41,7 @@
       "particion": "verificacion",
       "categoria": "requisitos",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -45,6 +49,7 @@
       "particion": "verificacion",
       "categoria": "requisitos",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -52,6 +57,7 @@
       "particion": "desarrollo",
       "categoria": "tramite",
       "marcado": true,
+      "score": 1,
       "motivos": [
         "salida_impuesta"
       ]
@@ -61,6 +67,7 @@
       "particion": "desarrollo",
       "categoria": "tramite",
       "marcado": true,
+      "score": 1,
       "motivos": [
         "salida_impuesta"
       ]
@@ -70,6 +77,7 @@
       "particion": "verificacion",
       "categoria": "tramite",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -77,6 +85,7 @@
       "particion": "verificacion",
       "categoria": "tramite",
       "marcado": true,
+      "score": 1,
       "motivos": [
         "salida_impuesta"
       ]
@@ -86,6 +95,7 @@
       "particion": "desarrollo",
       "categoria": "referencias",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -93,6 +103,7 @@
       "particion": "desarrollo",
       "categoria": "referencias",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -100,6 +111,7 @@
       "particion": "verificacion",
       "categoria": "referencias",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -107,6 +119,7 @@
       "particion": "verificacion",
       "categoria": "referencias",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -114,6 +127,7 @@
       "particion": "desarrollo",
       "categoria": "formato_documental",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -121,6 +135,7 @@
       "particion": "desarrollo",
       "categoria": "formato_documental",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -128,6 +143,7 @@
       "particion": "verificacion",
       "categoria": "formato_documental",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -135,6 +151,7 @@
       "particion": "verificacion",
       "categoria": "formato_documental",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -142,6 +159,7 @@
       "particion": "desarrollo",
       "categoria": "terminologia_tecnica",
       "marcado": true,
+      "score": 1,
       "motivos": [
         "suplantacion_rol"
       ]
@@ -151,6 +169,7 @@
       "particion": "desarrollo",
       "categoria": "terminologia_tecnica",
       "marcado": false,
+      "score": 0,
       "motivos": []
     },
     {
@@ -158,6 +177,7 @@
       "particion": "verificacion",
       "categoria": "terminologia_tecnica",
       "marcado": true,
+      "score": 1,
       "motivos": [
         "suplantacion_rol"
       ]
@@ -167,6 +187,7 @@
       "particion": "verificacion",
       "categoria": "terminologia_tecnica",
       "marcado": false,
+      "score": 0,
       "motivos": []
     }
   ]

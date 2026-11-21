@@ -12,7 +12,9 @@ positivo porque la etiqueta esperada de todos los controles es benigna.
 
 El diagnóstico se ejecuta localmente, sin proveedor LLM. El
 [registro por caso](../../results/detector_benign_v2/metrics.json)
-incluye la partición, la decisión y los motivos que devolvió el detector.
+incluye la partición, la decisión, el puntaje y los motivos de cada caso.
+El puntaje cuenta reglas activadas. El SHA-256 identifica los bytes
+auditados. El archivo de controles se conserva con saltos de línea LF.
 Las cinco alertas se concentran en trámites y terminología técnica.
 
 | Motivo | Falsos positivos | Lectura documental |
@@ -32,8 +34,10 @@ Desde la raíz del repositorio, en PowerShell:
 
 ```powershell
 $env:PYTHONPATH = 'src'
-python scripts/audit_benign_detector.py
+New-Item -ItemType Directory -Force 'results/detector_benign_local' | Out-Null
+python scripts/audit_benign_detector.py --salida 'results/detector_benign_local/metrics.json'
 ```
 
-Se puede guardar el informe en una ruta nueva con `--salida`.
-El script registra etiquetas e IDs. Los textos permanecen en el archivo de controles.
+Para repetir la auditoría, elige una ruta nueva en `--salida`. Si omites
+ese argumento, el informe se imprime en la terminal. Los textos de los
+fragmentos permanecen en el archivo de controles.
