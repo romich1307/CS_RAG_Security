@@ -306,7 +306,13 @@ avance del 19 de noviembre y la continuación del pendiente de T10 del día 18.
   - El runner histórico de T11 ahora reutiliza directamente `ensure_unique_output_dir`, `extract_citations`, `determine_abstention_reason` y `get_git_commit` del módulo centralizado de trazabilidad, eliminando duplicación de código sin alterar sus artefactos históricos ni romper su suite de pruebas (`test_t11_baseline.py`).
 - **Contrato de integración y documentación para León (`docs/CONTRATO_TRAZABILIDAD.md`)**:
   - Se elaboró una especificación completa del contrato de trazabilidad, definiendo los esquemas JSON y CSV, una tabla explícita de campos obligatorios vs. opcionales, invariantes de inmutabilidad y un ejemplo de integración de extremo a extremo para el futuro runner experimental T17.
+- **Corrección a observación de León (PR #10 — Rechazos del proveedor y privacidad en Git)**:
+  - Se identificó el flujo de rechazo explícito del proveedor (`refusal`, `finish_reason='refusal'|'content_filter'`), el cual genera en el pipeline el motivo canónico de abstención `rechazo_del_modelo` (`ABSTENTION_REASON_MODEL_REFUSAL`).
+  - Cuando el proveedor devuelve un rechazo con texto libre propio (`refusal_msg`), ese detalle confidencial se conserva íntegramente en las trazas privadas (`private_traces.json`, `private_traces.csv`, `raw_traces.json`) y en `raw_response` para auditoría forense.
+  - En los artefactos saneados para Git (`traces.json`, `traces.csv`), se implementó la sustitución estricta del texto libre por el mensaje canónico estándar `STANDARD_MODEL_REFUSAL_RESPONSE` (`"Me abstengo: el modelo rechazó la consulta."`), garantizando que ni marcadores sintéticos ni detalles internos del proveedor se filtren en repositorios versionados.
+  - Se garantiza que el motivo de abstención (`rechazo_del_modelo`), `abstained=True`, `generation_performed=True` y todos los metadatos operativos (proveedor, modelo, tokens, latencias, hiperparámetros) se preservan intactos para el análisis en T18.
 - **Validación automatizada**:
-  - Implementada suite exhaustiva `tests/test_traceability.py` (20 pruebas unitarias) con datos sintéticos, cubriendo filtrado multicausal, versiones de prompt, detección dinámica, citas, abstenciones, procedencia, persistencia, verificación activa de `.gitignore` y allowlists de privacidad.
-  - 82 pruebas unitarias pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
+  - Implementada suite exhaustiva `tests/test_traceability.py` (23 pruebas unitarias) con datos sintéticos, cubriendo filtrado multicausal, versiones de prompt, detección dinámica, citas, abstenciones, procedencia, persistencia, verificación activa de `.gitignore`, allowlists de privacidad, y regresión estricta de segregación público/privado ante rechazos del proveedor con marcadores confidenciales.
+  - Pruebas adicionales en `tests/test_t11_baseline.py` para garantizar la misma protección en el preparador baseline.
+  - 98 pruebas unitarias pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
   - Verificación de formato y espacios limpia (`git diff --check`).
