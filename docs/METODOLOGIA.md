@@ -8,8 +8,14 @@ El prototipo permite estudiar esa pregunta; las pruebas mock no la resuelven.
 Unidad de evaluación: pregunta o escenario, pareado entre A/B/C con igual seed 42,
 top-k, proveedor, modelo, índice base y parámetros (temperature=0 para servidor
 local; irrelevante en mock). A concatena texto, B delimita contexto con roles, C
-serializa JSON y excluye sospechosos. El control OCR, umbral y verificación de citas
-se aplican a todos. El manifiesto registra diferencias y hashes del código.
+serializa JSON y excluye sospechosos (condición C versión 3 incorpora formato
+genérico de citación [archivo.pdf p. N], aclarando que deben emplearse el nombre
+de archivo y número de página reales del contexto recuperado, sin ejemplos documentales
+específicos que sesguen la citación; preservando A y B en sus condiciones originales
+para trazabilidad comparativa). El control OCR, umbral y verificación de citas se
+aplican a todos. Se registra `raw_response` como auditoría de salida textual previa
+a la validación, sin que ésta reemplace la respuesta final ni se exponga en la interfaz
+de usuario. El manifiesto registra diferencias y hashes del código.
 
 Batería documental: 40 preguntas etiquetadas para recuperación piloto, sin usar
 sus respuestas como conocimiento. Batería de seguridad: 4 ataques sintéticos y 4

@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-11-21T00:54:23-05:00",
+  "task": "piloto_t11_pr7",
+  "query_id": "GQ019",
+  "source_document": "RCU-0504-2020.pdf",
+  "source_page": 4,
+  "provider": "local",
+  "model": "qwen2.5:3b",
+  "mode": "C_defensa_propuesta",
+  "prompt_version": "v3",
+  "documental": true,
+  "top_k": 5,
+  "seed": 42,
+  "abstained": false,
+  "citation_valid": true,
+  "accepted_ids": [
+    "RCU-0504-2020:4:6:0",
+    "RCU-0504-2020:4:5:0",
+    "RCU-0504-2020:5:5:0",
+    "RCU-0504-2020:4:7:0"
+  ],
+  "generation_metadata": {
+    "provider": "local",
+    "model": "qwen2.5:3b",
+    "parameters": {
+      "temperature": 0,
+      "seed": 42
+    },
+    "latency_seconds": 26.379808105999928,
+    "latency": 26.379808105999928
+  }
+}

@@ -21,6 +21,7 @@ def answer(index, question, mode='C_defensa_propuesta', provider='mock', k=5, do
     abstain = not reliable
     response = 'Me abstengo: no hay evidencia fiable suficiente o vigencia verificada. Puede consultar fragmentos como material documental provisional.'
     generation_metadata = None
+    raw_response = None
     if reliable:
         # Conserva las mismas fronteras de seguridad y metadatos de las tres variantes.
         _, messages, _ = prepare(question, reliable, mode)
@@ -32,6 +33,7 @@ def answer(index, question, mode='C_defensa_propuesta', provider='mock', k=5, do
         else:
             response = str(gen) if gen is not None else ''
             generation_metadata = None
+        raw_response = response
         if provider != 'mock':
             is_refusal = bool(generation_metadata and (
                 generation_metadata.get('refusal') or
@@ -50,7 +52,7 @@ def answer(index, question, mode='C_defensa_propuesta', provider='mock', k=5, do
                 if not citations or any(c not in allowed for c in citations):
                     response = 'Me abstengo: la salida del modelo carece de citas válidas del contexto.'
                     abstain = True
-    return {'question': question, 'response': response, 'provider': provider, 'mode': mode,
+    return {'question': question, 'response': response, 'raw_response': raw_response, 'provider': provider, 'mode': mode,
             'documental': documental, 'abstained': abstain, 'warnings': WARNINGS,
             'retrieved': retrieved, 'accepted_ids': [h['chunk_id'] for h in reliable], 'detector_log': log,
             'seconds': time.perf_counter() - start, 'seed': seed, 'top_k': k,
