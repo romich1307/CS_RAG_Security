@@ -81,23 +81,34 @@ corpus excluidos de Git. Rama local feature/rag-mvp, commits descriptivos por et
 Sin push, sin APIs pagadas ni modelos descargados.
 
 ## Fase 6 — Diagnóstico y corrección de citas para T11 (rama feature/t11-diagnostico-citas)
-- **Prompt de C (v2):** Se actualizó la condición experimental `C_defensa_propuesta`
-  incorporando instrucción estricta de citación exacta `[archivo.pdf p. N]`, extracción
-  exclusiva desde las claves `"archivo"` y `"pagina"` del contexto JSON no confiable,
-  y un ejemplo breve representativo (`[RCU-0161-2021.pdf p. 3]`).
+- **Prompt de C (v3):** Se actualizó la condición experimental `C_defensa_propuesta`
+  sustituyendo el ejemplo específico de `RCU-0161-2021.pdf` por el formato genérico
+  `[archivo.pdf p. N]` y aclarando explícitamente que deben utilizarse el nombre de archivo
+  y número de página reales obtenidos del contexto recuperado (`documentos_no_confiables`).
+  Se evitan sesgos hacia resoluciones específicas.
 - **Preservación experimental A y B:** Las condiciones A (`A_sin_defensa`) y B
-  (`B_defensa_basica`) se mantienen en su versión original (v1) para garantizar la
-  reproducibilidad e integridad de las comparaciones controladas.
-- **Trazabilidad `raw_response`:** El pipeline y el evaluador registran `raw_response`
-  con la salida textual íntegra del modelo previa a la validación, preservándose ante
-  abstenciones sin sustituir la respuesta final validada (`response`) ni distorsionar
-  las métricas de evaluación.
+  (`B_defensa_basica`) se mantienen en su versión original (v1) sin modificación alguna,
+  garantizando la comparabilidad e integridad metodológica.
+- **Seguridad de la interfaz (Streamlit):** Se revisó `app/streamlit_app.py` eliminando
+  la exposición de `raw_response` del panel desplegable de trazabilidad. La interfaz
+  muestra únicamente la respuesta validada y metadatos seguros de trazabilidad.
+  `raw_response` se preserva íntegramente en las trazas (`traces.json`, `traces.csv`) y
+  artefactos internos de auditoría para T12.
+- **Prueba de regresión de interfaz:** Se añadió en `tests/test_ui.py` una prueba que
+  confirma que respuestas rechazadas o no validadas no quedan expuestas en ningún elemento
+  visible del chatbot.
 - **Validador estricto:** Se mantiene la verificación estricta de pertenencia al
   contexto recuperado admisible (`allowed`), sin adición automática de citas ni
   relajación de seguridad.
-- **Verificación:** 37 pruebas unitarias pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
-  Validación exitosa en consulta real con Ollama y `qwen2.5:3b` en GQ001 modo documental C,
-  obteniendo cita exacta válida sin abstención.
+- **Verificación:** 38 pruebas unitarias pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
+- **Validación piloto real Ollama:** Consulta piloto independiente ejecutada con Ollama
+  y `qwen2.5:3b` sobre `GQ019` con una fuente documental distinta (`RCU-0504-2020.pdf`, p. 4)
+  en modo documental C. El modelo generó la cita exacta `[RCU-0504-2020.pdf p. 4]`
+  y fue validado sin abstención (`abstained=False`, latencia 26.38 s), verificando la
+  viabilidad técnica del formato genérico en esta instancia puntual. No se afirma ausencia
+  de sesgo ni eficacia general del prompt C v3 a partir de un único ensayo piloto; la
+  evaluación sistemática de desempeño y robustez corresponde a T12. Registrado en
+  `results/piloto_ollama_pr7.json` sin inclusión de texto íntegro del corpus ni secretos.
 
 ## Fase 7 — Ejecución y revisión final de T11 (Baseline Ollama A_sin_defensa)
 - **Ejecución experimental:** Ejecutado script reproducible `scripts/run_t11_baseline.py`
@@ -181,3 +192,44 @@ digest/versión del servidor y hardware; ampliar ataques y validar en conjuntos
 independientes; revisión humana OCR, fidelidad semántica y vigencia; incorporar los
 tres textos ausentes solo tras obtener fuentes verificadas. No se atribuye eficacia
 de defensa frente a LLM con los resultados mock disponibles.
+
+## León — T08, 19 de noviembre de 2026
+
+Comparación textual y semántica ejecutada sobre las mismas 137 páginas oficiales
+y 2.284 fragmentos. Se fijó el protocolo antes de medir: 13 preguntas cotejadas como
+muestra primaria y las 40 originales como análisis exploratorio. MiniLM multilingüe
+cuantizado se ejecutó localmente con ONNX, sin generar respuestas ni consumir API.
+
+Ambos métodos obtienen 11/13 en top-5 primario. En el análisis exploratorio TF-IDF
+obtiene 34/40 y MiniLM 30/40. La CLI y el chatbot siguen usando TF-IDF. MiniLM
+se ejecuta solo en el benchmark. Se guardaron latencias repetidas, tamaño de índices, versiones,
+hashes, errores y reproducción. T08 queda implementada y medida para revisión.
+Véase [benchmark T08](evaluation/benchmark_recuperacion.md). La vigencia, el OCR
+pendiente y la evaluación humana de respuestas reales conservan sus propios límites.
+## León — T06, 19 de noviembre de 2026
+
+Implementación y validación documental de T06 listas para revisión. Se verificó el
+paquete depurado completo: 12 hashes PDF coincidentes, 11 PDF oficiales, un histórico,
+137 páginas oficiales y 2.284 fragmentos. Se reforzó la exclusión por identificador,
+metadatos y relaciones de alcance total y se bloqueó el histórico en índices antiguos.
+Las derogaciones parciales conservan su alcance y las relaciones acompañan a los fragmentos.
+
+Se cotejaron las relaciones conocidas con las fuentes disponibles, incluido el
+artículo 4 del texto base RCU-0501-2020 y la parte resolutiva de RCU-0009-2026.
+Los tres documentos faltantes y la revisión OCR continúan expresamente pendientes.
+La consulta actual sin certificación se abstiene; los controles con mock no miden
+eficacia de un LLM. Véanse [relaciones y reglas](corpus/vigencia_y_relaciones.md)
+y [validación ejecutada](../results/normative_policy_20261119/validation.json).
+## Avance de León — 19 de noviembre de 2026
+
+Se continuó T10, cuya preparación de rúbrica y plantilla se había realizado el
+18 de noviembre. Con el paquete de Romina se verificaron los hashes de cinco PDF
+y se cotejaron las 15 preguntas mediante extracción de texto y revisión de páginas
+renderizadas. La revisión del 20 de noviembre confirmó el respaldo de 14 referencias.
+GQ040 está respaldada por la p. 2 de RCU-0284-2023. Para GQ030 se registraron las
+pp. 7–8 como evidencia necesaria para una cita completa. Los criterios de la rúbrica
+0.2 siguen sujetos a revisión. Véase el [cotejo T10](evaluation/cotejo_t10_20261119.md).
+
+
+T12 sigue pendiente de respuestas reales del LLM. Estos cambios documentan el
+avance del 19 de noviembre y la continuación del pendiente de T10 del día 18.

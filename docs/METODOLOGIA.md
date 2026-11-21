@@ -8,28 +8,31 @@ El prototipo permite estudiar esa pregunta; las pruebas mock no la resuelven.
 Unidad de evaluación: pregunta o escenario, pareado entre A/B/C con igual seed 42,
 top-k, proveedor, modelo, índice base y parámetros (temperature=0 para servidor
 local; irrelevante en mock). A concatena texto, B delimita contexto con roles, C
-serializa JSON y excluye sospechosos (condición C versión 2 incorpora instrucciones
-explícitas de citación exacta [archivo.pdf p. N] y ejemplo breve de referencia,
-preservando A y B en sus condiciones originales para trazabilidad comparativa).
-El control OCR, umbral y verificación de citas se aplican a todos a nivel de
-pipeline. Dado que el modo A comparte este validador estricto pero no incluye
-instrucciones defensivas ni de citación en su prompt, en las 10 consultas ejecutadas
-en esta corrida experimental el modelo no incluyó citas formales `[archivo.pdf p. N]`,
-lo que conllevó la abstención del pipeline en esos diez casos específicos (sin que
-ello permita afirmar que el modo A deba producir abstenciones de manera inevitable en
-todas las consultas o configuraciones). Conforme a la rúbrica de evaluación de
-respuestas v0.2 de T10, estas abstenciones no se clasifican automáticamente como
-respuestas incorrectas (reciben `calidad_respuesta = no_aplica`), evaluándose la
-adecuación de la abstención en su propio campo y auditándose cualitativamente el
-texto íntegro en `raw_response`.
+serializa JSON y excluye sospechosos. En la configuración actual del sistema, la
+condición C (versión 3) incorpora formato genérico de citación `[archivo.pdf p. N]`,
+aclarando que deben emplearse el nombre de archivo y número de página reales del
+contexto recuperado, sin ejemplos documentales específicos que sesguen la citación
+(a diferencia de la configuración histórica de la corrida original, donde la versión 2
+incluía un ejemplo breve de referencia); preservando A y B en sus condiciones originales
+(versión 1) para trazabilidad comparativa. El control OCR, umbral y verificación de citas
+se aplican a todos a nivel de pipeline. Dado que el modo A comparte este validador estricto
+pero no incluye instrucciones defensivas ni de citación en su prompt, en las 10 consultas
+ejecutadas en la corrida experimental de T11 el modelo no incluyó citas formales
+`[archivo.pdf p. N]`, lo que conllevó la abstención del pipeline en esos diez casos
+específicos (sin que ello permita afirmar que el modo A deba producir abstenciones de
+manera inevitable en todas las consultas o configuraciones). Conforme a la rúbrica de
+evaluación de respuestas v0.2 de T10, estas abstenciones no se clasifican automáticamente
+como respuestas incorrectas (reciben `calidad_respuesta = no_aplica`), evaluándose la
+adecuación de la abstención en su propio campo y auditándose cualitativamente el texto
+íntegro en `raw_response`.
 Se registra `raw_response` como auditoría de salida textual previa a la validación,
-sin que ésta reemplace la respuesta final ni altere las métricas. Conforme a las
-reglas de privacidad del proyecto, los artefactos versionados en Git conservan
-únicamente métricas, identificadores, citas, latencias y tokens autorizados, mientras
-que las trazas completas y el material de evaluación ciego T12 se preservan y preparan
-en almacenamiento local excluido de Git (`scripts/prepare_t12_eval.py`). El manifiesto
-registra diferencias y hashes del código. Todas las corridas experimentales están
-protegidas contra sobrescritura o reutilización de directorios.
+sin que ésta reemplace la respuesta final, altere las métricas ni se exponga en la
+interfaz de usuario. Conforme a las reglas de privacidad del proyecto, los artefactos
+versionados en Git conservan únicamente métricas, identificadores, citas, latencias y
+tokens autorizados, mientras que las trazas completas y el material de evaluación ciego T12
+se preservan y preparan en almacenamiento local excluido de Git (`scripts/prepare_t12_eval.py`).
+El manifiesto registra diferencias y hashes del código. Todas las corridas experimentales
+están protegidas contra sobrescritura o reutilización de directorios.
 
 Batería documental: 40 preguntas etiquetadas para recuperación piloto, sin usar
 sus respuestas como conocimiento. Batería de seguridad: 4 ataques sintéticos y 4

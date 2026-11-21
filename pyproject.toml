@@ -12,6 +12,7 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest==8.3.5"]
 ui = ["streamlit==1.41.1"]
+semantic = ["numpy==2.5.5", "onnxruntime==1.32.0", "tokenizers==0.23.3", "psutil==7.2.2"]
 
 [project.scripts]
 unsa-rag = "cs_rag_security.cli:main"

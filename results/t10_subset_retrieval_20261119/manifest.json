@@ -1,0 +1,73 @@
+{
+  "pages_sha256": "b1a2db0371972ed2d8fd4f0990ea58d6315437b0a25e3bd3547ca381eb1528c2",
+  "questions_sha256": "76144a8ecbd9c06ec6a3261267f17ea2ec3fdc17a65273d372eb8f324a0e5f8b",
+  "physical_pages": 26,
+  "text_pages": 22,
+  "pages_without_text": [
+    {
+      "documento_id": "RCU-0284-2023",
+      "pagina_pdf": 3
+    },
+    {
+      "documento_id": "RCU-0284-2023",
+      "pagina_pdf": 4
+    },
+    {
+      "documento_id": "RCU-0284-2023",
+      "pagina_pdf": 5
+    },
+    {
+      "documento_id": "RCU-0284-2023",
+      "pagina_pdf": 6
+    }
+  ],
+  "question_ids": [
+    "GQ004",
+    "GQ006",
+    "GQ012",
+    "GQ016",
+    "GQ017",
+    "GQ023",
+    "GQ027",
+    "GQ034",
+    "GQ035",
+    "GQ036",
+    "GQ037",
+    "GQ038",
+    "GQ039"
+  ],
+  "excluded_question_ids": [
+    "GQ030",
+    "GQ040"
+  ],
+  "status": "completed",
+  "scope": "retrieval_only",
+  "python": "3.12.14",
+  "started_utc": "2026-11-19T14:39:27.979180+00:00",
+  "finished_utc": "2026-11-19T14:39:28.045600+00:00",
+  "n_questions": 13,
+  "n_chunks": 63,
+  "chunk_size_words": 180,
+  "chunk_overlap_words": 30,
+  "top_k": [
+    1,
+    3,
+    5
+  ],
+  "index_build_seconds": {
+    "fallback_textual_tfidf_coseno_v1": 0.025017599982675165
+  },
+  "semantic_model": null,
+  "semantic_comparison": "pending_local_model",
+  "source_sha256": {
+    "scripts\\retrieval_benchmark.py": "fd1d2f17a87d0ac0c371fab60cb4086ddaee090c124ccdf4c65834dc0cb87999",
+    "src\\cs_rag_security\\retrieval\\__init__.py": "6b537bc3a790a1e85940bfcd380f964574d41a6f10a2c4bb104d2e101e6860d7",
+    "src\\cs_rag_security\\ingestion\\__init__.py": "0b9f03767e858f7a6e7b3b5365849db82ae346f059b65abd47b5450cdb18a308"
+  },
+  "limitations": [
+    "Acierto de al menos una fuente documento/página en top-k de fragmentos.",
+    "La vigencia y la calidad de respuesta del LLM quedan fuera de esta medición.",
+    "TF-IDF conserva su filtro de puntuación positiva. El modo semántico devuelve sus vecinos top-k.",
+    "La latencia corresponde a una búsqueda en un único pase, sin calentamiento controlado."
+  ]
+}
