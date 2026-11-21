@@ -56,6 +56,8 @@ def test_invariants_top_level_contract_and_metadata():
         'documental', 'abstained', 'warnings', 'retrieved', 'accepted_ids',
         'detector_log', 'seconds', 'seed', 'top_k', 'retriever',
         'citation_validation', 'generation_metadata',
+        'evaluated_chunks', 'discarded_chunks', 'prompt_version',
+        'detector_version', 'detector_applied',
     }
     assert keys_a == expected_keys
 
@@ -70,6 +72,17 @@ def test_invariants_top_level_contract_and_metadata():
         assert res['documental'] is True
         assert res['mode'] == mode
         assert res['generation_metadata']['parameters']['seed'] == 42
+        assert isinstance(res['evaluated_chunks'], list)
+        assert isinstance(res['discarded_chunks'], list)
+        assert res['detector_version'] == 'heuristic_v1'
+
+    # Verificación de los campos específicos de T16 por condición
+    assert results['A_sin_defensa']['prompt_version'] == 'v1'
+    assert results['A_sin_defensa']['detector_applied'] is False
+    assert results['B_defensa_basica']['prompt_version'] == 'v1'
+    assert results['B_defensa_basica']['detector_applied'] is False
+    assert results['C_defensa_propuesta']['prompt_version'] == 'v3'
+    assert results['C_defensa_propuesta']['detector_applied'] is True
 
 
 def test_invariant_retrieval_pairing_and_reproducibility():

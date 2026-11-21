@@ -25,6 +25,15 @@ from typing import Optional, Union
 from cs_rag_security.ingestion import digest, read_json
 from cs_rag_security.pipeline import answer
 from cs_rag_security.retrieval import Index
+from cs_rag_security.traceability import (
+    ABSTENTION_REASON_MODEL_REFUSAL,
+    STANDARD_MODEL_REFUSAL_RESPONSE,
+    determine_abstention_reason,
+    ensure_unique_output_dir,
+    extract_citations,
+    get_git_commit,
+    is_provider_refusal,
+)
 
 
 SELECTED_QUESTION_IDS = [
@@ -41,40 +50,6 @@ SELECTED_QUESTION_IDS = [
 ]
 
 TEST_QUESTION_ID = 'GQ001'
-
-
-def get_git_commit() -> str:
-    try:
-        res = subprocess.run(
-            ['git', 'rev-parse', 'HEAD'],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        return res.stdout.strip()
-    except Exception:
-        return 'unknown'
-
-
-def extract_citations(text: str):
-    if not text:
-        return []
-    return re.findall(r'\[([^\[\]]+\.pdf) p\. (\d+)\]', text)
-
-
-def determine_abstention_reason(res: dict) -> str:
-    if not res.get('abstained'):
-        return ''
-    response = res.get('response', '')
-    if 'no hay evidencia fiable suficiente' in response:
-        return 'evidencia_insuficiente_o_no_fiable'
-    if 'carece de citas válidas' in response:
-        return 'citas_invalidas_o_ausentes'
-    if 'rechazó la consulta' in response:
-        return 'rechazo_del_modelo'
-    if 'no devolvió contenido' in response:
-        return 'modelo_vacio'
-    return 'abstencion_otra'
 
 
 def execute_question(
@@ -173,10 +148,16 @@ def sanitize_record_for_git(record: dict) -> dict:
         {k: v for k, v in c.items() if k != 'texto'}
         for c in record.get('accepted_chunks', [])
     ]
+    final_resp = record.get('response', '')
+    abst_reason = record.get('abstention_reason', '')
+    if is_provider_refusal(record['abstained'], abst_reason, final_resp):
+        final_resp = STANDARD_MODEL_REFUSAL_RESPONSE
+        abst_reason = ABSTENTION_REASON_MODEL_REFUSAL
+
     sanitized = {
         'id': record['id'],
         'abstained': record['abstained'],
-        'abstention_reason': record['abstention_reason'],
+        'abstention_reason': abst_reason,
         'retrieved_chunks': retrieved,
         'accepted_chunks': accepted,
         'accepted_ids': record['accepted_ids'],
@@ -189,7 +170,7 @@ def sanitize_record_for_git(record: dict) -> dict:
         'latency_seconds': record['latency_seconds'],
         'pipeline_seconds': record['pipeline_seconds'],
         'tokens': record['tokens'],
-        'response': record['response'],
+        'response': final_resp,
     }
     return sanitized
 
@@ -282,15 +263,6 @@ def write_traces_csv(out_dir: Path, records: list):
 def get_default_output_dir() -> Path:
     timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
     return Path('results') / f'llm_baseline_{timestamp}'
-
-
-def ensure_unique_output_dir(out_dir: Path) -> Path:
-    if out_dir.exists():
-        raise FileExistsError(
-            f"El directorio de salida ya existe y no puede ser reutilizado ni sobrescrito: {out_dir}"
-        )
-    out_dir.mkdir(parents=True, exist_ok=False)
-    return out_dir
 
 
 def run_baseline(
