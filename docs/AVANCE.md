@@ -108,7 +108,9 @@ Sin push, sin APIs pagadas ni modelos descargados.
   viabilidad técnica del formato genérico en esta instancia puntual. No se afirma ausencia
   de sesgo ni eficacia general del prompt C v3 a partir de un único ensayo piloto; la
   evaluación sistemática de desempeño y robustez corresponde a T12. Registrado en
-  `results/piloto_ollama_pr7.json` sin inclusión de texto íntegro del corpus ni secretos.
+  `results/piloto_ollama_pr7.json` con el ID, la fuente, el resultado de la validación y
+  los metadatos de la ejecución. El enunciado y las respuestas solo se guardan en el
+  respaldo local del piloto.
 
 ## Fase 7 — Ejecución y revisión final de T11 (Baseline Ollama A_sin_defensa)
 - **Ejecución experimental:** Ejecutado script reproducible `scripts/run_t11_baseline.py`
