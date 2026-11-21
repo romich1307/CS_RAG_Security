@@ -1,0 +1,25 @@
+{
+  "task": "T08",
+  "frozen_before_semantic_execution": true,
+  "date": "2026-11-19",
+  "corpus": "UNSA_Corpus_RAG_Depurado_2026-11-17",
+  "primary_question_ids": ["GQ004", "GQ006", "GQ012", "GQ016", "GQ017", "GQ023", "GQ027", "GQ034", "GQ035", "GQ036", "GQ037", "GQ038", "GQ039"],
+  "selection_basis": "13 preguntas con respaldo confirmado en el cotejo documental asistido de T10, commit 7924ae6; revisión humana del equipo pendiente.",
+  "excluded_from_primary": {
+    "GQ030": "La referencia recibida omite página 7; necesita páginas 7 y 8.",
+    "GQ040": "Discrepancia UM-SA/UM-DSA entre resolución y anexo."
+  },
+  "secondary_scope": "Las 40 preguntas originales se reportan como exploratorias, sin declarar validación humana completa ni vigencia actual.",
+  "chunk_size_words": 180,
+  "chunk_overlap_words": 30,
+  "top_k": [1, 3, 5],
+  "latency_repeats": 5,
+  "warmup_queries_per_method": 3,
+  "seed": 42,
+  "onnx_threads": 4,
+  "model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "model_revision": "e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
+  "model_variant": "onnx/model_quint8_avx2.onnx",
+  "model_max_tokens": 128,
+  "decision_rule": "Comparar aciertos, fallos, latencia y tamaño; no cambiar el modelo para mejorar esta muestra ni declarar superioridad general."
+}

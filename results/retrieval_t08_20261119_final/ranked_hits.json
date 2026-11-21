@@ -1,0 +1,3282 @@
+[
+  {
+    "question_id": "GQ001",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:3:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.43562985012470057
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:6:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.3589399796334406
+      },
+      {
+        "chunk_id": "RCU-0450-2026:61:3:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 61,
+        "score": 0.32674136101338136
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:7:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.28553700570039536
+      },
+      {
+        "chunk_id": "RCU-0161-2021:2:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.26455081405416303
+      }
+    ]
+  },
+  {
+    "question_id": "GQ001",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:3:7:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.7282967567443848
+      },
+      {
+        "chunk_id": "RCU-0450-2026:61:3:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 61,
+        "score": 0.696202278137207
+      },
+      {
+        "chunk_id": "RCU-0450-2026:2:3:150",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 2,
+        "score": 0.6919786930084229
+      },
+      {
+        "chunk_id": "RCU-0450-2026:18:14:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 18,
+        "score": 0.6803545951843262
+      },
+      {
+        "chunk_id": "RCU-0450-2026:27:11:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 27,
+        "score": 0.6797856688499451
+      }
+    ]
+  },
+  {
+    "question_id": "GQ002",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:3:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.4069623202457834
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:7:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.315036395319896
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:3:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.2564191591777162
+      },
+      {
+        "chunk_id": "RCU-0470-2024:8:17:0",
+        "documento_id": "RCU-0470-2024",
+        "archivo_pdf": "RCU-0470-2024.pdf",
+        "pagina_pdf": 8,
+        "score": 0.22310602764804943
+      },
+      {
+        "chunk_id": "RCU-0009-2026:3:10:0",
+        "documento_id": "RCU-0009-2026",
+        "archivo_pdf": "RCU-0009-2026.pdf",
+        "pagina_pdf": 3,
+        "score": 0.20908385281452216
+      }
+    ]
+  },
+  {
+    "question_id": "GQ002",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:2:5:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.7588111758232117
+      },
+      {
+        "chunk_id": "RCU-0501-2020:10:12:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 10,
+        "score": 0.7528063058853149
+      },
+      {
+        "chunk_id": "RCU-0450-2026:73:10:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 73,
+        "score": 0.7492030262947083
+      },
+      {
+        "chunk_id": "RCU-0161-2021:6:10:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 6,
+        "score": 0.7490009069442749
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:6:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.7489655017852783
+      }
+    ]
+  },
+  {
+    "question_id": "GQ003",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:5:7:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.27945283084163364
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.2772155218052289
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:9:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.2723367160914741
+      },
+      {
+        "chunk_id": "RCU-0450-2026:1:6:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 1,
+        "score": 0.26860192506695774
+      },
+      {
+        "chunk_id": "RCU-0450-2026:9:13:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 9,
+        "score": 0.2518951278081338
+      }
+    ]
+  },
+  {
+    "question_id": "GQ003",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:6:10:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 6,
+        "score": 0.7584916949272156
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:6:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.7386725544929504
+      },
+      {
+        "chunk_id": "RCU-0501-2020:6:6:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.7309119701385498
+      },
+      {
+        "chunk_id": "RCU-0584-2023:3:2:0",
+        "documento_id": "RCU-0584-2023",
+        "archivo_pdf": "RCU-0584-2023.pdf",
+        "pagina_pdf": 3,
+        "score": 0.7291533350944519
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:8:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.7193201780319214
+      }
+    ]
+  },
+  {
+    "question_id": "GQ004",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:3:10:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.544976376625595
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.28951863129601935
+      },
+      {
+        "chunk_id": "RCU-0501-2020:9:10:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.19421800725799435
+      },
+      {
+        "chunk_id": "RCU-0450-2026:73:5:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 73,
+        "score": 0.1919797362856589
+      },
+      {
+        "chunk_id": "RCU-0127-2020:6:4:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.17035300986266685
+      }
+    ]
+  },
+  {
+    "question_id": "GQ004",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0450-2026:66:21:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 66,
+        "score": 0.800029993057251
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:10:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.7626334428787231
+      },
+      {
+        "chunk_id": "RCU-0501-2020:7:10:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.7285371422767639
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:4:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.728519082069397
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:10:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.7259689569473267
+      }
+    ]
+  },
+  {
+    "question_id": "GQ005",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:3:10:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.5127930216400317
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.3076890831015725
+      },
+      {
+        "chunk_id": "RCU-0501-2020:9:10:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.2064073054902165
+      },
+      {
+        "chunk_id": "RCU-0450-2026:73:5:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 73,
+        "score": 0.2040285586022257
+      },
+      {
+        "chunk_id": "RCU-0127-2020:6:4:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.1810445192200581
+      }
+    ]
+  },
+  {
+    "question_id": "GQ005",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0450-2026:66:21:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 66,
+        "score": 0.7879840731620789
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:10:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.6990237832069397
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:8:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.6707042455673218
+      },
+      {
+        "chunk_id": "RCU-0501-2020:9:11:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.6656932234764099
+      },
+      {
+        "chunk_id": "RCU-0501-2020:7:10:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.6603787541389465
+      }
+    ]
+  },
+  {
+    "question_id": "GQ006",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:4:4:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.37697904004047694
+      },
+      {
+        "chunk_id": "RCU-0501-2020:8:2:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.29210111474920064
+      },
+      {
+        "chunk_id": "RCU-0501-2020:7:12:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.23499190349809546
+      },
+      {
+        "chunk_id": "RCU-0501-2020:10:8:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 10,
+        "score": 0.20770180871412866
+      },
+      {
+        "chunk_id": "RCU-0273-2021:1:2:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 1,
+        "score": 0.20342645449175303
+      }
+    ]
+  },
+  {
+    "question_id": "GQ006",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0450-2026:9:12:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 9,
+        "score": 0.7109591960906982
+      },
+      {
+        "chunk_id": "RCU-0009-2026:2:3:0",
+        "documento_id": "RCU-0009-2026",
+        "archivo_pdf": "RCU-0009-2026.pdf",
+        "pagina_pdf": 2,
+        "score": 0.7000347971916199
+      },
+      {
+        "chunk_id": "RCU-0161-2021:2:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.6874229907989502
+      },
+      {
+        "chunk_id": "RCU-0161-2021:6:13:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6819217205047607
+      },
+      {
+        "chunk_id": "RCU-0273-2021:2:1:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.6748629212379456
+      }
+    ]
+  },
+  {
+    "question_id": "GQ007",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:3:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.5946796425020912
+      },
+      {
+        "chunk_id": "RCU-0501-2020:9:10:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.3367374935287362
+      },
+      {
+        "chunk_id": "RCU-0450-2026:73:5:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 73,
+        "score": 0.33285675266591214
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:7:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.3142722545946888
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.3037322803688086
+      }
+    ]
+  },
+  {
+    "question_id": "GQ007",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0450-2026:66:21:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 66,
+        "score": 0.8032814264297485
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:3:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.7944103479385376
+      },
+      {
+        "chunk_id": "RCU-0501-2020:7:10:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.7515270113945007
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:8:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.7498217821121216
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.7447148561477661
+      }
+    ]
+  },
+  {
+    "question_id": "GQ008",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:4:9:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.3043697827986304
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:8:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.27748260494897975
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:11:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.2240124739591206
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:29:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.18640244459416844
+      },
+      {
+        "chunk_id": "RCU-0501-2020:9:10:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.17190994211384816
+      }
+    ]
+  },
+  {
+    "question_id": "GQ008",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0450-2026:66:21:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 66,
+        "score": 0.7817314267158508
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:8:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.7364189028739929
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:29:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.6948708891868591
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:11:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.6941406726837158
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:7:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.6860816478729248
+      }
+    ]
+  },
+  {
+    "question_id": "GQ009",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:4:10:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.40535836819258314
+      },
+      {
+        "chunk_id": "RCU-0501-2020:6:10:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.2339122343827566
+      },
+      {
+        "chunk_id": "RCU-0501-2020:4:4:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.20989618430357118
+      },
+      {
+        "chunk_id": "RCU-0501-2020:9:10:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.19534972976998968
+      },
+      {
+        "chunk_id": "RCU-0450-2026:73:5:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 73,
+        "score": 0.19309841622923796
+      }
+    ]
+  },
+  {
+    "question_id": "GQ009",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:4:10:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.85772305727005
+      },
+      {
+        "chunk_id": "RCU-0450-2026:66:21:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 66,
+        "score": 0.7887824773788452
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:10:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.7652457356452942
+      },
+      {
+        "chunk_id": "RCU-0501-2020:7:10:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.7579425573348999
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:12:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.7508848905563354
+      }
+    ]
+  },
+  {
+    "question_id": "GQ010",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:4:12:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.45964037389861784
+      },
+      {
+        "chunk_id": "RCU-0450-2026:54:21:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 54,
+        "score": 0.30019478864755494
+      },
+      {
+        "chunk_id": "RCU-0450-2026:73:16:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 73,
+        "score": 0.2848058154236183
+      },
+      {
+        "chunk_id": "RCU-0127-2020:7:4:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.21628557385752045
+      },
+      {
+        "chunk_id": "RCU-0450-2026:33:8:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 33,
+        "score": 0.21183764303440722
+      }
+    ]
+  },
+  {
+    "question_id": "GQ010",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:4:12:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.8462702631950378
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:7:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.7595807313919067
+      },
+      {
+        "chunk_id": "RCU-0450-2026:66:21:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 66,
+        "score": 0.7254869341850281
+      },
+      {
+        "chunk_id": "RCU-0450-2026:54:21:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 54,
+        "score": 0.7160166501998901
+      },
+      {
+        "chunk_id": "RCU-0127-2020:7:4:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.7086639404296875
+      }
+    ]
+  },
+  {
+    "question_id": "GQ011",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0501-2020:9:10:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.3599000311953896
+      },
+      {
+        "chunk_id": "RCU-0450-2026:73:5:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 73,
+        "score": 0.35575235300560576
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.35276157265469615
+      },
+      {
+        "chunk_id": "RCU-0127-2020:6:4:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.3156764629057262
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:13:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.29476041952752136
+      }
+    ]
+  },
+  {
+    "question_id": "GQ011",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0450-2026:66:21:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 66,
+        "score": 0.7462620735168457
+      },
+      {
+        "chunk_id": "RCU-0501-2020:9:11:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.7434051632881165
+      },
+      {
+        "chunk_id": "RCU-0161-2021:6:10:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 6,
+        "score": 0.7290947437286377
+      },
+      {
+        "chunk_id": "RCU-0161-2021:2:5:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.7195025682449341
+      },
+      {
+        "chunk_id": "RCU-0584-2023:3:2:0",
+        "documento_id": "RCU-0584-2023",
+        "archivo_pdf": "RCU-0584-2023.pdf",
+        "pagina_pdf": 3,
+        "score": 0.7172970771789551
+      }
+    ]
+  },
+  {
+    "question_id": "GQ012",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:5:3:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 5,
+        "score": 0.42577766625947927
+      },
+      {
+        "chunk_id": "RCU-0450-2026:41:25:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 41,
+        "score": 0.41422535716425557
+      },
+      {
+        "chunk_id": "RCU-0450-2026:41:27:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 41,
+        "score": 0.41422535716425557
+      },
+      {
+        "chunk_id": "RCU-0450-2026:41:31:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 41,
+        "score": 0.41422535716425557
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:25:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.23309163337202987
+      }
+    ]
+  },
+  {
+    "question_id": "GQ012",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:5:3:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 5,
+        "score": 0.8201498985290527
+      },
+      {
+        "chunk_id": "RCU-0161-2021:5:4:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 5,
+        "score": 0.708522379398346
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:2:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6557374000549316
+      },
+      {
+        "chunk_id": "RCU-0127-2020:5:6:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.6481529474258423
+      },
+      {
+        "chunk_id": "RCU-0127-2020:6:8:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.636906623840332
+      }
+    ]
+  },
+  {
+    "question_id": "GQ013",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:6:5:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 6,
+        "score": 0.4196296558129806
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.3258707971259994
+      },
+      {
+        "chunk_id": "RCU-0450-2026:59:5:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 59,
+        "score": 0.3125342268618279
+      },
+      {
+        "chunk_id": "RCU-0161-2021:5:4:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 5,
+        "score": 0.3098774348371014
+      },
+      {
+        "chunk_id": "RCU-0127-2020:6:8:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.17157758310684373
+      }
+    ]
+  },
+  {
+    "question_id": "GQ013",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0450-2026:23:6:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 23,
+        "score": 0.6442660093307495
+      },
+      {
+        "chunk_id": "RCU-0450-2026:18:5:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 18,
+        "score": 0.6364014148712158
+      },
+      {
+        "chunk_id": "RCU-0161-2021:5:4:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 5,
+        "score": 0.6357961893081665
+      },
+      {
+        "chunk_id": "RCU-0450-2026:32:9:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 32,
+        "score": 0.6198453903198242
+      },
+      {
+        "chunk_id": "RCU-0450-2026:49:12:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 49,
+        "score": 0.6039091944694519
+      }
+    ]
+  },
+  {
+    "question_id": "GQ014",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0127-2020:6:8:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.3046195968517018
+      },
+      {
+        "chunk_id": "RCU-0127-2020:4:4:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.18699838784564046
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.1276297938815317
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:15:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.1177207633721548
+      },
+      {
+        "chunk_id": "RCU-0450-2026:15:15:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 15,
+        "score": 0.11332370108749873
+      }
+    ]
+  },
+  {
+    "question_id": "GQ014",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0501-2020:11:3:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 11,
+        "score": 0.7253826856613159
+      },
+      {
+        "chunk_id": "RCU-0504-2020:9:10:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.7165740728378296
+      },
+      {
+        "chunk_id": "RCU-0450-2026:11:12:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 11,
+        "score": 0.7115640640258789
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:17:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.695371150970459
+      },
+      {
+        "chunk_id": "RCU-0584-2023:3:3:0",
+        "documento_id": "RCU-0584-2023",
+        "archivo_pdf": "RCU-0584-2023.pdf",
+        "pagina_pdf": 3,
+        "score": 0.6943894624710083
+      }
+    ]
+  },
+  {
+    "question_id": "GQ015",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:5:6:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 5,
+        "score": 0.2918679720500277
+      },
+      {
+        "chunk_id": "RCU-0450-2026:42:3:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 42,
+        "score": 0.16202527358237057
+      },
+      {
+        "chunk_id": "RCU-0161-2021:4:12:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 4,
+        "score": 0.14723320138332957
+      },
+      {
+        "chunk_id": "RCU-0501-2020:4:1:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.13394891902488204
+      },
+      {
+        "chunk_id": "RCU-0450-2026:42:14:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 42,
+        "score": 0.12622994861562412
+      }
+    ]
+  },
+  {
+    "question_id": "GQ015",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:5:6:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 5,
+        "score": 0.650958776473999
+      },
+      {
+        "chunk_id": "RCU-0450-2026:66:21:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 66,
+        "score": 0.5820253491401672
+      },
+      {
+        "chunk_id": "RCU-0161-2021:5:7:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 5,
+        "score": 0.5765299797058105
+      },
+      {
+        "chunk_id": "RCU-0501-2020:8:1:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.5740528106689453
+      },
+      {
+        "chunk_id": "RCU-0501-2020:7:11:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.5639805197715759
+      }
+    ]
+  },
+  {
+    "question_id": "GQ016",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0127-2020:3:32:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.23863818504398132
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:17:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.19174718439031044
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:22:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.18351266462648014
+      },
+      {
+        "chunk_id": "RCU-0161-2021:5:7:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 5,
+        "score": 0.18161389374073914
+      },
+      {
+        "chunk_id": "RCU-0450-2026:42:3:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 42,
+        "score": 0.16085352239360523
+      }
+    ]
+  },
+  {
+    "question_id": "GQ016",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0470-2024:8:17:0",
+        "documento_id": "RCU-0470-2024",
+        "archivo_pdf": "RCU-0470-2024.pdf",
+        "pagina_pdf": 8,
+        "score": 0.7160254716873169
+      },
+      {
+        "chunk_id": "RCU-0161-2021:5:7:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 5,
+        "score": 0.7015032172203064
+      },
+      {
+        "chunk_id": "RCU-0470-2024:8:16:0",
+        "documento_id": "RCU-0470-2024",
+        "archivo_pdf": "RCU-0470-2024.pdf",
+        "pagina_pdf": 8,
+        "score": 0.6452069878578186
+      },
+      {
+        "chunk_id": "RCU-0470-2024:5:15:0",
+        "documento_id": "RCU-0470-2024",
+        "archivo_pdf": "RCU-0470-2024.pdf",
+        "pagina_pdf": 5,
+        "score": 0.6435901522636414
+      },
+      {
+        "chunk_id": "RCU-0450-2026:20:4:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 20,
+        "score": 0.6422170996665955
+      }
+    ]
+  },
+  {
+    "question_id": "GQ017",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:6:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 6,
+        "score": 0.3583732572272894
+      },
+      {
+        "chunk_id": "RCU-0450-2026:70:1:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 70,
+        "score": 0.27915725644550904
+      },
+      {
+        "chunk_id": "RCU-0450-2026:41:25:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 41,
+        "score": 0.2275623180707581
+      },
+      {
+        "chunk_id": "RCU-0450-2026:41:27:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 41,
+        "score": 0.2275623180707581
+      },
+      {
+        "chunk_id": "RCU-0450-2026:41:31:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 41,
+        "score": 0.2275623180707581
+      }
+    ]
+  },
+  {
+    "question_id": "GQ017",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:6:2:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 6,
+        "score": 0.7539069652557373
+      },
+      {
+        "chunk_id": "RCU-0450-2026:21:13:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 21,
+        "score": 0.6461472511291504
+      },
+      {
+        "chunk_id": "RCU-0450-2026:16:10:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 16,
+        "score": 0.6391588449478149
+      },
+      {
+        "chunk_id": "RCU-0450-2026:21:16:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 21,
+        "score": 0.6221888065338135
+      },
+      {
+        "chunk_id": "RCU-0450-2026:27:6:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 27,
+        "score": 0.6160253286361694
+      }
+    ]
+  },
+  {
+    "question_id": "GQ018",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:6:7:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 6,
+        "score": 0.5419113919596757
+      },
+      {
+        "chunk_id": "RCU-0450-2026:8:9:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 8,
+        "score": 0.17789226788685433
+      },
+      {
+        "chunk_id": "RCU-0470-2024:10:6:0",
+        "documento_id": "RCU-0470-2024",
+        "archivo_pdf": "RCU-0470-2024.pdf",
+        "pagina_pdf": 10,
+        "score": 0.16200340324182963
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:25:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.14393076642973898
+      },
+      {
+        "chunk_id": "RCU-0501-2020:8:2:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.13085107026853945
+      }
+    ]
+  },
+  {
+    "question_id": "GQ018",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0450-2026:49:12:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 49,
+        "score": 0.6689857244491577
+      },
+      {
+        "chunk_id": "RCU-0450-2026:66:21:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 66,
+        "score": 0.6198029518127441
+      },
+      {
+        "chunk_id": "RCU-0450-2026:63:12:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 63,
+        "score": 0.6165227293968201
+      },
+      {
+        "chunk_id": "RCU-0450-2026:35:13:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 35,
+        "score": 0.6155186891555786
+      },
+      {
+        "chunk_id": "RCU-0450-2026:36:2:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 36,
+        "score": 0.6014324426651001
+      }
+    ]
+  },
+  {
+    "question_id": "GQ019",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:4:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.559814032853087
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.3972606898959446
+      },
+      {
+        "chunk_id": "RCU-0504-2020:5:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.3290145662674201
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:7:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.3179793165980027
+      },
+      {
+        "chunk_id": "RCU-0501-2020:6:2:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.2815668889019104
+      }
+    ]
+  },
+  {
+    "question_id": "GQ019",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:4:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.7848938703536987
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.7439798712730408
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:4:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.7285716533660889
+      },
+      {
+        "chunk_id": "RCU-0504-2020:8:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.6945101022720337
+      },
+      {
+        "chunk_id": "RCU-0504-2020:5:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.6862301230430603
+      }
+    ]
+  },
+  {
+    "question_id": "GQ020",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:4:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.3983241989926531
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:1:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.3832643716009908
+      },
+      {
+        "chunk_id": "RCU-0501-2020:3:2:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.31926187128610856
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.2993897652413566
+      },
+      {
+        "chunk_id": "RCU-0501-2020:9:9:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.22137326338706967
+      }
+    ]
+  },
+  {
+    "question_id": "GQ020",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0501-2020:4:16:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.7087604403495789
+      },
+      {
+        "chunk_id": "RCU-0450-2026:2:1:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 2,
+        "score": 0.6796826124191284
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.6794887781143188
+      },
+      {
+        "chunk_id": "RCU-0284-2023:4:18:0",
+        "documento_id": "RCU-0284-2023",
+        "archivo_pdf": "RCU-0284-2023.pdf",
+        "pagina_pdf": 4,
+        "score": 0.6705756783485413
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.6522899270057678
+      }
+    ]
+  },
+  {
+    "question_id": "GQ021",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:6:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.2894814596351264
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.2634675459949031
+      },
+      {
+        "chunk_id": "RCU-0450-2026:41:24:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 41,
+        "score": 0.2605960655733911
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:11:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.23766781446024549
+      },
+      {
+        "chunk_id": "RCU-0273-2021:1:11:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 1,
+        "score": 0.2159536329208461
+      }
+    ]
+  },
+  {
+    "question_id": "GQ021",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0127-2020:3:28:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.7074668407440186
+      },
+      {
+        "chunk_id": "RCU-0501-2020:8:11:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.6581931710243225
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6477360129356384
+      },
+      {
+        "chunk_id": "RCU-0504-2020:9:4:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.6469582319259644
+      },
+      {
+        "chunk_id": "RCU-0009-2026:4:13:0",
+        "documento_id": "RCU-0009-2026",
+        "archivo_pdf": "RCU-0009-2026.pdf",
+        "pagina_pdf": 4,
+        "score": 0.6451032161712646
+      }
+    ]
+  },
+  {
+    "question_id": "GQ022",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:7:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.2800497912574727
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:15:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.2523526181828232
+      },
+      {
+        "chunk_id": "RCU-0504-2020:8:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.21362884149190023
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:10:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.17221347718383323
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:7:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.17085211385931348
+      }
+    ]
+  },
+  {
+    "question_id": "GQ022",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:6:7:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.7078375816345215
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:28:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.6834589242935181
+      },
+      {
+        "chunk_id": "RCU-0450-2026:42:16:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 42,
+        "score": 0.658147394657135
+      },
+      {
+        "chunk_id": "RCU-0450-2026:38:9:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 38,
+        "score": 0.6519275307655334
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6427931785583496
+      }
+    ]
+  },
+  {
+    "question_id": "GQ023",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:6:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.5221413468344247
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.2910646792481556
+      },
+      {
+        "chunk_id": "RCU-0504-2020:8:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.222031267896315
+      },
+      {
+        "chunk_id": "RCU-0504-2020:5:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.21675465593669363
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:10:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.17898695897486933
+      }
+    ]
+  },
+  {
+    "question_id": "GQ023",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:6:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.7012788653373718
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6055088043212891
+      },
+      {
+        "chunk_id": "RCU-0504-2020:5:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.6054823398590088
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:7:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6006807684898376
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:2:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.5757467746734619
+      }
+    ]
+  },
+  {
+    "question_id": "GQ024",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:6:10:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.5394052101695321
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:9:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.3099131601354733
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.30338392236931355
+      },
+      {
+        "chunk_id": "RCU-0127-2020:4:2:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.23289426435603694
+      },
+      {
+        "chunk_id": "RCU-0504-2020:8:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.23142868834863184
+      }
+    ]
+  },
+  {
+    "question_id": "GQ024",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:6:10:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6535131931304932
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:7:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6339465379714966
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.5839472413063049
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:2:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.5782365798950195
+      },
+      {
+        "chunk_id": "RCU-0127-2020:4:2:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.5706819295883179
+      }
+    ]
+  },
+  {
+    "question_id": "GQ025",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:4:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.37900718532055666
+      },
+      {
+        "chunk_id": "RCU-0504-2020:5:7:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.2710677929464447
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:11:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.26983331824784845
+      },
+      {
+        "chunk_id": "RCU-0504-2020:5:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.23465282887784128
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.2285421320896725
+      }
+    ]
+  },
+  {
+    "question_id": "GQ025",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:9:4:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.6560497283935547
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:11:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.631291389465332
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:2:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.6133752465248108
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:2:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.5878567695617676
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:3:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.5792008638381958
+      }
+    ]
+  },
+  {
+    "question_id": "GQ026",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:7:2:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.5275785779942855
+      },
+      {
+        "chunk_id": "RCU-0504-2020:5:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.2029077415230942
+      },
+      {
+        "chunk_id": "RCU-0450-2026:25:22:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 25,
+        "score": 0.17972811400754496
+      },
+      {
+        "chunk_id": "RCU-0450-2026:36:8:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 36,
+        "score": 0.1702927755759191
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:9:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.1663980416236744
+      }
+    ]
+  },
+  {
+    "question_id": "GQ026",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:7:2:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.8440970778465271
+      },
+      {
+        "chunk_id": "RCU-0504-2020:9:4:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.7345963716506958
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6948674321174622
+      },
+      {
+        "chunk_id": "RCU-0501-2020:7:8:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.6895982623100281
+      },
+      {
+        "chunk_id": "RCU-0450-2026:10:22:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 10,
+        "score": 0.6805725693702698
+      }
+    ]
+  },
+  {
+    "question_id": "GQ027",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0450-2026:10:10:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 10,
+        "score": 0.3556361897590967
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.34406963765733634
+      },
+      {
+        "chunk_id": "RCU-0450-2026:51:3:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 51,
+        "score": 0.2944412543357812
+      },
+      {
+        "chunk_id": "RCU-0450-2026:41:25:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 41,
+        "score": 0.25383036006284093
+      },
+      {
+        "chunk_id": "RCU-0450-2026:41:27:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 41,
+        "score": 0.25383036006284093
+      }
+    ]
+  },
+  {
+    "question_id": "GQ027",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:7:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.7435078024864197
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:2:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6881409883499146
+      },
+      {
+        "chunk_id": "RCU-0161-2021:5:3:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 5,
+        "score": 0.6823021769523621
+      },
+      {
+        "chunk_id": "RCU-0161-2021:5:4:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 5,
+        "score": 0.6687570810317993
+      },
+      {
+        "chunk_id": "RCU-0504-2020:5:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.5985148549079895
+      }
+    ]
+  },
+  {
+    "question_id": "GQ028",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:7:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.317223722206827
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:9:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.23613700861008396
+      },
+      {
+        "chunk_id": "RCU-0504-2020:8:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.19364205959184622
+      },
+      {
+        "chunk_id": "RCU-0470-2024:8:10:0",
+        "documento_id": "RCU-0470-2024",
+        "archivo_pdf": "RCU-0470-2024.pdf",
+        "pagina_pdf": 8,
+        "score": 0.1882822596179624
+      },
+      {
+        "chunk_id": "RCU-0127-2020:5:6:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.1758699521626969
+      }
+    ]
+  },
+  {
+    "question_id": "GQ028",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0127-2020:3:26:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.7281748652458191
+      },
+      {
+        "chunk_id": "RCU-0127-2020:5:6:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.6963928937911987
+      },
+      {
+        "chunk_id": "RCU-0127-2020:6:2:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6541022658348083
+      },
+      {
+        "chunk_id": "RCU-0127-2020:4:10:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.6331014037132263
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:21:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.629853367805481
+      }
+    ]
+  },
+  {
+    "question_id": "GQ029",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:6:11:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.2399494217234603
+      },
+      {
+        "chunk_id": "RCU-0161-2021:3:10:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 3,
+        "score": 0.2215213804681484
+      },
+      {
+        "chunk_id": "RCU-0504-2020:5:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.20866515284556064
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.20323121247759723
+      },
+      {
+        "chunk_id": "RCU-0504-2020:8:2:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.19350371442213152
+      }
+    ]
+  },
+  {
+    "question_id": "GQ029",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:9:4:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.7234101295471191
+      },
+      {
+        "chunk_id": "RCU-0501-2020:7:8:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.7100978493690491
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6866880059242249
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:2:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.6850523948669434
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:26:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.6776939630508423
+      }
+    ]
+  },
+  {
+    "question_id": "GQ030",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0161-2021:6:5:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6384597367878919
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.4958071491797798
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:2:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.2528765071602196
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:12:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.21211671035435073
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:11:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.20676540851538328
+      }
+    ]
+  },
+  {
+    "question_id": "GQ030",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:7:9:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.759496808052063
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:12:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.7488664388656616
+      },
+      {
+        "chunk_id": "RCU-0161-2021:6:6:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 6,
+        "score": 0.7358639240264893
+      },
+      {
+        "chunk_id": "RCU-0161-2021:6:7:0",
+        "documento_id": "RCU-0161-2021",
+        "archivo_pdf": "RCU-0161-2021.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6426947712898254
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:27:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.6399721503257751
+      }
+    ]
+  },
+  {
+    "question_id": "GQ031",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:7:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.2894865591846351
+      },
+      {
+        "chunk_id": "RCU-0504-2020:8:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.220827439250733
+      },
+      {
+        "chunk_id": "RCU-0504-2020:8:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.20672539731792441
+      },
+      {
+        "chunk_id": "RCU-0450-2026:61:7:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 61,
+        "score": 0.19452465709304947
+      },
+      {
+        "chunk_id": "RCU-0450-2026:60:4:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 60,
+        "score": 0.1820904363031153
+      }
+    ]
+  },
+  {
+    "question_id": "GQ031",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:6:7:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.664384126663208
+      },
+      {
+        "chunk_id": "RCU-0450-2026:38:9:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 38,
+        "score": 0.6338450908660889
+      },
+      {
+        "chunk_id": "RCU-0450-2026:42:16:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 42,
+        "score": 0.6252368688583374
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:23:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.6251654028892517
+      },
+      {
+        "chunk_id": "RCU-0501-2020:6:13:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6192148923873901
+      }
+    ]
+  },
+  {
+    "question_id": "GQ032",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:8:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.36840897827657304
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.23268989523028066
+      },
+      {
+        "chunk_id": "RCU-0504-2020:8:4:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.22950718950284185
+      },
+      {
+        "chunk_id": "RCU-0501-2020:5:3:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.21933898706600577
+      },
+      {
+        "chunk_id": "RCU-0450-2026:51:19:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 51,
+        "score": 0.14903110489733679
+      }
+    ]
+  },
+  {
+    "question_id": "GQ032",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:6:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.7688801288604736
+      },
+      {
+        "chunk_id": "RCU-0504-2020:8:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.7170202732086182
+      },
+      {
+        "chunk_id": "RCU-0501-2020:6:17:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.6887907981872559
+      },
+      {
+        "chunk_id": "RCU-0504-2020:9:4:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.685906171798706
+      },
+      {
+        "chunk_id": "RCU-0284-2023:4:17:0",
+        "documento_id": "RCU-0284-2023",
+        "archivo_pdf": "RCU-0284-2023.pdf",
+        "pagina_pdf": 4,
+        "score": 0.6816355586051941
+      }
+    ]
+  },
+  {
+    "question_id": "GQ033",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:4:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.40435236325037843
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:7:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.2904245428396677
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.24028363962028576
+      },
+      {
+        "chunk_id": "RCU-0504-2020:5:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.22519668388427155
+      },
+      {
+        "chunk_id": "RCU-0504-2020:8:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.20857128608512882
+      }
+    ]
+  },
+  {
+    "question_id": "GQ033",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:5:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 5,
+        "score": 0.6849568486213684
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.6500403881072998
+      },
+      {
+        "chunk_id": "RCU-0450-2026:35:12:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 35,
+        "score": 0.5858498215675354
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.5796457529067993
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:2:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.5529482364654541
+      }
+    ]
+  },
+  {
+    "question_id": "GQ034",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:9:4:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.3877465159212114
+      },
+      {
+        "chunk_id": "RCU-0504-2020:9:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.2040874045132188
+      },
+      {
+        "chunk_id": "RCU-0504-2020:8:8:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 8,
+        "score": 0.19168158178713338
+      },
+      {
+        "chunk_id": "RCU-0504-2020:2:4:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 2,
+        "score": 0.17196199642684337
+      },
+      {
+        "chunk_id": "RCU-0450-2026:41:19:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 41,
+        "score": 0.16203227585900576
+      }
+    ]
+  },
+  {
+    "question_id": "GQ034",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0504-2020:9:4:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.7736308574676514
+      },
+      {
+        "chunk_id": "RCU-0504-2020:6:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.7010375261306763
+      },
+      {
+        "chunk_id": "RCU-0504-2020:9:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.6773722171783447
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:28:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.6741093397140503
+      },
+      {
+        "chunk_id": "RCU-0504-2020:7:3:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 7,
+        "score": 0.667076587677002
+      }
+    ]
+  },
+  {
+    "question_id": "GQ035",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0450-2026:14:12:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 14,
+        "score": 0.26772157409135655
+      },
+      {
+        "chunk_id": "RCU-0450-2026:41:26:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 41,
+        "score": 0.2060879707525134
+      },
+      {
+        "chunk_id": "RCU-0450-2026:14:15:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 14,
+        "score": 0.1977519803627653
+      },
+      {
+        "chunk_id": "RCU-0504-2020:9:6:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 9,
+        "score": 0.19518471016241284
+      },
+      {
+        "chunk_id": "RCU-0127-2020:4:4:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.19216116980123185
+      }
+    ]
+  },
+  {
+    "question_id": "GQ035",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0450-2026:41:26:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 41,
+        "score": 0.7126381397247314
+      },
+      {
+        "chunk_id": "RCU-0009-2026:3:3:0",
+        "documento_id": "RCU-0009-2026",
+        "archivo_pdf": "RCU-0009-2026.pdf",
+        "pagina_pdf": 3,
+        "score": 0.7026780843734741
+      },
+      {
+        "chunk_id": "RCU-0450-2026:37:9:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 37,
+        "score": 0.7012820839881897
+      },
+      {
+        "chunk_id": "RCU-0009-2026:2:6:0",
+        "documento_id": "RCU-0009-2026",
+        "archivo_pdf": "RCU-0009-2026.pdf",
+        "pagina_pdf": 2,
+        "score": 0.685071587562561
+      },
+      {
+        "chunk_id": "RCU-0450-2026:14:12:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 14,
+        "score": 0.6603905558586121
+      }
+    ]
+  },
+  {
+    "question_id": "GQ036",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0273-2021:1:1:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 1,
+        "score": 0.5473087522319033
+      },
+      {
+        "chunk_id": "RCU-0273-2021:2:5:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.2740348322690932
+      },
+      {
+        "chunk_id": "RCU-0273-2021:2:3:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.25600545408821684
+      },
+      {
+        "chunk_id": "RCU-0273-2021:2:2:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.2156054601964275
+      },
+      {
+        "chunk_id": "RCU-0284-2023:6:8:0",
+        "documento_id": "RCU-0284-2023",
+        "archivo_pdf": "RCU-0284-2023.pdf",
+        "pagina_pdf": 6,
+        "score": 0.21074293859340676
+      }
+    ]
+  },
+  {
+    "question_id": "GQ036",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0273-2021:2:5:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.805160403251648
+      },
+      {
+        "chunk_id": "RCU-0273-2021:1:10:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 1,
+        "score": 0.7769328951835632
+      },
+      {
+        "chunk_id": "RCU-0273-2021:2:3:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.7474027276039124
+      },
+      {
+        "chunk_id": "RCU-0273-2021:2:2:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.7221654057502747
+      },
+      {
+        "chunk_id": "RCU-0320-2022:1:2:0",
+        "documento_id": "RCU-0320-2022",
+        "archivo_pdf": "RCU-0320-2022.pdf",
+        "pagina_pdf": 1,
+        "score": 0.6607948541641235
+      }
+    ]
+  },
+  {
+    "question_id": "GQ037",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0273-2021:1:1:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 1,
+        "score": 0.46360039763337657
+      },
+      {
+        "chunk_id": "RCU-0273-2021:2:6:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.3353067937791465
+      },
+      {
+        "chunk_id": "RCU-0273-2021:2:1:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.25808774660232364
+      },
+      {
+        "chunk_id": "RCU-0504-2020:4:1:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 4,
+        "score": 0.24997938003035086
+      },
+      {
+        "chunk_id": "RCU-0273-2021:1:2:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 1,
+        "score": 0.22335340224106123
+      }
+    ]
+  },
+  {
+    "question_id": "GQ037",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0273-2021:1:11:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 1,
+        "score": 0.7440457344055176
+      },
+      {
+        "chunk_id": "RCU-0273-2021:2:6:0",
+        "documento_id": "RCU-0273-2021",
+        "archivo_pdf": "RCU-0273-2021.pdf",
+        "pagina_pdf": 2,
+        "score": 0.7180132269859314
+      },
+      {
+        "chunk_id": "RCU-0504-2020:2:5:0",
+        "documento_id": "RCU-0504-2020",
+        "archivo_pdf": "RCU-0504-2020.pdf",
+        "pagina_pdf": 2,
+        "score": 0.7160912752151489
+      },
+      {
+        "chunk_id": "RCU-0470-2024:7:6:0",
+        "documento_id": "RCU-0470-2024",
+        "archivo_pdf": "RCU-0470-2024.pdf",
+        "pagina_pdf": 7,
+        "score": 0.7103647589683533
+      },
+      {
+        "chunk_id": "RCU-0009-2026:2:3:150",
+        "documento_id": "RCU-0009-2026",
+        "archivo_pdf": "RCU-0009-2026.pdf",
+        "pagina_pdf": 2,
+        "score": 0.7078124284744263
+      }
+    ]
+  },
+  {
+    "question_id": "GQ038",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0320-2022:1:3:0",
+        "documento_id": "RCU-0320-2022",
+        "archivo_pdf": "RCU-0320-2022.pdf",
+        "pagina_pdf": 1,
+        "score": 0.2011503277349173
+      },
+      {
+        "chunk_id": "RCU-0450-2026:9:12:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 9,
+        "score": 0.19907621930465152
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:0:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.1949988282475733
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:2:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.1949988282475733
+      },
+      {
+        "chunk_id": "RCU-0320-2022:1:2:0",
+        "documento_id": "RCU-0320-2022",
+        "archivo_pdf": "RCU-0320-2022.pdf",
+        "pagina_pdf": 1,
+        "score": 0.1850592291797218
+      }
+    ]
+  },
+  {
+    "question_id": "GQ038",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0127-2020:1:9:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 1,
+        "score": 0.6914877891540527
+      },
+      {
+        "chunk_id": "RCU-0320-2022:2:4:0",
+        "documento_id": "RCU-0320-2022",
+        "archivo_pdf": "RCU-0320-2022.pdf",
+        "pagina_pdf": 2,
+        "score": 0.679369330406189
+      },
+      {
+        "chunk_id": "RCU-0501-2020:2:3:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 2,
+        "score": 0.6793522834777832
+      },
+      {
+        "chunk_id": "RCU-0320-2022:2:7:0",
+        "documento_id": "RCU-0320-2022",
+        "archivo_pdf": "RCU-0320-2022.pdf",
+        "pagina_pdf": 2,
+        "score": 0.6781519651412964
+      },
+      {
+        "chunk_id": "RCU-0470-2024:1:14:0",
+        "documento_id": "RCU-0470-2024",
+        "archivo_pdf": "RCU-0470-2024.pdf",
+        "pagina_pdf": 1,
+        "score": 0.6749459505081177
+      }
+    ]
+  },
+  {
+    "question_id": "GQ039",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0127-2020:3:0:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.2508591892889631
+      },
+      {
+        "chunk_id": "RCU-0127-2020:3:2:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 3,
+        "score": 0.2508591892889631
+      },
+      {
+        "chunk_id": "RCU-0127-2020:6:5:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.23239228228566333
+      },
+      {
+        "chunk_id": "RCU-0501-2020:6:12:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.21988912769807806
+      },
+      {
+        "chunk_id": "RCU-0501-2020:6:3:0",
+        "documento_id": "RCU-0501-2020",
+        "archivo_pdf": "RCU-0501-2020.pdf",
+        "pagina_pdf": 6,
+        "score": 0.20508271520567772
+      }
+    ]
+  },
+  {
+    "question_id": "GQ039",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0450-2026:37:11:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 37,
+        "score": 0.717217206954956
+      },
+      {
+        "chunk_id": "RCU-0320-2022:2:7:0",
+        "documento_id": "RCU-0320-2022",
+        "archivo_pdf": "RCU-0320-2022.pdf",
+        "pagina_pdf": 2,
+        "score": 0.705030083656311
+      },
+      {
+        "chunk_id": "RCU-0450-2026:11:12:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 11,
+        "score": 0.6994907855987549
+      },
+      {
+        "chunk_id": "RCU-0127-2020:1:9:0",
+        "documento_id": "RCU-0127-2020",
+        "archivo_pdf": "RCU-0127-2020.pdf",
+        "pagina_pdf": 1,
+        "score": 0.6891645789146423
+      },
+      {
+        "chunk_id": "RCU-0450-2026:40:0:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 40,
+        "score": 0.680496096611023
+      }
+    ]
+  },
+  {
+    "question_id": "GQ040",
+    "method": "fallback_textual_tfidf_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0284-2023:1:2:0",
+        "documento_id": "RCU-0284-2023",
+        "archivo_pdf": "RCU-0284-2023.pdf",
+        "pagina_pdf": 1,
+        "score": 0.5373949969753472
+      },
+      {
+        "chunk_id": "RCU-0284-2023:2:1:0",
+        "documento_id": "RCU-0284-2023",
+        "archivo_pdf": "RCU-0284-2023.pdf",
+        "pagina_pdf": 2,
+        "score": 0.5162131510735698
+      },
+      {
+        "chunk_id": "RCU-0284-2023:3:5:0",
+        "documento_id": "RCU-0284-2023",
+        "archivo_pdf": "RCU-0284-2023.pdf",
+        "pagina_pdf": 3,
+        "score": 0.3536558028129905
+      },
+      {
+        "chunk_id": "RCU-0284-2023:3:1:0",
+        "documento_id": "RCU-0284-2023",
+        "archivo_pdf": "RCU-0284-2023.pdf",
+        "pagina_pdf": 3,
+        "score": 0.3409909278571252
+      },
+      {
+        "chunk_id": "RCU-0470-2024:1:14:0",
+        "documento_id": "RCU-0470-2024",
+        "archivo_pdf": "RCU-0470-2024.pdf",
+        "pagina_pdf": 1,
+        "score": 0.3125930757697299
+      }
+    ]
+  },
+  {
+    "question_id": "GQ040",
+    "method": "onnx_minilm_multilingual_quint8_avx2_coseno_v1",
+    "hits": [
+      {
+        "chunk_id": "RCU-0284-2023:2:4:0",
+        "documento_id": "RCU-0284-2023",
+        "archivo_pdf": "RCU-0284-2023.pdf",
+        "pagina_pdf": 2,
+        "score": 0.7664692401885986
+      },
+      {
+        "chunk_id": "RCU-0284-2023:4:12:0",
+        "documento_id": "RCU-0284-2023",
+        "archivo_pdf": "RCU-0284-2023.pdf",
+        "pagina_pdf": 4,
+        "score": 0.761252760887146
+      },
+      {
+        "chunk_id": "RCU-0450-2026:9:12:0",
+        "documento_id": "RCU-0450-2026",
+        "archivo_pdf": "RCU-0450-2026.pdf",
+        "pagina_pdf": 9,
+        "score": 0.7527055740356445
+      },
+      {
+        "chunk_id": "RCU-0284-2023:2:3:0",
+        "documento_id": "RCU-0284-2023",
+        "archivo_pdf": "RCU-0284-2023.pdf",
+        "pagina_pdf": 2,
+        "score": 0.7380973696708679
+      },
+      {
+        "chunk_id": "RCU-0009-2026:2:3:0",
+        "documento_id": "RCU-0009-2026",
+        "archivo_pdf": "RCU-0009-2026.pdf",
+        "pagina_pdf": 2,
+        "score": 0.7211572527885437
+      }
+    ]
+  }
+]
