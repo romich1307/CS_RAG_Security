@@ -257,3 +257,32 @@ avance del 19 de noviembre y la continuación del pendiente de T10 del día 18.
   - Implementada suite exhaustiva `tests/test_traceability.py` (20 pruebas unitarias) con datos sintéticos, cubriendo filtrado multicausal, versiones de prompt, detección dinámica, citas, abstenciones, procedencia, persistencia, verificación activa de `.gitignore` y allowlists de privacidad.
   - 82 pruebas unitarias pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
   - Verificación de formato y espacios limpia (`git diff --check`).
+
+## Fase 10 — T18: Métricas de calidad de respuestas, 21 de noviembre de 2026
+- **Auditoría e integración metodológica de métricas previas**:
+  - Se auditaron el módulo de evaluación existente (`src/cs_rag_security/evaluation/__init__.py`), el contrato de trazabilidad (`docs/CONTRATO_TRAZABILIDAD.md`) y la rúbrica oficial T10 v0.2 (`docs/evaluation/rubrica_qa.md`).
+  - Se reutilizó el concepto de fracciones explícitas (`fraction`), extendiéndolo a estructuras tipadas con numeradores, denominadores, valores decimales y porcentajes formateados, garantizando que todo denominador cero genere `null` / `None` / `no_aplica` sin inventar resultados ni provocar excepciones.
+- **Implementación del módulo de calidad (`src/cs_rag_security/evaluation/quality.py`)**:
+  - **Contabilidad rigurosa y no penalización de pendientes**: Se implementó la clase `EvaluationRecord` y el clasificador de estados. Las evaluaciones pendientes (`estado_revision == 'pendiente'`) y las no evaluables (`estado_revision == 'no_evaluable'` o `evidencia_disponible == 'sin_verificar'`) se segregan formalmente en `casos_pendientes` y `casos_no_evaluables`. Bajo ninguna circunstancia se contabilizan casos pendientes como respuestas incorrectas ni se inflan los denominadores.
+  - **Calidad de contenido humano**: Cálculo exacto de tasa de respuestas correctas (`exactitud_humana_contenido`), parcialmente correctas e incorrectas conforme a la rúbrica v0.2. Se computan tanto sobre el total de consultas evaluables (incluyendo abstenciones, que reciben `calidad_respuesta = 'no_aplica'`), como condicionalmente sobre respuestas sustantivas.
+  - **Abstenciones y su adecuación**: Cálculo de la tasa de abstención global y distinción formal entre abstenciones adecuadas e inadecuadas (`abstencion_adecuada == 'si'` vs `'no'`), tanto sobre el denominador de abstenciones evaluadas como sobre el total de consultas legítimas.
+  - **Validez de citas: Pertenencia vs. Sustento Real**: Distinción estricta entre la pertenencia formal de las citas al contexto recuperado (`cita_pertenece_contexto == 'si'`) y el respaldo fáctico semántico de las afirmaciones (`cita_sustenta_respuesta == 'completa'`). Se computa la métrica combinada de citas válidas completas y se mide específicamente la brecha de citas en contexto pero sin sustento real (falsa apariencia de respaldo), así como errores de vigencia normativa.
+  - **Separación Pipeline vs. LLM Raw**: Evaluación y reporte desacoplado para la respuesta final post-pipeline (`pipeline`) y la salida directa del generador (`llm_raw`). Diagnóstico pareado de filtros fundamentado estrictamente en los motivos canónicos de T16 (`citas_invalidas_o_ausentes` / `ABSTENTION_REASON_INVALID_CITATIONS`), distinguiendo abstenciones por formato de citación de abstenciones por falta de evidencia.
+  - **Comparación pareada A/B/C**: Segmentación y cómputo de métricas por condición experimental (`A_sin_defensa`, `B_defensa_basica`, `C_defensa_propuesta`). La comparación pareada (`compute_paired_condition_comparison`) utiliza estrictamente la intersección de casos comunes evaluables de una misma corrida experimental para evitar sesgos por casos dispares.
+  - **Resolución de consenso y gestión de conflictos**: Función `resolve_consensus_records` que prioriza evaluaciones con `estado_revision == 'consensuado'`. Si dos evaluadores discrepan sin fila de consenso, el conflicto se registra en `desacuerdos_sin_consenso` y el caso se mantiene como pendiente, impidiendo duplicaciones o resoluciones arbitrarias. Se ratifica que T12 corresponde a la evaluación humana independiente asignada a León.
+- **Salidas agregadas compatibles con T20 y publicación**:
+  - Exportación jerárquica en JSON (`quality_metrics.json`), libre de textos de preguntas gold o respuestas privadas.
+  - Exportación en formato tabular largo/tidy (`quality_metrics.csv`) para análisis estadístico con `pandas` / R.
+  - Exportación en formato horizontal comparativo (`quality_summary_comparison.csv`) diseñado para inclusión directa en tablas de artículos científicos.
+- **Herramientas ejecutables y CLI**:
+  - Se implementó el script reproducible `scripts/compute_quality_metrics.py` (con soporte para `--traces` para fundamentar motivos de abstención).
+  - Se extendió la CLI `cs_rag_security.cli` para admitir el comando `quality` (admitiendo `--annotations`, `--mapping`, `--traces` y `--output`).
+  - Se probó la integración con el archivo real `results/t12_evaluacion/t12_evaluacion_ciega.csv`, confirmando que reporta los 20 registros como pendientes con denominador 0 y sin falsos errores.
+  - Se garantiza la privacidad estricta de los reportes agregados generados para T20, sin incluir textos de preguntas gold, fragmentos del corpus ni respuestas crudas.
+  - Se preservan intactas las evidencias históricas de T11 en `results/llm_baseline/`.
+- **Documentación formal**:
+  - Se redactó [docs/evaluation/metricas_calidad_t18.md](evaluation/metricas_calidad_t18.md) detallando las fórmulas matemáticas, criterios de inclusión/exclusión, tratamiento de estados y amenazas a la validez.
+- **Validación automatizada**:
+  - Se implementó la suite `tests/test_quality_metrics.py` (21 pruebas unitarias) cubriendo todas las categorías de calidad, abstenciones, citas, denominadores cero, casos incompletos, fundamentación en trazas T16, separación pipeline/raw, comparación A/B/C estrictamente pareada, CLI, manejo de conflictos y consenso.
+  - 103 pruebas unitarias pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
+  - Formato limpio y sin advertencias (`git diff --check`).

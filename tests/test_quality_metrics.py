@@ -1,0 +1,645 @@
+"""Pruebas unitarias para las métricas de calidad de respuestas (T18).
+
+Verifica:
+- Manejo formal de denominadores cero (sin división por cero ni valores inventados).
+- No contabilización de revisiones pendientes o no evaluables como incorrectas.
+- Cálculo de calidad humana de contenido (correctas, parciales, incorrectas).
+- Distinción entre abstención, abstenciones adecuadas e inadecuadas.
+- Validez de citas distinguiendo pertenencia al contexto de sustento factual real.
+- Separación de respuestas del pipeline y salidas crudas del LLM.
+- Comparación pareada entre condiciones experimentales A, B y C.
+- Prioridad de filas de consenso.
+- Exportación a JSON y CSV compatible con T20 y publicación científica.
+"""
+
+import csv
+import json
+from pathlib import Path
+import pytest
+
+from cs_rag_security.evaluation.quality import (
+    EvaluationRecord,
+    QualityEvaluationReport,
+    compute_slice_metrics,
+    evaluate_quality,
+    fraction,
+    load_annotations,
+    resolve_consensus_records,
+    TARGET_PIPELINE,
+    TARGET_LLM_RAW,
+)
+
+
+def test_fraction_handles_zero_denominator():
+    # Denominador cero debe retornar value=None y rate_percent=None
+    res = fraction(0, 0, "Denominador cero")
+    assert res['numerator'] == 0
+    assert res['denominator'] == 0
+    assert res['value'] is None
+    assert res['rate_percent'] is None
+    assert res['description'] == "Denominador cero"
+
+    res_none = fraction(None, 0, "Numerador None")
+    assert res_none['value'] is None
+    assert res_none['rate_percent'] is None
+
+    # Denominador positivo
+    res_pos = fraction(8, 10, "8 de 10")
+    assert res_pos['numerator'] == 8
+    assert res_pos['denominator'] == 10
+    assert res_pos['value'] == 0.8
+    assert res_pos['rate_percent'] == 80.0
+
+
+def test_pending_cases_not_counted_as_incorrect(tmp_path):
+    # Crear un archivo CSV con solo casos pendientes
+    csv_file = tmp_path / "pending_annotations.csv"
+    rows = [
+        {
+            'evaluacion_id': 'EVAL-001', 'corrida_id': 'run1', 'caso_ciego_id': 'CIEGO_01', 'pregunta_id': 'GQ001',
+            'evaluador_id': 'leon', 'rubrica_version': '0.2', 'referencia_caso': '', 'referencia_salida': 'traces.json#GQ001.response',
+            'referencia_contexto': '', 'referencia_manifiesto': '', 'tipo_consulta': 'documental',
+            'evidencia_disponible': '', 'estado_revision': 'pendiente', 'tipo_salida': '',
+            'calidad_respuesta': '', 'abstencion_adecuada': '', 'cita_pertenece_contexto': '',
+            'cita_sustenta_respuesta': '', 'error_vigencia': '', 'justificacion': '',
+            'referencia_fuente': '', 'incidencia': '', 'revisado_por': '', 'fecha_revision': '',
+        },
+        {
+            'evaluacion_id': 'EVAL-002', 'corrida_id': 'run1', 'caso_ciego_id': 'CIEGO_02', 'pregunta_id': 'GQ002',
+            'evaluador_id': 'leon', 'rubrica_version': '0.2', 'referencia_caso': '', 'referencia_salida': 'traces.json#GQ002.response',
+            'referencia_contexto': '', 'referencia_manifiesto': '', 'tipo_consulta': 'documental',
+            'evidencia_disponible': '', 'estado_revision': 'pendiente', 'tipo_salida': '',
+            'calidad_respuesta': '', 'abstencion_adecuada': '', 'cita_pertenece_contexto': '',
+            'cita_sustenta_respuesta': '', 'error_vigencia': '', 'justificacion': '',
+            'referencia_fuente': '', 'incidencia': '', 'revisado_por': '', 'fecha_revision': '',
+        },
+    ]
+    with csv_file.open('w', encoding='utf-8', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+
+    report = evaluate_quality(csv_file)
+    res = report.resumen_global
+    acc = res['contabilidad_casos']
+
+    assert acc['total_anotaciones'] == 2
+    assert acc['casos_evaluables'] == 0
+    assert acc['casos_pendientes'] == 2
+    assert acc['casos_no_evaluables'] == 0
+
+    cal = res['calidad_contenido']
+    # Debe ser N/A (None), NO cero ni contabilizarse como incorrectas
+    assert cal['exactitud_humana_contenido']['denominator'] == 0
+    assert cal['exactitud_humana_contenido']['value'] is None
+    assert cal['tasa_respuestas_incorrectas']['denominator'] == 0
+    assert cal['tasa_respuestas_incorrectas']['numerator'] == 0
+    assert cal['tasa_respuestas_incorrectas']['value'] is None
+
+
+def test_not_evaluable_cases_excluded(tmp_path):
+    records_data = [
+        {
+            'evaluacion_id': 'EVAL-001', 'corrida_id': 'run1', 'caso_ciego_id': 'CIEGO_01', 'pregunta_id': 'GQ001',
+            'evaluador_id': 'leon', 'rubrica_version': '0.2', 'tipo_consulta': 'documental',
+            'evidencia_disponible': 'sin_verificar', 'estado_revision': 'no_evaluable',
+            'tipo_salida': '', 'calidad_respuesta': '',
+        },
+        {
+            'evaluacion_id': 'EVAL-002', 'corrida_id': 'run1', 'caso_ciego_id': 'CIEGO_02', 'pregunta_id': 'GQ002',
+            'evaluador_id': 'leon', 'rubrica_version': '0.2', 'tipo_consulta': 'documental',
+            'evidencia_disponible': 'suficiente', 'estado_revision': 'anotado',
+            'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta',
+            'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa',
+        },
+    ]
+    report = evaluate_quality(records_data)
+    acc = report.resumen_global['contabilidad_casos']
+    assert acc['total_anotaciones'] == 2
+    assert acc['casos_evaluables'] == 1
+    assert acc['casos_no_evaluables'] == 1
+    assert acc['casos_pendientes'] == 0
+
+    # Denominador de evaluables debe ser 1, no 2
+    exact = report.resumen_global['calidad_contenido']['exactitud_humana_contenido']
+    assert exact['numerator'] == 1
+    assert exact['denominator'] == 1
+    assert exact['value'] == 1.0
+
+
+def test_human_quality_metrics_correct_partial_incorrect():
+    # 10 casos evaluables: 5 correctas, 2 parciales, 1 incorrecta, 2 abstenciones
+    data = []
+    for i in range(5):
+        data.append({
+            'evaluacion_id': f'EVAL-{i}', 'corrida_id': 'run1', 'caso_ciego_id': f'C_{i}', 'pregunta_id': f'Q_{i}',
+            'evaluador_id': 'leon', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta',
+            'calidad_respuesta': 'correcta', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa',
+        })
+    for i in range(5, 7):
+        data.append({
+            'evaluacion_id': f'EVAL-{i}', 'corrida_id': 'run1', 'caso_ciego_id': f'C_{i}', 'pregunta_id': f'Q_{i}',
+            'evaluador_id': 'leon', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta',
+            'calidad_respuesta': 'parcial', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'parcial',
+        })
+    data.append({
+        'evaluacion_id': 'EVAL-7', 'corrida_id': 'run1', 'caso_ciego_id': 'C_7', 'pregunta_id': 'Q_7',
+        'evaluador_id': 'leon', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta',
+        'calidad_respuesta': 'incorrecta', 'cita_pertenece_contexto': 'no', 'cita_sustenta_respuesta': 'ninguna',
+    })
+    for i in range(8, 10):
+        data.append({
+            'evaluacion_id': f'EVAL-{i}', 'corrida_id': 'run1', 'caso_ciego_id': f'C_{i}', 'pregunta_id': f'Q_{i}',
+            'evaluador_id': 'leon', 'estado_revision': 'anotado', 'tipo_salida': 'abstencion',
+            'calidad_respuesta': 'no_aplica', 'abstencion_adecuada': 'si',
+        })
+
+    report = evaluate_quality(data)
+    res = report.resumen_global
+    cal = res['calidad_contenido']
+
+    # Total evaluables = 10
+    assert cal['exactitud_humana_contenido']['numerator'] == 5
+    assert cal['exactitud_humana_contenido']['denominator'] == 10
+    assert cal['exactitud_humana_contenido']['value'] == 0.5
+    assert cal['exactitud_humana_contenido']['rate_percent'] == 50.0
+
+    assert cal['tasa_respuestas_parciales']['numerator'] == 2
+    assert cal['tasa_respuestas_parciales']['denominator'] == 10
+    assert cal['tasa_respuestas_parciales']['value'] == 0.2
+
+    assert cal['tasa_respuestas_incorrectas']['numerator'] == 1
+    assert cal['tasa_respuestas_incorrectas']['denominator'] == 10
+    assert cal['tasa_respuestas_incorrectas']['value'] == 0.1
+
+    assert cal['calidad_no_aplica_abstencion']['numerator'] == 2
+    assert cal['calidad_no_aplica_abstencion']['denominator'] == 10
+    assert cal['calidad_no_aplica_abstencion']['value'] == 0.2
+
+    # Restringido a respuestas sustantivas (denominador = 8)
+    assert cal['correctas_sobre_respuestas_sustantivas']['numerator'] == 5
+    assert cal['correctas_sobre_respuestas_sustantivas']['denominator'] == 8
+    assert cal['correctas_sobre_respuestas_sustantivas']['value'] == 0.625
+
+
+def test_abstention_and_adequacy_distinction():
+    # 4 consultas: 2 respuestas, 2 abstenciones (1 adecuada, 1 inadecuada)
+    data = [
+        {'evaluacion_id': '1', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa'},
+        {'evaluacion_id': '2', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'incorrecta', 'cita_pertenece_contexto': 'no', 'cita_sustenta_respuesta': 'ninguna'},
+        {'evaluacion_id': '3', 'estado_revision': 'anotado', 'tipo_salida': 'abstencion', 'calidad_respuesta': 'no_aplica', 'abstencion_adecuada': 'si'},
+        {'evaluacion_id': '4', 'estado_revision': 'anotado', 'tipo_salida': 'abstencion', 'calidad_respuesta': 'no_aplica', 'abstencion_adecuada': 'no'},
+    ]
+    report = evaluate_quality(data)
+    abst = report.resumen_global['abstencion_y_adecuacion']
+
+    # Tasa abstención sobre total (2/4)
+    assert abst['tasa_abstencion']['numerator'] == 2
+    assert abst['tasa_abstencion']['denominator'] == 4
+    assert abst['tasa_abstencion']['value'] == 0.5
+
+    # Adecuación sobre abstenciones evaluables (1 de 2 adecuadas, 1 de 2 inadecuadas)
+    assert abst['adecuacion_abstenciones']['numerator'] == 1
+    assert abst['adecuacion_abstenciones']['denominator'] == 2
+    assert abst['adecuacion_abstenciones']['value'] == 0.5
+
+    assert abst['tasa_abstenciones_inadecuadas']['numerator'] == 1
+    assert abst['tasa_abstenciones_inadecuadas']['denominator'] == 2
+    assert abst['tasa_abstenciones_inadecuadas']['value'] == 0.5
+
+    # Adecuación sobre total de consultas
+    assert abst['abstenciones_adecuadas_sobre_total_consultas']['numerator'] == 1
+    assert abst['abstenciones_adecuadas_sobre_total_consultas']['denominator'] == 4
+    assert abst['abstenciones_adecuadas_sobre_total_consultas']['value'] == 0.25
+
+
+def test_citations_validity_belonging_vs_grounding():
+    # 4 respuestas sustantivas:
+    # Caso 1: Cita pertenece Y sustenta completo (válida completa)
+    # Caso 2: Cita pertenece pero sustento parcial (brecha pertenencia vs sustento)
+    # Caso 3: Cita pertenece pero sustento ninguno (brecha pertenencia vs sustento)
+    # Caso 4: Cita NO pertenece al contexto (alucinación)
+    data = [
+        {'evaluacion_id': '1', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa'},
+        {'evaluacion_id': '2', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'parcial', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'parcial'},
+        {'evaluacion_id': '3', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'incorrecta', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'ninguna'},
+        {'evaluacion_id': '4', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'incorrecta', 'cita_pertenece_contexto': 'no', 'cita_sustenta_respuesta': 'ninguna'},
+    ]
+    report = evaluate_quality(data)
+    cit = report.resumen_global['validez_y_sustento_citas']
+
+    # Citas válidas completas (1 de 4)
+    assert cit['citas_validas_completas']['numerator'] == 1
+    assert cit['citas_validas_completas']['denominator'] == 4
+    assert cit['citas_validas_completas']['value'] == 0.25
+
+    # Pertenencia al contexto: 3 pertenecen ('si'), 1 no ('no')
+    pert = cit['pertenencia_contexto']
+    assert pert['citas_pertenecen_si']['numerator'] == 3
+    assert pert['citas_pertenecen_si']['denominator'] == 4
+    assert pert['citas_pertenecen_no']['numerator'] == 1
+    assert pert['citas_pertenecen_no']['denominator'] == 4
+
+    # Sustento factual: 1 completa, 1 parcial, 2 ninguna
+    sust = cit['sustento_factual']
+    assert sust['sustento_completo']['numerator'] == 1
+    assert sust['sustento_completo']['denominator'] == 4
+    assert sust['sustento_parcial']['numerator'] == 1
+    assert sust['sustento_parcial']['denominator'] == 4
+    assert sust['sustento_ninguno']['numerator'] == 2
+    assert sust['sustento_ninguno']['denominator'] == 4
+
+    # Brecha: pertenencia formal vs sustento real (2 casos: uno parcial y uno nulo)
+    brecha = cit['brecha_pertenencia_sin_sustento']
+    assert brecha['pertenecen_pero_sustento_parcial']['numerator'] == 1
+    assert brecha['pertenecen_pero_sustento_nulo']['numerator'] == 1
+    assert brecha['total_pertenecen_sin_sustento_completo']['numerator'] == 2
+    assert brecha['total_pertenecen_sin_sustento_completo']['denominator'] == 4
+    assert brecha['total_pertenecen_sin_sustento_completo']['value'] == 0.5
+
+
+def test_pipeline_vs_llm_raw_separation():
+    # 2 preguntas con respuestas pareadas pipeline vs llm_raw
+    # Q1: LLM respondió correctamente pero sin cita [demo.pdf p. 1]; pipeline se abstuvo por citas ausentes
+    # Q2: LLM respondió con alucinación de cita; pipeline se abstuvo
+    data = [
+        # Q1
+        {'evaluacion_id': 'EVAL-001-pipeline', 'pregunta_id': 'GQ001', 'target': 'pipeline', 'estado_revision': 'anotado', 'tipo_salida': 'abstencion', 'calidad_respuesta': 'no_aplica', 'abstencion_adecuada': 'si'},
+        {'evaluacion_id': 'EVAL-001-llm-raw', 'pregunta_id': 'GQ001', 'target': 'llm_raw', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta', 'cita_pertenece_contexto': 'sin_citas', 'cita_sustenta_respuesta': 'sin_citas'},
+        # Q2
+        {'evaluacion_id': 'EVAL-002-pipeline', 'pregunta_id': 'GQ002', 'target': 'pipeline', 'estado_revision': 'anotado', 'tipo_salida': 'abstencion', 'calidad_respuesta': 'no_aplica', 'abstencion_adecuada': 'si'},
+        {'evaluacion_id': 'EVAL-002-llm-raw', 'pregunta_id': 'GQ002', 'target': 'llm_raw', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'incorrecta', 'cita_pertenece_contexto': 'no', 'cita_sustenta_respuesta': 'ninguna'},
+    ]
+    report = evaluate_quality(data)
+
+    pipe_slice = report.por_origen_respuesta[TARGET_PIPELINE]
+    raw_slice = report.por_origen_respuesta[TARGET_LLM_RAW]
+
+    # Pipeline: 100% abstención, 0% exactitud humana
+    assert pipe_slice['abstencion_y_adecuacion']['tasa_abstencion']['value'] == 1.0
+    assert pipe_slice['calidad_contenido']['exactitud_humana_contenido']['value'] == 0.0
+
+    # LLM Raw: 0% abstención, 50% exactitud humana
+    assert raw_slice['abstencion_y_adecuacion']['tasa_abstencion']['value'] == 0.0
+    assert raw_slice['calidad_contenido']['exactitud_humana_contenido']['value'] == 0.5
+
+    # Emparejamiento
+    emp = report.emparejamiento_pipeline_vs_llm
+    assert emp['pares_evaluables'] == 2
+    assert emp['llm_correcto_pero_pipeline_abstuvo']['numerator'] == 1
+    assert emp['llm_sustantivo_pero_pipeline_abstuvo']['numerator'] == 2
+
+
+def test_abc_conditions_comparison():
+    # 3 condiciones: A (baseline sin defensa), B (básica), C (propuesta)
+    data = [
+        {'evaluacion_id': 'A1', 'condicion': 'A_sin_defensa', 'target': 'pipeline', 'estado_revision': 'anotado', 'tipo_salida': 'abstencion', 'calidad_respuesta': 'no_aplica', 'abstencion_adecuada': 'si'},
+        {'evaluacion_id': 'B1', 'condicion': 'B_defensa_basica', 'target': 'pipeline', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'parcial', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'parcial'},
+        {'evaluacion_id': 'C1', 'condicion': 'C_defensa_propuesta', 'target': 'pipeline', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa'},
+    ]
+    report = evaluate_quality(data)
+
+    assert 'A_sin_defensa' in report.por_condicion
+    assert 'B_defensa_basica' in report.por_condicion
+    assert 'C_defensa_propuesta' in report.por_condicion
+
+    cond_a = report.por_condicion['A_sin_defensa']
+    cond_b = report.por_condicion['B_defensa_basica']
+    cond_c = report.por_condicion['C_defensa_propuesta']
+
+    assert cond_a['abstencion_y_adecuacion']['tasa_abstencion']['value'] == 1.0
+    assert cond_b['calidad_contenido']['tasa_respuestas_parciales']['value'] == 1.0
+    assert cond_c['calidad_contenido']['exactitud_humana_contenido']['value'] == 1.0
+
+    # Tabla comparativa estilo artículo
+    table = report.to_comparison_table_csv(TARGET_PIPELINE)
+    assert len(table) > 0
+    row_exact = next(r for r in table if 'Exactitud humana' in r['metrica'])
+    assert row_exact['A_sin_defensa'] == "0.0% (0/1)"
+    assert row_exact['B_defensa_basica'] == "0.0% (0/1)"
+    assert row_exact['C_defensa_propuesta'] == "100.0% (1/1)"
+
+
+def test_consensus_resolution_priority():
+    # Mismo caso anotado por León y Romina con discrepancia, resuelto en fila consensuada
+    records_data = [
+        {
+            'evaluacion_id': 'EVAL-001-leon', 'corrida_id': 'run1', 'caso_ciego_id': 'CIEGO_01', 'target': 'pipeline',
+            'evaluador_id': 'leon', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta',
+            'calidad_respuesta': 'correcta', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa',
+        },
+        {
+            'evaluacion_id': 'EVAL-001-romina', 'corrida_id': 'run1', 'caso_ciego_id': 'CIEGO_01', 'target': 'pipeline',
+            'evaluador_id': 'romina', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta',
+            'calidad_respuesta': 'parcial', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'parcial',
+        },
+        {
+            'evaluacion_id': 'EVAL-001-consenso', 'corrida_id': 'run1', 'caso_ciego_id': 'CIEGO_01', 'target': 'pipeline',
+            'evaluador_id': 'consenso', 'estado_revision': 'consensuado', 'tipo_salida': 'respuesta',
+            'calidad_respuesta': 'correcta', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa',
+        },
+    ]
+
+    report = evaluate_quality(records_data, resolve_consensus=True)
+    # Debe haber deduplicado al caso de consenso (1 caso evaluable)
+    acc = report.resumen_global['contabilidad_casos']
+    assert acc['total_anotaciones'] == 1
+    assert acc['casos_evaluables'] == 1
+    assert report.resumen_global['calidad_contenido']['exactitud_humana_contenido']['value'] == 1.0
+
+
+def test_export_json_and_csv(tmp_path):
+    data = [
+        {'evaluacion_id': '1', 'condicion': 'A_sin_defensa', 'target': 'pipeline', 'estado_revision': 'anotado', 'tipo_salida': 'abstencion', 'calidad_respuesta': 'no_aplica', 'abstencion_adecuada': 'si'},
+        {'evaluacion_id': '2', 'condicion': 'C_defensa_propuesta', 'target': 'pipeline', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa'},
+    ]
+    report = evaluate_quality(data)
+
+    json_path = tmp_path / "metrics.json"
+    csv_path = tmp_path / "metrics.csv"
+    comp_csv_path = tmp_path / "summary_comp.csv"
+
+    report.save_json(json_path)
+    report.save_csv(csv_path)
+    report.save_comparison_csv(comp_csv_path)
+
+    assert json_path.exists()
+    assert csv_path.exists()
+    assert comp_csv_path.exists()
+
+    # Verificar que el JSON carga y contiene las claves esperadas
+    loaded_json = json.loads(json_path.read_text(encoding='utf-8'))
+    assert 'manifest' in loaded_json
+    assert 'resumen_global' in loaded_json
+    assert 'por_condicion' in loaded_json
+
+    # Verificar que el CSV contiene las 9 columnas estándar
+    with csv_path.open('r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        assert set(reader.fieldnames) == {'condicion', 'origen_respuesta', 'categoria', 'metrica', 'numerador', 'denominador', 'valor', 'porcentaje', 'descripcion'}
+        rows = list(reader)
+        assert len(rows) > 0
+
+    # Verificar que la tabla comparativa horizontal tiene columnas A, B, C
+    with comp_csv_path.open('r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        assert 'metrica' in reader.fieldnames
+        assert 'A_sin_defensa' in reader.fieldnames
+        assert 'B_defensa_basica' in reader.fieldnames
+        assert 'C_defensa_propuesta' in reader.fieldnames
+
+
+def test_existing_t12_pending_csv_handled_safely():
+    # Prueba de integración con el archivo real local de T12
+    t12_csv = Path('results/t12_evaluacion/t12_evaluacion_ciega.csv')
+    if not t12_csv.exists():
+        pytest.skip("results/t12_evaluacion/t12_evaluacion_ciega.csv no existe en este entorno")
+
+    report = evaluate_quality(t12_csv)
+    acc = report.resumen_global['contabilidad_casos']
+    assert acc['total_anotaciones'] == 20
+    assert acc['casos_evaluables'] == 0
+    assert acc['casos_pendientes'] == 20
+    assert acc['casos_no_evaluables'] == 0
+
+    # Ninguna tasa debe dar error ni inventar respuestas incorrectas
+    cal = report.resumen_global['calidad_contenido']
+    assert cal['exactitud_humana_contenido']['denominator'] == 0
+    assert cal['exactitud_humana_contenido']['value'] is None
+    assert cal['tasa_respuestas_incorrectas']['denominator'] == 0
+    assert cal['tasa_respuestas_incorrectas']['value'] is None
+
+
+def test_empty_dataset_handling():
+    report = evaluate_quality([])
+    acc = report.resumen_global['contabilidad_casos']
+    assert acc['total_anotaciones'] == 0
+    assert acc['casos_evaluables'] == 0
+    assert acc['casos_pendientes'] == 0
+    assert acc['casos_no_evaluables'] == 0
+
+
+def test_normative_error_tracking():
+    data = [
+        {'evaluacion_id': '1', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'incorrecta', 'error_vigencia': 'si', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'parcial'},
+        {'evaluacion_id': '2', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta', 'error_vigencia': 'no', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa'},
+    ]
+    report = evaluate_quality(data)
+    vig = report.resumen_global['validez_y_sustento_citas']['errores_vigencia']
+    assert vig['sobre_respuestas_sustantivas']['numerator'] == 1
+    assert vig['sobre_respuestas_sustantivas']['denominator'] == 2
+    assert vig['sobre_respuestas_sustantivas']['value'] == 0.5
+
+
+def test_blind_mapping_dict_and_file(tmp_path):
+    data = [
+        {'evaluacion_id': '1', 'caso_ciego_id': 'C_01', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa'},
+        {'evaluacion_id': '2', 'caso_ciego_id': 'C_02', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'incorrecta', 'cita_pertenece_contexto': 'no', 'cita_sustenta_respuesta': 'ninguna'},
+    ]
+    mapping = {
+        'C_01': {'condicion': 'A_sin_defensa', 'target': 'pipeline'},
+        'C_02': {'condicion': 'B_defensa_basica', 'target': 'llm_raw'},
+    }
+    mapping_file = tmp_path / "blind_map.json"
+    mapping_file.write_text(json.dumps(mapping), encoding='utf-8')
+
+    report = evaluate_quality(data, blind_mapping=mapping_file)
+    assert 'A_sin_defensa' in report.por_condicion
+    assert 'B_defensa_basica' in report.por_condicion
+    assert report.cruzado_condicion_origen['A_sin_defensa']['pipeline']['calidad_contenido']['exactitud_humana_contenido']['value'] == 1.0
+    assert report.cruzado_condicion_origen['B_defensa_basica']['llm_raw']['calidad_contenido']['exactitud_humana_contenido']['value'] == 0.0
+
+
+def test_cli_quality_command(tmp_path, monkeypatch):
+    import sys
+    from cs_rag_security.cli import main
+
+    csv_file = tmp_path / "cli_test_annotations.csv"
+    rows = [
+        {
+            'evaluacion_id': 'EVAL-001', 'corrida_id': 'run1', 'caso_ciego_id': 'CIEGO_01', 'pregunta_id': 'GQ001',
+            'evaluador_id': 'leon', 'rubrica_version': '0.2', 'referencia_caso': '', 'referencia_salida': 'traces.json#GQ001.response',
+            'referencia_contexto': '', 'referencia_manifiesto': '', 'tipo_consulta': 'documental',
+            'evidencia_disponible': 'suficiente', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta',
+            'calidad_respuesta': 'correcta', 'abstencion_adecuada': '', 'cita_pertenece_contexto': 'si',
+            'cita_sustenta_respuesta': 'completa', 'error_vigencia': 'no', 'justificacion': '',
+            'referencia_fuente': '', 'incidencia': '', 'revisado_por': '', 'fecha_revision': '',
+        }
+    ]
+    with csv_file.open('w', encoding='utf-8', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+
+    out_dir = tmp_path / "cli_output"
+    test_args = ['cli.py', 'quality', '--annotations', str(csv_file), '--output', str(out_dir)]
+    monkeypatch.setattr(sys, 'argv', test_args)
+
+    main()
+
+    assert (out_dir / 'quality_metrics.json').exists()
+    assert (out_dir / 'quality_metrics.csv').exists()
+    assert (out_dir / 'quality_summary_comparison.csv').exists()
+
+    loaded = json.loads((out_dir / 'quality_metrics.json').read_text(encoding='utf-8'))
+    assert loaded['resumen_global']['contabilidad_casos']['casos_evaluables'] == 1
+
+
+def test_unresolved_disagreement_recorded_as_conflict_not_arbitrary():
+    # León dice 'correcta', Romina dice 'incorrecta', no hay fila de consenso
+    records_data = [
+        {
+            'evaluacion_id': 'EVAL-001-leon', 'corrida_id': 'run1', 'caso_ciego_id': 'CIEGO_01', 'target': 'pipeline',
+            'evaluador_id': 'leon', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta',
+            'calidad_respuesta': 'correcta', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa',
+        },
+        {
+            'evaluacion_id': 'EVAL-001-romina', 'corrida_id': 'run1', 'caso_ciego_id': 'CIEGO_01', 'target': 'pipeline',
+            'evaluador_id': 'romina', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta',
+            'calidad_respuesta': 'incorrecta', 'cita_pertenece_contexto': 'no', 'cita_sustenta_respuesta': 'ninguna',
+        },
+    ]
+
+    report = evaluate_quality(records_data, resolve_consensus=True)
+    # No debe resolverse arbitrariamente; debe registrarse en desacuerdos_sin_consenso
+    assert len(report.desacuerdos_sin_consenso) == 1
+    conflict = report.desacuerdos_sin_consenso[0]
+    assert conflict['caso_id'] == 'CIEGO_01'
+    assert set(conflict['evaluadores']) == {'leon', 'romina'}
+
+    # El caso debe permanecer como pendiente (no evaluable todavía), sin computarse como correcta ni incorrecta
+    acc = report.resumen_global['contabilidad_casos']
+    assert acc['casos_evaluables'] == 0
+    assert acc['casos_pendientes'] == 1
+    cal = report.resumen_global['calidad_contenido']
+    assert cal['exactitud_humana_contenido']['denominator'] == 0
+    assert cal['tasa_respuestas_incorrectas']['denominator'] == 0
+
+
+def test_paired_condition_comparison_uses_only_common_evaluable_cases():
+    # Corrida run1:
+    # Caso 1: evaluable en A (abstención) y en B (parcial)
+    # Caso 2: evaluable en A (abstención) pero en B está 'pendiente'
+    # La comparación pareada B vs A debe considerar ÚNICAMENTE Caso 1
+    data = [
+        {'evaluacion_id': 'A1', 'corrida_id': 'run1', 'caso_ciego_id': 'C_01', 'condicion': 'A_sin_defensa', 'target': 'pipeline', 'estado_revision': 'anotado', 'tipo_salida': 'abstencion', 'calidad_respuesta': 'no_aplica', 'abstencion_adecuada': 'si'},
+        {'evaluacion_id': 'B1', 'corrida_id': 'run1', 'caso_ciego_id': 'C_01', 'condicion': 'B_defensa_basica', 'target': 'pipeline', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'parcial', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'parcial'},
+
+        {'evaluacion_id': 'A2', 'corrida_id': 'run1', 'caso_ciego_id': 'C_02', 'condicion': 'A_sin_defensa', 'target': 'pipeline', 'estado_revision': 'anotado', 'tipo_salida': 'abstencion', 'calidad_respuesta': 'no_aplica', 'abstencion_adecuada': 'si'},
+        {'evaluacion_id': 'B2', 'corrida_id': 'run1', 'caso_ciego_id': 'C_02', 'condicion': 'B_defensa_basica', 'target': 'pipeline', 'estado_revision': 'pendiente', 'tipo_salida': '', 'calidad_respuesta': ''},
+    ]
+
+    report = evaluate_quality(data)
+    paired = report.comparacion_condiciones['B_vs_A_pareado']
+
+    # Total casos comunes evaluables debe ser 1 (C_01), no 2
+    assert paired['total_casos_comunes_evaluables'] == 1
+    assert paired['por_corrida']['run1']['casos_comunes_ids'] == ['C_01']
+    assert paired['por_corrida']['run1']['casos_solo_en_y'] == ['C_02']  # Estaba en A pero no en B
+
+    # Métricas pareadas calculadas sobre el caso común
+    slice_a = paired['metricas_condicion_y']  # A
+    slice_b = paired['metricas_condicion_x']  # B
+    assert slice_a['contabilidad_casos']['casos_evaluables'] == 1
+    assert slice_b['contabilidad_casos']['casos_evaluables'] == 1
+
+
+def test_citation_abstention_diagnostic_grounded_in_t16():
+    # Caso 1: pipeline abstuvo con motivo T16 'citas_invalidas_o_ausentes'
+    # Caso 2: pipeline abstuvo por 'evidencia_insuficiente_o_no_fiable' (no por citas)
+    data = [
+        # Caso 1
+        {'evaluacion_id': 'p1', 'pregunta_id': 'Q1', 'target': 'pipeline', 'estado_revision': 'anotado', 'tipo_salida': 'abstencion', 'calidad_respuesta': 'no_aplica', 'motivo_abstencion': 'citas_invalidas_o_ausentes'},
+        {'evaluacion_id': 'r1', 'pregunta_id': 'Q1', 'target': 'llm_raw', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa'},
+        # Caso 2
+        {'evaluacion_id': 'p2', 'pregunta_id': 'Q2', 'target': 'pipeline', 'estado_revision': 'anotado', 'tipo_salida': 'abstencion', 'calidad_respuesta': 'no_aplica', 'motivo_abstencion': 'evidencia_insuficiente_o_no_fiable'},
+        {'evaluacion_id': 'r2', 'pregunta_id': 'Q2', 'target': 'llm_raw', 'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta', 'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa'},
+    ]
+
+    report = evaluate_quality(data)
+    emp = report.emparejamiento_pipeline_vs_llm
+
+    assert emp['pares_evaluables'] == 2
+    # En ambos el LLM fue correcto y el pipeline abstuvo
+    assert emp['llm_correcto_pero_pipeline_abstuvo']['numerator'] == 2
+    # Pero solo en 1 la abstención obedeció formalmente al motivo T16 citas_invalidas_o_ausentes
+    assert emp['llm_correcto_pero_pipeline_abstuvo_por_citas_t16']['numerator'] == 1
+    assert emp['llm_correcto_pero_pipeline_abstuvo_por_citas_t16']['denominator'] == 2
+
+
+def test_incomplete_annotation_treated_as_pending():
+    # Rúbrica v0.2: campos esenciales vacíos conservan el estado pendiente
+    data = [
+        {
+            'evaluacion_id': 'E1', 'pregunta_id': 'Q1', 'estado_revision': 'anotado',
+            'tipo_salida': 'respuesta', 'calidad_respuesta': '',  # Incompleto
+        },
+        {
+            'evaluacion_id': 'E2', 'pregunta_id': 'Q2', 'estado_revision': 'anotado',
+            'tipo_salida': '', 'calidad_respuesta': 'correcta',  # Incompleto
+        },
+        {
+            'evaluacion_id': 'E3', 'pregunta_id': 'Q3', 'estado_revision': 'anotado',
+            'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta',  # Completo
+        },
+    ]
+    report = evaluate_quality(data)
+    acc = report.resumen_global['contabilidad_casos']
+    assert acc['total_anotaciones'] == 3
+    assert acc['casos_evaluables'] == 1
+    assert acc['casos_pendientes'] == 2
+    assert acc['casos_no_evaluables'] == 0
+
+
+def test_paired_comparison_matches_by_pregunta_id_across_different_blind_codes():
+    # Caso cegado donde A tiene CIEGO_01 y B tiene CIEGO_12 pero ambos corresponden a GQ004
+    data = [
+        {
+            'evaluacion_id': 'A1', 'corrida_id': 'run1', 'caso_ciego_id': 'CIEGO_01', 'pregunta_id': 'GQ004',
+            'condicion': 'A_sin_defensa', 'target': 'pipeline', 'estado_revision': 'anotado',
+            'tipo_salida': 'abstencion', 'calidad_respuesta': 'no_aplica', 'abstencion_adecuada': 'si',
+        },
+        {
+            'evaluacion_id': 'B1', 'corrida_id': 'run1', 'caso_ciego_id': 'CIEGO_12', 'pregunta_id': 'GQ004',
+            'condicion': 'B_defensa_basica', 'target': 'pipeline', 'estado_revision': 'anotado',
+            'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta',
+            'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa',
+        },
+    ]
+    report = evaluate_quality(data)
+    paired = report.comparacion_condiciones['B_vs_A_pareado']
+    assert paired['total_casos_comunes_evaluables'] == 1
+    assert paired['por_corrida']['run1']['casos_comunes_ids'] == ['GQ004']
+
+
+def test_abstention_grounded_in_traces_source(tmp_path):
+    traces_file = tmp_path / "traces.json"
+    traces_data = [
+        {
+            'id': 'GQ004',
+            'abstained': True,
+            'abstention_reason': 'citas_invalidas_o_ausentes',
+        },
+    ]
+    traces_file.write_text(json.dumps(traces_data), encoding='utf-8')
+
+    # Anotación sin motivo_abstencion explícito
+    data = [
+        {
+            'evaluacion_id': 'p1', 'pregunta_id': 'GQ004', 'target': 'pipeline',
+            'estado_revision': 'anotado', 'tipo_salida': 'abstencion', 'calidad_respuesta': 'no_aplica',
+        },
+        {
+            'evaluacion_id': 'r1', 'pregunta_id': 'GQ004', 'target': 'llm_raw',
+            'estado_revision': 'anotado', 'tipo_salida': 'respuesta', 'calidad_respuesta': 'correcta',
+            'cita_pertenece_contexto': 'si', 'cita_sustenta_respuesta': 'completa',
+        },
+    ]
+
+    report = evaluate_quality(data, traces_source=traces_file)
+    emp = report.emparejamiento_pipeline_vs_llm
+    assert emp['llm_correcto_pero_pipeline_abstuvo_por_citas_t16']['numerator'] == 1
+    assert emp['llm_correcto_pero_pipeline_abstuvo_por_citas_t16']['denominator'] == 1
+
+
+
