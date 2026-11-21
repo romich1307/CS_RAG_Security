@@ -81,23 +81,34 @@ corpus excluidos de Git. Rama local feature/rag-mvp, commits descriptivos por et
 Sin push, sin APIs pagadas ni modelos descargados.
 
 ## Fase 6 — Diagnóstico y corrección de citas para T11 (rama feature/t11-diagnostico-citas)
-- **Prompt de C (v2):** Se actualizó la condición experimental `C_defensa_propuesta`
-  incorporando instrucción estricta de citación exacta `[archivo.pdf p. N]`, extracción
-  exclusiva desde las claves `"archivo"` y `"pagina"` del contexto JSON no confiable,
-  y un ejemplo breve representativo (`[RCU-0161-2021.pdf p. 3]`).
+- **Prompt de C (v3):** Se actualizó la condición experimental `C_defensa_propuesta`
+  sustituyendo el ejemplo específico de `RCU-0161-2021.pdf` por el formato genérico
+  `[archivo.pdf p. N]` y aclarando explícitamente que deben utilizarse el nombre de archivo
+  y número de página reales obtenidos del contexto recuperado (`documentos_no_confiables`).
+  Se evitan sesgos hacia resoluciones específicas.
 - **Preservación experimental A y B:** Las condiciones A (`A_sin_defensa`) y B
-  (`B_defensa_basica`) se mantienen en su versión original (v1) para garantizar la
-  reproducibilidad e integridad de las comparaciones controladas.
-- **Trazabilidad `raw_response`:** El pipeline y el evaluador registran `raw_response`
-  con la salida textual íntegra del modelo previa a la validación, preservándose ante
-  abstenciones sin sustituir la respuesta final validada (`response`) ni distorsionar
-  las métricas de evaluación.
+  (`B_defensa_basica`) se mantienen en su versión original (v1) sin modificación alguna,
+  garantizando la comparabilidad e integridad metodológica.
+- **Seguridad de la interfaz (Streamlit):** Se revisó `app/streamlit_app.py` eliminando
+  la exposición de `raw_response` del panel desplegable de trazabilidad. La interfaz
+  muestra únicamente la respuesta validada y metadatos seguros de trazabilidad.
+  `raw_response` se preserva íntegramente en las trazas (`traces.json`, `traces.csv`) y
+  artefactos internos de auditoría para T12.
+- **Prueba de regresión de interfaz:** Se añadió en `tests/test_ui.py` una prueba que
+  confirma que respuestas rechazadas o no validadas no quedan expuestas en ningún elemento
+  visible del chatbot.
 - **Validador estricto:** Se mantiene la verificación estricta de pertenencia al
   contexto recuperado admisible (`allowed`), sin adición automática de citas ni
   relajación de seguridad.
-- **Verificación:** 37 pruebas unitarias pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
-  Validación exitosa en consulta real con Ollama y `qwen2.5:3b` en GQ001 modo documental C,
-  obteniendo cita exacta válida sin abstención.
+- **Verificación:** 38 pruebas unitarias pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
+- **Validación piloto real Ollama:** Consulta piloto independiente ejecutada con Ollama
+  y `qwen2.5:3b` sobre `GQ019` con una fuente documental distinta (`RCU-0504-2020.pdf`, p. 4)
+  en modo documental C. El modelo generó la cita exacta `[RCU-0504-2020.pdf p. 4]`
+  y fue validado sin abstención (`abstained=False`, latencia 26.38 s), verificando la
+  viabilidad técnica del formato genérico en esta instancia puntual. No se afirma ausencia
+  de sesgo ni eficacia general del prompt C v3 a partir de un único ensayo piloto; la
+  evaluación sistemática de desempeño y robustez corresponde a T12. Registrado en
+  `results/piloto_ollama_pr7.json` sin inclusión de texto íntegro del corpus ni secretos.
 
 Pendientes externos/científicos: configurar y ejecutar modelo local real; registrar
 digest/versión del servidor y hardware; ampliar ataques y validar en conjuntos

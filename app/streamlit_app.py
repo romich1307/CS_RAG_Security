@@ -4,6 +4,25 @@ from cs_rag_security.retrieval import Index
 from cs_rag_security.defenses import MODES
 from cs_rag_security.pipeline import answer
 
+SAFE_TRACE_FIELDS = (
+    'question',
+    'response',
+    'provider',
+    'mode',
+    'documental',
+    'abstained',
+    'warnings',
+    'retrieved',
+    'accepted_ids',
+    'detector_log',
+    'seconds',
+    'seed',
+    'top_k',
+    'retriever',
+    'citation_validation',
+    'generation_metadata',
+)
+
 st.title('Consulta documental UNSA')
 st.warning('Prototipo académico no oficial')
 st.caption('MOCK por defecto: muestra extractos, no genera una respuesta de LLM.')
@@ -26,7 +45,8 @@ if st.button('Consultar') and question.strip():
             for warning in result['warnings']:
                 st.warning(warning)
             with st.expander('Fuentes, páginas, puntuaciones y trazabilidad'):
-                st.json(result)
+                safe_trace = {k: result[k] for k in SAFE_TRACE_FIELDS if k in result}
+                st.json(safe_trace)
         except RuntimeError as exc:
             msg = str(exc)
             if '401' in msg:
