@@ -60,6 +60,7 @@ Conforme a las reglas del proyecto (`AGENTS.md`):
    - Este directorio se encuentra estrictamente ignorado por `.gitignore`.
 3. **Material para evaluación humana T12**:
    - Se genera localmente mediante el script `scripts/prepare_t12_eval.py` en `results/t12_evaluacion/` (ignorado por `.gitignore`), verificando el hash del índice antes de incorporar los fragmentos textuales exactos para los evaluadores humanos.
+   - El preparador exige que el directorio de salida aún no exista. Para una sesión adicional, usa `--output-dir results/t12_evaluacion/sesion_02` y conserva el CSV anotado de la sesión anterior.
 
 ---
 
