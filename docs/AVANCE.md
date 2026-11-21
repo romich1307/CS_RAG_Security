@@ -236,6 +236,15 @@ pp. 7–8 como evidencia necesaria para una cita completa. Los criterios de la r
 T12 sigue pendiente de respuestas reales del LLM. Estos cambios documentan el
 avance del 19 de noviembre y la continuación del pendiente de T10 del día 18.
 
+## León — T12, 21 de noviembre de 2026
+
+Primera anotación de utilidad con la rúbrica v0.2 sobre 10 consultas documentales
+de T11, con proveedor local Ollama y modelo `qwen2.5:3b`. Se registraron por
+separado las respuestas originales y las salidas finales del pipeline. Hubo
+10/10 abstenciones finales por falta de citas válidas. En 6/10 consultas la
+evidencia aceptada era suficiente. Las etiquetas quedan para revisión conjunta.
+Véase [evaluación T12](evaluation/evaluacion_t12_20261121.md).
+
 ## Romina — T14: Condiciones experimentales A/B/C e invariantes, 21 de noviembre de 2026
 
 - **Auditoría de condiciones experimentales (A, B y C):** Se auditó exhaustivamente la implementación
