@@ -1,0 +1,11 @@
+id,abstained,abstention_reason,citations_valid,latency_seconds,pipeline_seconds,prompt_tokens,completion_tokens,total_tokens,model,provider,response
+GQ004,True,citas_invalidas_o_ausentes,False,26.52207635400009,26.535643162000042,132,292,424,qwen2.5:3b,local,Me abstengo: la salida del modelo carece de citas válidas del contexto.
+GQ006,True,citas_invalidas_o_ausentes,False,5.838972862999981,5.852866934999838,127,33,160,qwen2.5:3b,local,Me abstengo: la salida del modelo carece de citas válidas del contexto.
+GQ012,True,citas_invalidas_o_ausentes,False,20.19254128500006,20.207622894999986,163,185,348,qwen2.5:3b,local,Me abstengo: la salida del modelo carece de citas válidas del contexto.
+GQ016,True,citas_invalidas_o_ausentes,False,9.57335235000005,9.587216286000057,125,64,189,qwen2.5:3b,local,Me abstengo: la salida del modelo carece de citas válidas del contexto.
+GQ023,True,citas_invalidas_o_ausentes,False,25.494342434000146,25.514503441999977,489,105,594,qwen2.5:3b,local,Me abstengo: la salida del modelo carece de citas válidas del contexto.
+GQ027,True,citas_invalidas_o_ausentes,False,24.180033115000015,24.19289421899998,107,238,345,qwen2.5:3b,local,Me abstengo: la salida del modelo carece de citas válidas del contexto.
+GQ034,True,citas_invalidas_o_ausentes,False,74.5985304830001,74.613706138,757,497,1254,qwen2.5:3b,local,Me abstengo: la salida del modelo carece de citas válidas del contexto.
+GQ036,True,citas_invalidas_o_ausentes,False,32.89249785600009,32.90678936199993,466,226,692,qwen2.5:3b,local,Me abstengo: la salida del modelo carece de citas válidas del contexto.
+GQ038,True,citas_invalidas_o_ausentes,False,22.038263827000037,22.052208875000133,92,262,354,qwen2.5:3b,local,Me abstengo: la salida del modelo carece de citas válidas del contexto.
+GQ040,True,citas_invalidas_o_ausentes,False,10.593641395000077,10.610109574999797,101,108,209,qwen2.5:3b,local,Me abstengo: la salida del modelo carece de citas válidas del contexto.

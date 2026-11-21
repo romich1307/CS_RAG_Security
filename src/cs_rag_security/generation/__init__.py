@@ -51,6 +51,16 @@ def generate(messages, hits, provider='mock', seed=42, return_metadata=False):
                     'latency_seconds': latency,
                     'latency': latency
                 }
+                prompt_tokens = body.get('prompt_eval_count')
+                eval_tokens = body.get('eval_count')
+                if isinstance(prompt_tokens, (int, float)) and isinstance(eval_tokens, (int, float)):
+                    tokens_data = {
+                        'prompt_tokens': int(prompt_tokens),
+                        'completion_tokens': int(eval_tokens),
+                        'total_tokens': int(prompt_tokens + eval_tokens)
+                    }
+                    metadata['tokens'] = tokens_data
+                    metadata['usage'] = tokens_data
                 return {'text': text, 'metadata': metadata}
             return text
 
