@@ -6,7 +6,6 @@ import ipaddress
 import json
 import os
 import re
-import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import URLError
@@ -14,11 +13,16 @@ from urllib.parse import urlparse
 from urllib.request import ProxyHandler, build_opener
 
 from cs_rag_security.defenses import MODES
+from cs_rag_security.evaluation.quality import compute_latency_summary
 from cs_rag_security.generation import NoRedirect
 from cs_rag_security.pipeline import answer
 from cs_rag_security.retrieval import Index
-
-from .run_t11_baseline import determine_abstention_reason, extract_citations
+from cs_rag_security.traceability import (
+    build_run_manifest,
+    build_trace_record,
+    is_path_git_ignored,
+    save_experimental_run,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -62,9 +66,21 @@ def local_model(expected):
     return {'modelo': model, 'modelo_digest': checksum, 'ollama_version': version}
 
 
-def write_json(path, value):
-    with path.open('x', encoding='utf-8', newline='\n') as stream:
-        stream.write(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + '\n')
+def summarize_latencies(records):
+    by_mode = {}
+    for mode in MODES:
+        condition_records = [record for record in records if record['condition'] == mode]
+        by_mode[mode] = {
+            'pipeline_sin_recuperacion': compute_latency_summary(
+                [record['latency_pipeline_seconds'] for record in condition_records],
+                'Pipeline sin la recuperación pareada compartida',
+            ),
+            'generacion': compute_latency_summary(
+                [record['latency_generation_seconds'] for record in condition_records],
+                'Llamada al generador',
+            ),
+        }
+    return by_mode
 
 
 def run_utility(index_path, gold_path, run_id, provider):
@@ -72,6 +88,12 @@ def run_utility(index_path, gold_path, run_id, provider):
         raise ValueError('El proveedor debe ser mock o local.')
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,63}', run_id):
         raise ValueError('El ID de corrida debe contener solo letras, cifras, guiones o guiones bajos.')
+    out = PRIVATE_RESULTS / run_id
+    private = out / 'privado'
+    if out.exists():
+        raise FileExistsError(f'La corrida ya existe: {out}')
+    if out.resolve() != out or not all(is_path_git_ignored(path, ROOT) for path in (out, private)):
+        raise ValueError('La corrida requiere rutas locales ignoradas por Git.')
     baseline = json.loads(BASELINE.read_text(encoding='utf-8'))
     source_hashes = baseline['hashes']
     index_input, index_hash = snapshot(
@@ -87,77 +109,46 @@ def run_utility(index_path, gold_path, run_id, provider):
         'modelo': 'mock_extractivo_v1', 'modelo_digest': None, 'ollama_version': None,
     }
 
-    out = PRIVATE_RESULTS / run_id
-    if out.resolve() != out or subprocess.run(
-        ['git', 'check-ignore', '-q', '--', str(out / 'manifest.json')], cwd=ROOT, check=False,
-    ).returncode != 0:
-        raise ValueError('La corrida requiere una ruta local ignorada por Git.')
-    out.mkdir(parents=True)
     started = datetime.now(timezone.utc).isoformat()
-    traces, private_traces = [], []
+    traces, failures = [], []
+    parameters = {'top_k': TOP_K, 'seed': SEED, 'documental': True, 'temperature': 0.0, 'evidence_threshold': 0.12}
     for case_id in selected:
         question = questions[case_id]
         hits = index.search(question, TOP_K)
-        retrieved_ids = [hit['chunk_id'] for hit in hits]
         for mode in MODES:
-            common = {
-                'run_id': run_id, 'case_id': case_id, 'pregunta_id': case_id, 'case_kind': 'gold',
-                'condition': mode, 'provider': provider, 'model': config['modelo'],
-                'retrieved_ids': retrieved_ids,
-            }
             try:
                 result = answer(
                     index, question, mode=mode, provider=provider, k=TOP_K,
                     documental=True, seed=SEED, hits=hits,
                 )
             except (TimeoutError, URLError, ValueError) as error:
-                traces.append({**common, 'status': 'error', 'tipo_error': type(error).__name__})
+                failures.append({'case_id': case_id, 'condition': mode, 'tipo_error': type(error).__name__})
                 continue
-            generation = result['generation_metadata'] or {}
-            accepted_ids = result['accepted_ids']
-            sources = {(hit['archivo_pdf'], str(hit['pagina_pdf'])) for hit in hits
-                       if hit['chunk_id'] in accepted_ids}
-            citations = extract_citations(result['response'])
-            tags = result['detector_log']
-            trace = {
-                **common, 'status': 'completo',
-                'accepted_ids': accepted_ids,
-                'discarded_ids': [hit_id for hit_id in retrieved_ids if hit_id not in accepted_ids],
-                'abstained': result['abstained'],
-                'abstention_reason': determine_abstention_reason(result),
-                'generation_performed': result['raw_response'] is not None,
-                'citations_valid': not result['abstained'] and bool(citations)
-                and all(citation in sources for citation in citations),
-                'latency_pipeline_seconds': result['seconds'],
-                'latency_generation_seconds': generation.get('latency_seconds'),
-                'tokens': generation.get('tokens'),
-                'prompt_version': result.get('prompt_version', 'v3' if mode == MODES[2] else 'v1'),
-                'detector_version': result.get('detector_version') or (tags[0]['detector'] if tags else None),
-                'detector_log': tags,
-            }
-            traces.append(trace)
-            private_traces.append({
-                **trace, 'question': question, 'response': result['response'],
-                'raw_response': result['raw_response'], 'retrieved': hits,
-            })
+            traces.append(build_trace_record(
+                run_id=run_id, case_id=case_id, mode=mode, pipeline_result=result,
+                case_kind='gold', question=question, provider=provider,
+                model=config['modelo'], model_digest=config['modelo_digest'], **parameters,
+            ))
 
-    commit = subprocess.run(
-        ['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True, check=True,
-    ).stdout.strip()
-    manifest = {
-        'run_id': run_id, 'tarea': 'T17_utilidad_pareada', 'proveedor': provider, **config,
-        'alcance': 'consultas_legitimas', 'commit_git': commit,
-        'started_utc': started, 'finished_utc': datetime.now(timezone.utc).isoformat(),
-        'condiciones_evaluadas': list(MODES), 'casos_evaluados': selected,
-        'parametros': {'top_k': TOP_K, 'seed': SEED, 'documental': True, 'temperature': 0},
-        'recuperador': index.method,
-        'hashes': {'index_sha256': index_hash, 'gold_sha256': gold_hash},
-        'trazas_esperadas': len(selected) * len(MODES), 'trazas_registradas': len(traces),
-        'trazas_con_error': sum(trace['status'] == 'error' for trace in traces),
-    }
-    write_json(out / 'traces.json', traces)
-    write_json(out / 'raw_traces.json', private_traces)
-    write_json(out / 'manifest.json', manifest)
+    version = next((trace['detector_version'] for trace in traces), None)
+    manifest = build_run_manifest(
+        run_id=run_id, task_name='T17_utilidad_pareada',
+        description='Comparación A/B/C de consultas documentales legítimas',
+        evaluated_cases=selected, modes=list(MODES), provider=provider, model=config['modelo'],
+        started_utc=started, finished_utc=datetime.now(timezone.utc).isoformat(),
+        model_digest=config['modelo_digest'], detector_version=version, parameters=parameters,
+        index_path=index_path, gold_path=gold_path, attacks_path=None,
+        extra_hashes={'index_sha256': index_hash, 'gold_sha256': gold_hash},
+        extra_metadata={
+            'alcance': 'consultas_legitimas',
+            'ollama_version': config['ollama_version'],
+            'recuperador': index.method,
+            'trazas_registradas': len(traces),
+            'incidencias': failures,
+            'latencias_segundos': summarize_latencies(traces),
+        },
+    )
+    save_experimental_run(out, manifest, traces, private_dir=private)
     return out, manifest
 
 
@@ -172,8 +163,9 @@ def main():
         out, manifest = run_utility(args.indice, args.gold, args.run_id, args.proveedor)
     except (OSError, ValueError) as error:
         parser.exit(1, f'{error}\n')
-    print(f'{out} · {manifest["trazas_registradas"]} trazas, {manifest["trazas_con_error"]} errores.')
-    return int(manifest['trazas_con_error'] > 0)
+    extra = manifest['extra']
+    print(f'{out} · {extra["trazas_registradas"]} trazas, {len(extra["incidencias"])} errores.')
+    return int(bool(extra['incidencias']))
 
 
 if __name__ == '__main__':

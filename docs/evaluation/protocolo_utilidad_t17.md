@@ -47,8 +47,10 @@ histórica de la condición A.
 
 La corrida se considera completa cuando se puede comprobar la configuración
 común y cada consulta tiene sus tres salidas o incidencias documentadas.
-Quedan pendientes la integración del contrato de trazabilidad T16, la corrida
-con el índice y el proveedor local y la revisión de sus anotaciones.
+La corrida local `t17_ollama_20261121_r1` conservó 30 salidas de Ollama con
+`qwen2.5:3b`. Se hizo antes de integrar el contrato T16. Su manifiesto,
+trazas y planilla ciega se conservan en el directorio original. Las corridas
+canónicas se guardan con IDs nuevos. La revisión con la rúbrica sigue pendiente.
 
 ## Ejecutar el piloto
 
@@ -64,8 +66,13 @@ conservado de T08 o la instantánea histórica de T11. Para Ollama, configurar
 `RAG_LOCAL_MODEL=qwen2.5:3b` y añadir `--proveedor local`. El ejecutor verifica
 la versión del servidor y el digest del modelo instalado antes de generar.
 
-El resultado se guarda por corrida en `results/llm_abc_local/`, ignorado por
-Git. El manifiesto y `traces.json` documentan el pareamiento, las decisiones
-y la telemetría. `raw_traces.json` conserva el texto íntegro para el cotejo
-privado. Una corrida con errores conserva sus incidencias y termina con
-código distinto de cero. El proveedor predeterminado `mock` comprueba el flujo.
+El [contrato T16](../CONTRATO_TRAZABILIDAD.md) genera el manifiesto y las
+trazas saneadas en JSON y CSV para T18/T20. El resultado se guarda por corrida
+en `results/llm_abc_local/`, ignorado por Git. Las preguntas, las respuestas
+originales y el contexto íntegro quedan en `privado/` para el cotejo.
+
+El manifiesto registra por condición la media, mediana, p95 y número de
+mediciones válidas, separando la llamada al generador y el tiempo del
+pipeline sin la recuperación compartida. Una corrida con errores registra
+las incidencias en el manifiesto y termina con código distinto de cero.
+El proveedor predeterminado `mock` comprueba el flujo.
