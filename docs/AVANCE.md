@@ -108,7 +108,9 @@ Sin push, sin APIs pagadas ni modelos descargados.
   viabilidad técnica del formato genérico en esta instancia puntual. No se afirma ausencia
   de sesgo ni eficacia general del prompt C v3 a partir de un único ensayo piloto; la
   evaluación sistemática de desempeño y robustez corresponde a T12. Registrado en
-  `results/piloto_ollama_pr7.json` sin inclusión de texto íntegro del corpus ni secretos.
+  `results/piloto_ollama_pr7.json` con el ID, la fuente, el resultado de la validación y
+  los metadatos de la ejecución. El enunciado y las respuestas solo se guardan en el
+  respaldo local del piloto.
 
 Pendientes externos/científicos: configurar y ejecutar modelo local real; registrar
 digest/versión del servidor y hardware; ampliar ataques y validar en conjuntos
