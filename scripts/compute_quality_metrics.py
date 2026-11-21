@@ -114,6 +114,20 @@ def main():
     print(f"Sustento factual completo:    {format_pct(sust.get('rate_percent'), sust.get('numerator'), sust.get('denominator'))}")
     print(f"Brecha (en contexto sin sust):{format_pct(brecha.get('rate_percent'), brecha.get('numerator'), brecha.get('denominator'))}")
 
+    dif_cit = cit.get('diferenciacion_citas', {})
+    if dif_cit:
+        c_abs = dif_cit.get('ausencia_citas', {})
+        c_inv = dif_cit.get('citas_presentes_invalidas', {})
+        c_val = dif_cit.get('citas_formalmente_validas', {})
+        c_mix = dif_cit.get('casos_mixtos', {})
+        c_nod = dif_cit.get('no_determinable', {})
+        print("\n--- Diferenciación Formal de Citas (desacoplada de sustento fáctico) ---")
+        print(f"Ausencia de citas:            {format_pct(c_abs.get('rate_percent'), c_abs.get('numerator'), c_abs.get('denominator'))}")
+        print(f"Citas presentes pero inválidas: {format_pct(c_inv.get('rate_percent'), c_inv.get('numerator'), c_inv.get('denominator'))}")
+        print(f"Citas formalmente válidas:    {format_pct(c_val.get('rate_percent'), c_val.get('numerator'), c_val.get('denominator'))}")
+        print(f"Casos mixtos (válidas+invál.): {format_pct(c_mix.get('rate_percent'), c_mix.get('numerator'), c_mix.get('denominator'))}")
+        print(f"No determinable (histórico):   {format_pct(c_nod.get('rate_percent'), c_nod.get('numerator'), c_nod.get('denominator'))}")
+
     # Separación Pipeline vs LLM Raw
     pipe_slice = report.por_origen_respuesta.get(TARGET_PIPELINE, {})
     raw_slice = report.por_origen_respuesta.get(TARGET_LLM_RAW, {})
@@ -125,6 +139,49 @@ def main():
         r_abs = raw_slice.get('abstencion_y_adecuacion', {}).get('tasa_abstencion', {})
         print(f"Pipeline exactitud:  {format_pct(p_acc.get('rate_percent'), p_acc.get('numerator'), p_acc.get('denominator'))} | Abstención: {format_pct(p_abs.get('rate_percent'), p_abs.get('numerator'), p_abs.get('denominator'))}")
         print(f"LLM Raw exactitud:   {format_pct(r_acc.get('rate_percent'), r_acc.get('numerator'), r_acc.get('denominator'))} | Abstención: {format_pct(r_abs.get('rate_percent'), r_abs.get('numerator'), r_abs.get('denominator'))}")
+
+    # Telemetría de latencias (sin duplicación y desacoplada de evaluación humana)
+    lat_data = report.metricas_latencia.get('por_condicion', {})
+    has_lats = any(
+        c.get('latencia_pipeline', {}).get('observaciones_validas', 0) > 0
+        or c.get('latencia_generacion', {}).get('observaciones_validas', 0) > 0
+        or not c.get('configuracion_compatible', True)
+        for c in lat_data.values()
+    )
+    if has_lats:
+        print("\n--- Telemetría de Latencias Desacopladas (sin duplicación pipeline/raw) ---")
+        print(f"Método p95: {report.metricas_latencia.get('metodo_calculo_p95', 'Interpolación lineal Hyndman-Fan Tipo 7')}")
+        for cond, c_lat in lat_data.items():
+            compat = c_lat.get('configuracion_compatible', True)
+            if compat:
+                p_lat = c_lat.get('latencia_pipeline', {})
+                g_lat = c_lat.get('latencia_generacion', {})
+                p_obs = p_lat.get('observaciones_validas', 0)
+                g_obs = g_lat.get('observaciones_validas', 0)
+                p_str = f"media={p_lat.get('media')}s, med={p_lat.get('mediana')}s, p95={p_lat.get('percentil_95')}s (n={p_obs})" if p_obs > 0 else "N/A"
+                g_str = f"media={g_lat.get('media')}s, med={g_lat.get('mediana')}s, p95={g_lat.get('percentil_95')}s (n={g_obs})" if g_obs > 0 else "N/A"
+                cfg = c_lat.get('configuracion', {})
+                cfg_info = f"prov={cfg.get('provider')}, mod={cfg.get('model')}, seed={cfg.get('seed')}, temp={cfg.get('temperature')}, top_k={cfg.get('top_k')}, ret={cfg.get('retriever')}" if cfg else "cfg=N/A"
+                print(f"[{cond}] Pipeline: {p_str} | Generación: {g_str} | ({cfg_info})")
+            else:
+                print(f"[{cond}] Configuraciones incompatibles separadas para evitar mezclas espurias:")
+                for grp in c_lat.get('grupos_configuracion', []):
+                    gid = grp.get('grupo_id')
+                    g_cfg = grp.get('configuracion', {})
+                    gp_lat = grp.get('latencia_pipeline', {})
+                    gg_lat = grp.get('latencia_generacion', {})
+                    gp_obs = gp_lat.get('observaciones_validas', 0)
+                    gg_obs = gg_lat.get('observaciones_validas', 0)
+                    gp_str = f"media={gp_lat.get('media')}s, med={gp_lat.get('mediana')}s, p95={gp_lat.get('percentil_95')}s (n={gp_obs})" if gp_obs > 0 else "N/A"
+                    gg_str = f"media={gg_lat.get('media')}s, med={gg_lat.get('mediana')}s, p95={gg_lat.get('percentil_95')}s (n={gg_obs})" if gg_obs > 0 else "N/A"
+                    g_cfg_info = f"prov={g_cfg.get('provider')}, mod={g_cfg.get('model')}, seed={g_cfg.get('seed')}, temp={g_cfg.get('temperature')}, top_k={g_cfg.get('top_k')}, ret={g_cfg.get('retriever')}"
+                    print(f"  - Grupo {gid}: Pipeline: {gp_str} | Generación: {gg_str} | ({g_cfg_info})")
+
+    # Conflictos sin consenso detectados
+    if report.desacuerdos_sin_consenso:
+        print(f"\n--- Desacuerdos entre evaluadores sin consenso ({len(report.desacuerdos_sin_consenso)} casos) ---")
+        for conf in report.desacuerdos_sin_consenso:
+            print(f"  - Caso {conf.get('caso_id')} [{conf.get('condicion')}/{conf.get('target')}]: Evaluadores {conf.get('evaluadores')}")
 
     # Si se especificó directorio de salida, guardar archivos
     if args.output_dir:
