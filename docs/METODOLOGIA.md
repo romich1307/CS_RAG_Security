@@ -96,6 +96,12 @@ la mejora o degradación a cada mecanismo específico por separado:
 - Latencia = segundos por llamada a pipeline, media con n por grupo y modo.
   Excluye recuperación compartida e incluye detector/control/generación; no representa
   latencia de extremo a extremo. El orden fijo A/B/C puede introducir sesgos.
+- Métricas de calidad humana de respuestas (T18, rúbrica T10 v0.2): exactitud humana
+  de contenido, respuestas parciales/incorrectas, tasa y adecuación de abstención,
+  y validez de citas distinguiendo pertenencia formal al contexto de sustento factual real.
+  Evaluadas desacopladamente para la respuesta del pipeline y la salida cruda del LLM
+  (`raw_response`), con registro explícito de numeradores, denominadores y casos excluidos
+  (véase detalle formal en [docs/evaluation/metricas_calidad_t18.md](evaluation/metricas_calidad_t18.md)).
 
 Todas las tasas guardan numerador y denominador; cero denominador produce null.
 El proveedor se registra en manifiesto, métricas y cada traza. Con mock, ASR y

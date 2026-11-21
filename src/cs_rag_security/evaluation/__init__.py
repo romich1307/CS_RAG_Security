@@ -12,6 +12,14 @@ from cs_rag_security.defenses import MODES, detect
 from cs_rag_security.ingestion import audit, digest, read_json
 from cs_rag_security.pipeline import answer
 from cs_rag_security.retrieval import Index
+from cs_rag_security.evaluation.quality import (
+    EvaluationRecord,
+    QualityEvaluationReport,
+    compute_slice_metrics,
+    evaluate_quality,
+    load_annotations,
+    resolve_consensus_records,
+)
 
 
 def fraction(num, den):
