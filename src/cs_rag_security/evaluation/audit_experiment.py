@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -34,6 +35,7 @@ SEVERITY_INFO = "informativa"
 
 # Códigos canónicos de incidencias
 CODE_HASH_MISMATCH = "HASH_MISMATCH"
+CODE_MALFORMED_HASH = "MALFORMED_HASH"
 CODE_FILE_MISSING = "FILE_MISSING"
 CODE_INCOMPATIBLE_RUNS = "INCOMPATIBLE_RUNS"
 CODE_UNIMODAL_RUN = "UNIMODAL_RUN"
@@ -48,6 +50,12 @@ CODE_PRIVACY_VIOLATION = "PRIVACY_VIOLATION"
 CODE_PARAMETER_NON_COMPLIANT = "PARAMETER_NON_COMPLIANT"
 CODE_SCRIPTS_HASH_MISSING = "SCRIPTS_HASH_MISSING"
 CODE_GIT_DIRTY = "GIT_DIRTY"
+
+# Estados canónicos de verificación de hash
+HASH_STATUS_VERIFIED = "verified"
+HASH_STATUS_MISMATCH = "mismatch"
+HASH_STATUS_MALFORMED = "malformed"
+HASH_STATUS_FILE_NOT_FOUND = "file_not_found"
 
 # Tipos canónicos de corrida
 RUN_TYPE_REAL_LLM = "real_llm"
@@ -353,6 +361,75 @@ def check_privacy_compliance_in_data(
     return is_compliant, issues
 
 
+def is_valid_sha256(val: Any) -> bool:
+    """Verifica si un valor es un hash SHA-256 sintácticamente válido (64 caracteres hexadecimales)."""
+    if not isinstance(val, str):
+        return False
+    return bool(re.fullmatch(r"[0-9a-fA-F]{64}", val.strip()))
+
+
+def _audit_single_file_hash(
+    declared_hash: Any,
+    expected_path: Path,
+    key: str,
+    run_id: str,
+) -> Tuple[Dict[str, Any], Optional[AuditIssue]]:
+    """Coteja un hash individual distinguiendo verified, mismatch, malformed y file_not_found.
+
+    Un hash malformado se detecta independientemente de si el archivo existe o no en disco.
+    """
+    if not is_valid_sha256(declared_hash):
+        status_info = {
+            "declared": declared_hash,
+            "status": HASH_STATUS_MALFORMED,
+            "path": str(expected_path),
+        }
+        issue = AuditIssue(
+            code=CODE_MALFORMED_HASH,
+            message=f"Hash SHA-256 malformado para {key} ({expected_path.name}): {declared_hash!r} no es un hash hexadecimal válido de 64 caracteres.",
+            severity=SEVERITY_ERROR,
+            run_id=run_id,
+            source=str(expected_path),
+        )
+        return status_info, issue
+
+    clean_declared = str(declared_hash).strip().lower()
+
+    if not expected_path.exists():
+        status_info = {
+            "declared": clean_declared,
+            "status": HASH_STATUS_FILE_NOT_FOUND,
+            "path": str(expected_path),
+        }
+        issue = AuditIssue(
+            code=CODE_FILE_MISSING,
+            message=f"Archivo de referencia para {key} no existe en disco: {expected_path}",
+            severity=SEVERITY_WARNING,
+            run_id=run_id,
+            source=str(expected_path),
+        )
+        return status_info, issue
+
+    computed = digest(expected_path).lower()
+    match = (computed == clean_declared)
+    status_info = {
+        "declared": clean_declared,
+        "computed": computed,
+        "path": str(expected_path),
+        "status": HASH_STATUS_VERIFIED if match else HASH_STATUS_MISMATCH,
+    }
+    issue = None
+    if not match:
+        issue = AuditIssue(
+            code=CODE_HASH_MISMATCH,
+            message=f"Discrepancia en hash SHA-256 de {key} ({expected_path.name}): declarado={clean_declared[:10]}..., calculado={computed[:10]}...",
+            severity=SEVERITY_ERROR,
+            run_id=run_id,
+            source=str(expected_path),
+        )
+    return status_info, issue
+
+
 def verify_file_hashes(
     manifest_hashes: Dict[str, Any],
     base_dir: Optional[Union[str, Path]] = None,
@@ -373,67 +450,22 @@ def verify_file_hashes(
     # Revisar hashes directos
     for key, expected_path in target_files.items():
         declared_hash = manifest_hashes.get(key)
-        if declared_hash:
-            if expected_path.exists():
-                computed = digest(expected_path)
-                match = (computed == declared_hash)
-                results[key] = {
-                    "declared": declared_hash,
-                    "computed": computed,
-                    "path": str(expected_path),
-                    "status": "verified" if match else "mismatch",
-                }
-                if not match:
-                    issues.append(
-                        AuditIssue(
-                            code=CODE_HASH_MISMATCH,
-                            message=f"Discrepancia en hash SHA-256 de {key} ({expected_path.name}): declarado={declared_hash[:10]}..., calculado={computed[:10]}...",
-                            severity=SEVERITY_ERROR,
-                            run_id=run_id,
-                            source=str(expected_path),
-                        )
-                    )
-            else:
-                results[key] = {
-                    "declared": declared_hash,
-                    "status": "file_not_found",
-                    "path": str(expected_path),
-                }
-                issues.append(
-                    AuditIssue(
-                        code=CODE_FILE_MISSING,
-                        message=f"Archivo de referencia para {key} no existe en disco: {expected_path}",
-                        severity=SEVERITY_WARNING,
-                        run_id=run_id,
-                        source=str(expected_path),
-                    )
-                )
+        if declared_hash is not None:
+            info, issue = _audit_single_file_hash(declared_hash, expected_path, key, run_id)
+            results[key] = info
+            if issue:
+                issues.append(issue)
 
     # Revisar hashes anidados bajo 'hashes'
     nested = manifest_hashes.get("hashes", {})
     if isinstance(nested, dict):
         for k, v in nested.items():
-            if isinstance(v, str) and k in target_files and k not in results:
+            if k in target_files and k not in results and v is not None:
                 exp_path = target_files[k]
-                if exp_path.exists():
-                    computed = digest(exp_path)
-                    match = (computed == v)
-                    results[k] = {
-                        "declared": v,
-                        "computed": computed,
-                        "path": str(exp_path),
-                        "status": "verified" if match else "mismatch",
-                    }
-                    if not match:
-                        issues.append(
-                            AuditIssue(
-                                code=CODE_HASH_MISMATCH,
-                                message=f"Discrepancia en hash SHA-256 de {k}: declarado={v[:10]}..., calculado={computed[:10]}...",
-                                severity=SEVERITY_ERROR,
-                                run_id=run_id,
-                                source=str(exp_path),
-                            )
-                        )
+                info, issue = _audit_single_file_hash(v, exp_path, k, run_id)
+                results[k] = info
+                if issue:
+                    issues.append(issue)
 
     return results, issues
 
@@ -443,6 +475,7 @@ def audit_run(
     corpus_dir: Optional[Union[str, Path]] = None,
     expected_cases: Optional[List[str]] = None,
     gold_questions: Optional[List[str]] = None,
+    base_dir: Optional[Union[str, Path]] = None,
 ) -> RunAuditResult:
     """Audita de forma exhaustiva una corrida experimental o piloto."""
     path = Path(run_dir_or_file)
@@ -760,7 +793,7 @@ def audit_run(
     if "hashes" in manifest and isinstance(manifest["hashes"], dict):
         all_manifest_hashes.update(manifest["hashes"])
 
-    hashes_status, hash_issues = verify_file_hashes(all_manifest_hashes, base_dir=Path.cwd(), run_id=run_id)
+    hashes_status, hash_issues = verify_file_hashes(all_manifest_hashes, base_dir=base_dir, run_id=run_id)
     issues.extend(hash_issues)
 
     # 7. Privacidad
@@ -895,6 +928,7 @@ def audit_experiments(
     mapping_path: Optional[Union[str, Path]] = None,
     gold_path: Optional[Union[str, Path]] = None,
     expected_cases: Optional[List[str]] = None,
+    base_dir: Optional[Union[str, Path]] = None,
 ) -> ExperimentAuditReport:
     """Ejecuta la auditoría experimental completa sobre múltiples corridas y artefactos."""
     timestamp_utc = datetime.now(timezone.utc).isoformat()
@@ -904,7 +938,8 @@ def audit_experiments(
 
     # Cargar textos de preguntas gold si están disponibles para control de privacidad estricto
     gold_questions: List[str] = []
-    g_path = Path(gold_path) if gold_path else Path("data/corpus_unsa/03_Preguntas_Respuestas/gold_questions.json")
+    default_gold = (Path(base_dir) / "data/corpus_unsa/03_Preguntas_Respuestas/gold_questions.json") if base_dir else Path("data/corpus_unsa/03_Preguntas_Respuestas/gold_questions.json")
+    g_path = Path(gold_path) if gold_path else default_gold
     if g_path.exists():
         try:
             g_data = json.loads(g_path.read_text(encoding="utf-8"))
@@ -932,6 +967,7 @@ def audit_experiments(
             p,
             expected_cases=expected_cases,
             gold_questions=gold_questions,
+            base_dir=base_dir,
         )
         runs_audited[res.run_id] = res
         all_issues.extend(res.issues)

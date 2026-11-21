@@ -30,11 +30,16 @@ from cs_rag_security.evaluation.audit_experiment import (
     CODE_FILE_MISSING,
     CODE_HASH_MISMATCH,
     CODE_INCOMPATIBLE_RUNS,
+    CODE_MALFORMED_HASH,
     CODE_MISSING_CASES,
     CODE_MOCK_RUN_LIMITATION,
     CODE_PENDING_EVALUATIONS,
     CODE_PRIVACY_VIOLATION,
     CODE_UNIMODAL_RUN,
+    HASH_STATUS_FILE_NOT_FOUND,
+    HASH_STATUS_MALFORMED,
+    HASH_STATUS_MISMATCH,
+    HASH_STATUS_VERIFIED,
     RUN_TYPE_MOCK_OFFLINE,
     RUN_TYPE_PILOT_LLM,
     RUN_TYPE_REAL_LLM,
@@ -45,6 +50,8 @@ from cs_rag_security.evaluation.audit_experiment import (
     audit_human_evaluation_coverage,
     audit_run,
     check_privacy_compliance_in_data,
+    is_valid_sha256,
+    verify_file_hashes,
 )
 from cs_rag_security.evaluation.figures import (
     generate_all_paper_figures,
@@ -57,10 +64,11 @@ from cs_rag_security.evaluation.tables import (
     format_markdown_table,
     generate_all_paper_tables,
 )
+from cs_rag_security.ingestion import digest
 
 
-def test_audit_real_and_mock_runs():
-    """Verifica la auditoría sobre las evidencias existentes en el repositorio."""
+def test_audit_real_and_mock_runs(tmp_path):
+    """Verifica la auditoría sobre las evidencias existentes en el repositorio y fixtures sintéticos."""
     # 1. Baseline T11
     res_t11 = audit_run("results/llm_baseline")
     assert res_t11.run_type == RUN_TYPE_REAL_LLM
@@ -74,8 +82,20 @@ def test_audit_real_and_mock_runs():
     assert res_t11.is_multimodal_abc is False
     assert res_t11.cases_count == 10
     assert res_t11.privacy_compliant is True
-    assert res_t11.hashes_status["index_sha256"]["status"] == "verified"
-    assert res_t11.hashes_status["gold_sha256"]["status"] == "verified"
+
+    # No clasificar como verificada una evidencia que no pudo comprobarse
+    expected_index_status = (
+        HASH_STATUS_VERIFIED
+        if Path("data/vector_db/index.json").exists()
+        else HASH_STATUS_FILE_NOT_FOUND
+    )
+    expected_gold_status = (
+        HASH_STATUS_VERIFIED
+        if Path("data/corpus_unsa/03_Preguntas_Respuestas/gold_questions.json").exists()
+        else HASH_STATUS_FILE_NOT_FOUND
+    )
+    assert res_t11.hashes_status["index_sha256"]["status"] == expected_index_status
+    assert res_t11.hashes_status["gold_sha256"]["status"] == expected_gold_status
 
     # 2. Mock offline 20261117_final
     res_mock = audit_run("results/offline_20261117_final")
@@ -90,6 +110,38 @@ def test_audit_real_and_mock_runs():
     res_pilot = audit_run("results/piloto_ollama_pr7.json")
     assert res_pilot.run_type == RUN_TYPE_PILOT_LLM
     assert res_pilot.cases_count == 1
+
+    # 4. Desacoplamiento de pruebas automatizadas mediante fixture sintético en tmp_path
+    synth_index = tmp_path / "data/vector_db/index.json"
+    synth_index.parent.mkdir(parents=True, exist_ok=True)
+    synth_index.write_text(json.dumps({"fragmentos": ["f1", "f2"]}), encoding="utf-8")
+    synth_index_hash = digest(synth_index)
+
+    synth_gold = tmp_path / "data/corpus_unsa/03_Preguntas_Respuestas/gold_questions.json"
+    synth_gold.parent.mkdir(parents=True, exist_ok=True)
+    synth_gold.write_text(json.dumps({"preguntas": []}), encoding="utf-8")
+    synth_gold_hash = digest(synth_gold)
+
+    synth_run = tmp_path / "synthetic_run"
+    synth_run.mkdir()
+    (synth_run / "manifest.json").write_text(
+        json.dumps({
+            "run_id": "synth_1",
+            "proveedor": "local",
+            "modelo": "qwen2.5:3b",
+            "index_sha256": synth_index_hash,
+            "gold_sha256": synth_gold_hash,
+            "parametros": {"seed": 42, "temperature": 0, "top_k": 5},
+        }),
+        encoding="utf-8",
+    )
+    (synth_run / "traces.json").write_text(json.dumps([]), encoding="utf-8")
+
+    res_synth = audit_run(synth_run, base_dir=tmp_path)
+    assert res_synth.hashes_status["index_sha256"]["status"] == HASH_STATUS_VERIFIED
+    assert res_synth.hashes_status["gold_sha256"]["status"] == HASH_STATUS_VERIFIED
+    assert res_synth.hashes_status["index_sha256"]["computed"] == synth_index_hash
+    assert res_synth.hashes_status["gold_sha256"]["computed"] == synth_gold_hash
 
 
 def test_audit_zero_denominators_handling():
@@ -393,9 +445,10 @@ def test_force_cannot_overwrite_protected_or_historical_paths():
 
 def test_critical_audit_error_blocks_generation(tmp_path):
     """Verifica que una corrida con errores críticos de auditoría no produzca resultados válidos (Punto 6)."""
+    # 1. Caso hash malformado: debe detectarse como error crítico incluso si el archivo original no existe
     bad_run = tmp_path / "bad_run"
     bad_run.mkdir()
-    # Manifiesto con hash deliberadamente corrompido
+    # Manifiesto con hash deliberadamente malformado
     (bad_run / "manifest.json").write_text(
         json.dumps({
             "run_id": "bad_run_1",
@@ -407,6 +460,11 @@ def test_critical_audit_error_blocks_generation(tmp_path):
     )
     (bad_run / "traces.json").write_text(json.dumps([]), encoding="utf-8")
 
+    # El hash malformado debe detectarse directamente en la auditoría unitaria
+    audit_res = audit_run(bad_run)
+    assert audit_res.hashes_status["index_sha256"]["status"] == HASH_STATUS_MALFORMED
+    assert any(i.code == CODE_MALFORMED_HASH and i.severity == SEVERITY_ERROR for i in audit_res.issues)
+
     out_dir = tmp_path / "out_blocked"
 
     # Sin force debe abortar con RuntimeError
@@ -417,6 +475,29 @@ def test_critical_audit_error_blocks_generation(tmp_path):
     res = generate_paper_artifacts(output_dir=out_dir, run_paths=[bad_run], force=True)
     assert res["manifest"]["valido_para_publicacion"] is False
     assert "ARTEFACTOS DE AUDITORÍA RECHAZADOS" in res["manifest"].get("advertencia_critica", "")
+
+    # 2. Caso archivo alterado (mismatch con hash válido pero no coincidente): también bloquea generación
+    fake_base = tmp_path / "env_mismatch"
+    synth_file = fake_base / "data/vector_db/index.json"
+    synth_file.parent.mkdir(parents=True, exist_ok=True)
+    synth_file.write_text("contenido real sintético", encoding="utf-8")
+
+    mismatch_run = tmp_path / "run_mismatch"
+    mismatch_run.mkdir()
+    (mismatch_run / "manifest.json").write_text(
+        json.dumps({
+            "run_id": "bad_run_mismatch",
+            "proveedor": "local",
+            "modelo": "qwen2.5:3b",
+            "index_sha256": "0" * 64,  # hash válido de 64 hex pero que no coincide con el contenido
+        }),
+        encoding="utf-8",
+    )
+    (mismatch_run / "traces.json").write_text(json.dumps([]), encoding="utf-8")
+
+    out_mismatch = tmp_path / "out_mismatch_blocked"
+    with pytest.raises(RuntimeError, match="Generación abortada: la auditoría experimental detectó errores críticos"):
+        generate_paper_artifacts(output_dir=out_mismatch, run_paths=[mismatch_run], force=False, base_dir=fake_base)
 
 
 def test_no_causal_claims_in_mode_a_artifacts(tmp_path):
@@ -458,18 +539,109 @@ def test_privacy_audit_does_not_leak_detected_content():
         assert "omitid" in iss.message.lower()
 
 
-def test_historical_code_evolution_distinguished_from_evidence_alteration():
+def test_historical_code_evolution_distinguished_from_evidence_alteration(tmp_path):
     """Verifica que la auditoría distinga la evolución legítima del código de una alteración de datos (Punto 5)."""
-    res = audit_run("results/llm_baseline")
-    # Los datos originales (índice y gold) deben estar íntegros
-    assert res.hashes_status["index_sha256"]["status"] == "verified"
-    assert res.hashes_status["gold_sha256"]["status"] == "verified"
+    # 1. Verificación reproducible e independiente mediante fixtures sintéticos en tmp_path
+    fake_base = tmp_path / "env_synth"
+    synth_idx = fake_base / "data/vector_db/index.json"
+    synth_idx.parent.mkdir(parents=True, exist_ok=True)
+    synth_idx.write_text(json.dumps({"version": "sintetica_v1"}), encoding="utf-8")
+    valid_idx_hash = digest(synth_idx)
 
-    # La evolución de código debe clasificarse como SEVERITY_INFO
+    synth_gold = fake_base / "data/corpus_unsa/03_Preguntas_Respuestas/gold_questions.json"
+    synth_gold.parent.mkdir(parents=True, exist_ok=True)
+    synth_gold.write_text(json.dumps({"preguntas": ["P1"]}), encoding="utf-8")
+    valid_gold_hash = digest(synth_gold)
+
+    synth_run_dir = tmp_path / "run_historical"
+    synth_run_dir.mkdir()
+    (synth_run_dir / "manifest.json").write_text(
+        json.dumps({
+            "run_id": "synth_historical_1",
+            "proveedor": "local",
+            "modelo": "qwen2.5:3b",
+            "commit_git": "0000000000000000000000000000000000000000",
+            "index_sha256": valid_idx_hash,
+            "gold_sha256": valid_gold_hash,
+            "parametros": {"seed": 42, "temperature": 0, "top_k": 5},
+        }),
+        encoding="utf-8",
+    )
+    (synth_run_dir / "traces.json").write_text(json.dumps([]), encoding="utf-8")
+
+    res_synth = audit_run(synth_run_dir, base_dir=fake_base)
+    # Los datos sintéticos originales están íntegros
+    assert res_synth.hashes_status["index_sha256"]["status"] == HASH_STATUS_VERIFIED
+    assert res_synth.hashes_status["gold_sha256"]["status"] == HASH_STATUS_VERIFIED
+
+    # La evolución legítima de código se clasifica como SEVERITY_INFO
+    code_issues_synth = [i for i in res_synth.issues if i.code == "HISTORICAL_CODE_EVOLUTION"]
+    assert len(code_issues_synth) >= 1
+    assert code_issues_synth[0].severity == SEVERITY_INFO
+    assert "evolución legítima" in code_issues_synth[0].message
+
+    # 2. Alteración deliberada de evidencia de datos frente a evolución de código
+    synth_idx.write_text(json.dumps({"version": "sintetica_alterada"}), encoding="utf-8")
+    res_altered = audit_run(synth_run_dir, base_dir=fake_base)
+    # Debe señalar discrepancia crítica de datos con SEVERITY_ERROR
+    assert res_altered.hashes_status["index_sha256"]["status"] == HASH_STATUS_MISMATCH
+    assert any(i.code == CODE_HASH_MISMATCH and i.severity == SEVERITY_ERROR for i in res_altered.issues)
+
+    # 3. Comprobación sobre evidencia histórica de T11 en el repositorio local
+    res = audit_run("results/llm_baseline")
+    # No clasificar como verificada una evidencia que no pudo comprobarse
+    expected_index_status = (
+        HASH_STATUS_VERIFIED
+        if Path("data/vector_db/index.json").exists()
+        else HASH_STATUS_FILE_NOT_FOUND
+    )
+    expected_gold_status = (
+        HASH_STATUS_VERIFIED
+        if Path("data/corpus_unsa/03_Preguntas_Respuestas/gold_questions.json").exists()
+        else HASH_STATUS_FILE_NOT_FOUND
+    )
+    assert res.hashes_status["index_sha256"]["status"] == expected_index_status
+    assert res.hashes_status["gold_sha256"]["status"] == expected_gold_status
+
     code_issues = [i for i in res.issues if i.code == "HISTORICAL_CODE_EVOLUTION"]
     assert len(code_issues) >= 1
     assert code_issues[0].severity == SEVERITY_INFO
     assert "evolución legítima" in code_issues[0].message
+
+
+def test_hash_verification_all_states(tmp_path):
+    """Verifica explícitamente los 4 estados: verified, mismatch, malformed y file_not_found."""
+    fake_base = tmp_path / "env_states"
+    idx_file = fake_base / "data/vector_db/index.json"
+    idx_file.parent.mkdir(parents=True, exist_ok=True)
+    idx_file.write_text("indice real de prueba", encoding="utf-8")
+    idx_hash = digest(idx_file)
+
+    # 1. Verified (archivo presente y hash coincide)
+    res_v, iss_v = verify_file_hashes({"index_sha256": idx_hash}, base_dir=fake_base)
+    assert res_v["index_sha256"]["status"] == HASH_STATUS_VERIFIED
+    assert len(iss_v) == 0
+
+    # 2. Mismatch (archivo alterado: existe pero el hash calculado discrepa)
+    res_m, iss_m = verify_file_hashes({"index_sha256": "a" * 64}, base_dir=fake_base)
+    assert res_m["index_sha256"]["status"] == HASH_STATUS_MISMATCH
+    assert any(i.code == CODE_HASH_MISMATCH and i.severity == SEVERITY_ERROR for i in iss_m)
+
+    # 3. Malformed (hash con formato corrupto/inválido: archivo presente)
+    res_mal_pres, iss_mal_pres = verify_file_hashes({"index_sha256": "malformed_hash_123"}, base_dir=fake_base)
+    assert res_mal_pres["index_sha256"]["status"] == HASH_STATUS_MALFORMED
+    assert any(i.code == CODE_MALFORMED_HASH and i.severity == SEVERITY_ERROR for i in iss_mal_pres)
+
+    # 4. Malformed (hash con formato corrupto/inválido: archivo ausente)
+    # Debe detectarse incluso cuando el archivo original no existe
+    res_mal_abs, iss_mal_abs = verify_file_hashes({"gold_sha256": "malformed_hash_456"}, base_dir=fake_base)
+    assert res_mal_abs["gold_sha256"]["status"] == HASH_STATUS_MALFORMED
+    assert any(i.code == CODE_MALFORMED_HASH and i.severity == SEVERITY_ERROR for i in iss_mal_abs)
+
+    # 5. File not found (hash válido de 64 hex pero archivo no existe en disco)
+    res_fnf, iss_fnf = verify_file_hashes({"gold_sha256": "b" * 64}, base_dir=fake_base)
+    assert res_fnf["gold_sha256"]["status"] == HASH_STATUS_FILE_NOT_FOUND
+    assert any(i.code == CODE_FILE_MISSING and i.severity == SEVERITY_WARNING for i in iss_fnf)
 
 
 def test_cli_execution_paper_artifacts(tmp_path):

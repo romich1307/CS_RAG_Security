@@ -21,12 +21,18 @@ from cs_rag_security.evaluation.quality import (
     resolve_consensus_records,
 )
 from cs_rag_security.evaluation.audit_experiment import (
+    CODE_MALFORMED_HASH,
+    HASH_STATUS_FILE_NOT_FOUND,
+    HASH_STATUS_MALFORMED,
+    HASH_STATUS_MISMATCH,
+    HASH_STATUS_VERIFIED,
     AuditIssue,
     ExperimentAuditReport,
     RunAuditResult,
     audit_experiments,
     audit_run,
     check_privacy_compliance_in_data,
+    is_valid_sha256,
 )
 from cs_rag_security.evaluation.tables import (
     PaperTable,

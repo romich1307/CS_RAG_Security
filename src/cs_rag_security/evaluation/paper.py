@@ -111,6 +111,7 @@ def generate_paper_artifacts(
     traces_path: Optional[Union[str, Path]] = None,
     security_metrics_path: Optional[Union[str, Path]] = None,
     force: bool = False,
+    base_dir: Optional[Union[str, Path]] = None,
 ) -> Dict[str, Any]:
     """Genera el paquete completo de tablas, figuras, reportes y manifiesto para el artículo.
 
@@ -144,6 +145,7 @@ def generate_paper_artifacts(
         run_paths=existing_runs,
         annotations_path=annotations_path,
         mapping_path=mapping_path,
+        base_dir=base_dir,
     )
 
     # Punto 6: Comprobar que una corrida con errores críticos de auditoría no produzca resultados presentados como válidos
