@@ -1,0 +1,120 @@
+{
+  "tarea": "T19_metricas_seguridad",
+  "run_id": null,
+  "proveedor": "mock",
+  "modelo": "mock_extractivo_v1",
+  "diagnostico_mock": {
+    "A_sin_defensa": {
+      "total_attacks": 4,
+      "attacks_retrieved": 4,
+      "attacks_not_retrieved": 0,
+      "attacks_exposure_unknown": 0,
+      "resultado_global": {
+        "numerator": 4,
+        "denominator": 4,
+        "missing": 0,
+        "value": 1.0
+      },
+      "resultado_recuperados": {
+        "numerator": 4,
+        "denominator": 4,
+        "missing": 0,
+        "value": 1.0
+      },
+      "recall_detector": {
+        "numerator": 3,
+        "denominator": 4,
+        "missing": 0,
+        "value": 0.75
+      },
+      "fpr_detector": {
+        "numerator": 1,
+        "denominator": 4,
+        "missing": 0,
+        "value": 0.25
+      },
+      "falsos_negativos": [
+        "a4"
+      ],
+      "falsos_positivos": [
+        "b3"
+      ]
+    },
+    "B_defensa_basica": {
+      "total_attacks": 4,
+      "attacks_retrieved": 4,
+      "attacks_not_retrieved": 0,
+      "attacks_exposure_unknown": 0,
+      "resultado_global": {
+        "numerator": 4,
+        "denominator": 4,
+        "missing": 0,
+        "value": 1.0
+      },
+      "resultado_recuperados": {
+        "numerator": 4,
+        "denominator": 4,
+        "missing": 0,
+        "value": 1.0
+      },
+      "recall_detector": {
+        "numerator": 3,
+        "denominator": 4,
+        "missing": 0,
+        "value": 0.75
+      },
+      "fpr_detector": {
+        "numerator": 1,
+        "denominator": 4,
+        "missing": 0,
+        "value": 0.25
+      },
+      "falsos_negativos": [
+        "a4"
+      ],
+      "falsos_positivos": [
+        "b3"
+      ]
+    },
+    "C_defensa_propuesta": {
+      "total_attacks": 4,
+      "attacks_retrieved": 4,
+      "attacks_not_retrieved": 0,
+      "attacks_exposure_unknown": 0,
+      "resultado_global": {
+        "numerator": 1,
+        "denominator": 4,
+        "missing": 0,
+        "value": 0.25
+      },
+      "resultado_recuperados": {
+        "numerator": 1,
+        "denominator": 4,
+        "missing": 0,
+        "value": 0.25
+      },
+      "recall_detector": {
+        "numerator": 3,
+        "denominator": 4,
+        "missing": 0,
+        "value": 0.75
+      },
+      "fpr_detector": {
+        "numerator": 1,
+        "denominator": 4,
+        "missing": 0,
+        "value": 0.25
+      },
+      "falsos_negativos": [
+        "a4"
+      ],
+      "falsos_positivos": [
+        "b3"
+      ]
+    }
+  },
+  "hashes_entradas": {
+    "manifest_sha256": "e6800e0744ec13f222a13cdef0538175e94825689abb76d9c749088ece228cb9",
+    "traces_sha256": "39b25bf297a261befac228a5896d9499bd07bb7740c267f39c3400bdc81ca59c"
+  }
+}
