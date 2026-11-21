@@ -167,8 +167,8 @@ def prepare_t12_evaluation(
             'fecha_revision': '',
         })
 
-    # Guardar artefactos en directorio local
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # Reservar un directorio nuevo para preservar las anotaciones de sesiones anteriores.
+    output_dir.mkdir(parents=True, exist_ok=False)
     json_path = output_dir / 't12_material_ciego.json'
     csv_path = output_dir / 't12_evaluacion_ciega.csv'
 
@@ -204,7 +204,8 @@ def main():
     parser.add_argument('--manifest', default='results/llm_baseline/manifest.json', help='Ruta a manifest.json')
     parser.add_argument('--traces', default='results/llm_baseline_local/traces.json', help='Ruta a traces.json con trazas originales')
     parser.add_argument('--index', default='data/vector_db/index.json', help='Ruta al índice vectorial')
-    parser.add_argument('--output-dir', default='results/t12_evaluacion', help='Directorio de salida local (excluido de Git)')
+    parser.add_argument('--output-dir', default='results/t12_evaluacion',
+                        help='Directorio local nuevo para la sesión de evaluación')
     parser.add_argument('--evaluator', default='leon', help='ID del evaluador')
     parser.add_argument('--rubrica-version', default='0.2', help='Versión de la rúbrica')
     args = parser.parse_args()

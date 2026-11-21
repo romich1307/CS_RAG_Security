@@ -2,7 +2,6 @@
   "timestamp": "2026-11-21T00:54:23-05:00",
   "task": "piloto_t11_pr7",
   "query_id": "GQ019",
-  "question": "¿Qué oficina organiza y supervisa las actividades extracurriculares artísticas y deportivas?",
   "source_document": "RCU-0504-2020.pdf",
   "source_page": 4,
   "provider": "local",
@@ -13,8 +12,7 @@
   "top_k": 5,
   "seed": 42,
   "abstained": false,
-  "validated_response": "[RCU-0504-2020.pdf p. 4]. La Oficina de Promoción de Arte, Cultura, Deporte y Recreación (OPACDR) organiza y supervisa las actividades extracurriculares artísticas y deportivas.",
-  "raw_response": "[RCU-0504-2020.pdf p. 4]. La Oficina de Promoción de Arte, Cultura, Deporte y Recreación (OPACDR) organiza y supervisa las actividades extracurriculares artísticas y deportivas.",
+  "citation_valid": true,
   "accepted_ids": [
     "RCU-0504-2020:4:6:0",
     "RCU-0504-2020:4:5:0",

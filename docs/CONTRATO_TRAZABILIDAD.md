@@ -92,10 +92,11 @@ Listas derivadas:
   - `abstencion_otra`: Otras causas.
   - `""` (cadena vacía) si no hubo abstención.
 
-### 3.5 Validación de Citas
-- `citations_raw` (*list[dict]*): Citas detectadas en `raw_response` (`[{'archivo': str, 'pagina': int}]`).
-- `citations_final` (*list[dict]*): Citas detectadas en `response`.
+### 3.5 Validación y Saneamiento de Citas
+- `citations_raw` (*list[dict]*): Citas detectadas en `raw_response` (`[{'archivo': str, 'pagina': int}]`). En las trazas privadas locales se conservan todas las citas originales completas para auditoría forense. En artefactos públicos para Git, se sanean conservando **únicamente las referencias válidas que coincidan con fuentes aceptadas** (`allowed_citations`); nunca se publican nombres de archivo, números de página ni textos de citas inválidas o sintéticas propuestas por el modelo.
+- `citations_final` (*list[dict]*): Citas detectadas en `response`, filtradas bajo las mismas reglas estrictas de saneamiento.
 - `citations_valid` (*bool*): `True` si y solo si la consulta no se abstuvo, existen citas y todas pertenecen estrictamente a `accepted_chunks`.
+- `citations_invalid_count` / `invalid_citations_count` (*int*): Conteo cuantitativo de citas inválidas o no autorizadas propuestas por el modelo. Permite registrar cuantitativamente la tasa de alucinación o citas erróneas en Git sin exponer cadenas no autorizadas ni fragmentos confidenciales.
 - `allowed_citations` (*list[dict]*): Conjunto de tuplas `(archivo_pdf, pagina_pdf)` permitidas a partir de `accepted_chunks`.
 
 ### 3.6 Parámetros, Telemetría y Tokens
@@ -139,9 +140,10 @@ Para facilitar la implementación del runner experimental en **T17** por parte d
 | `question` | `str` | **Condicional** | **Sólo Privado** | Obligatorio en traza privada local; **estrictamente excluido** de Git. |
 | `raw_response` | `str \| null` | **Condicional** | **Sólo Privado** | Salida cruda del LLM. `null` si no hubo generación; **estrictamente excluido** de Git. |
 | `response` | `str` | **Obligatorio** | Saneado en Git | En Git: abstención estándar o redacción `[CONTENIDO_CORPUS_PRIVADO_PROTEGIDO]`. |
-| `citations_raw` | `list[dict]` | **Obligatorio** | Público | Lista de citas detectadas en texto crudo; vacía si no hubo citas. |
-| `citations_final` | `list[dict]` | **Obligatorio** | Público | Lista de citas en respuesta final. |
+| `citations_raw` | `list[dict]` | **Obligatorio** | Saneado en Git | Lista de citas detectadas en texto crudo; en Git solo conserva referencias válidas a fuentes aceptadas. |
+| `citations_final` | `list[dict]` | **Obligatorio** | Saneado en Git | Lista de citas en respuesta final; en Git solo conserva referencias válidas. |
 | `citations_valid` | `bool` | **Obligatorio** | Público | Pertenencia estricta a fragmentos aceptados sin abstención. |
+| `citations_invalid_count` | `int` | **Obligatorio** | Público | Conteo cuantitativo de citas inválidas propuestas por el modelo (sin publicar nombres/páginas). |
 | `allowed_citations` | `list[dict]` | **Obligatorio** | Público | Tuplas `(archivo_pdf, pagina_pdf)` admisibles según `accepted_chunks`. |
 | `retrieved_chunks` | `list[dict]` | **Obligatorio** | Saneado | Metadatos y ranking (1..$k$); campo `texto` **estrictamente excluido** de Git. |
 | `accepted_chunks` | `list[dict]` | **Obligatorio** | Saneado | Fragmentos que superaron filtros; sin `texto` en Git. |
@@ -231,9 +233,10 @@ Para cumplir con las normas del proyecto (sin volcado de texto PDF, OCR ni enunc
    - Excluye el campo `question`.
    - Excluye el campo `raw_response`.
    - Elimina el campo `texto` de todos los fragmentos (`retrieved_chunks`, `accepted_chunks`, etc.).
+   - Sanea citas: filtra `citations_raw`, `citations_final` y `response` para no publicar nombres de archivo, páginas ni textos de citas inválidas propuestas por el modelo, conservando únicamente las referencias válidas del contexto y el conteo en `citations_invalid_count`.
    - Anonimiza respuestas afirmativas de dataset gold como `[CONTENIDO_CORPUS_PRIVADO_PROTEGIDO]`.
-   - Conserva toda la telemetría, identificadores, puntuaciones, listas de citas y motivos de descarte.
-3. `traces.csv`: Tabla plana para análisis estadístico con 28 columnas estándar, libre de textos de fuentes.
+   - Conserva toda la telemetría, identificadores, puntuaciones, listas de citas válidas y motivos de descarte.
+3. `traces.csv`: Tabla plana para análisis estadístico con 29 columnas estándar (incluye `citations_invalid_count`), libre de textos de fuentes o nombres de archivos sintéticos.
 
 ### 5.2 Artefactos Privados Locales (`results/<run_id>_local/`)
 Directorio excluido de Git por `.gitignore` (`/results/*_local*/`):

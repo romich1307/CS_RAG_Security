@@ -108,7 +108,9 @@ Sin push, sin APIs pagadas ni modelos descargados.
   viabilidad técnica del formato genérico en esta instancia puntual. No se afirma ausencia
   de sesgo ni eficacia general del prompt C v3 a partir de un único ensayo piloto; la
   evaluación sistemática de desempeño y robustez corresponde a T12. Registrado en
-  `results/piloto_ollama_pr7.json` sin inclusión de texto íntegro del corpus ni secretos.
+  `results/piloto_ollama_pr7.json` con el ID, la fuente, el resultado de la validación y
+  los metadatos de la ejecución. El enunciado y las respuestas solo se guardan en el
+  respaldo local del piloto.
 
 ## Fase 7 — Ejecución y revisión final de T11 (Baseline Ollama A_sin_defensa)
 - **Ejecución experimental:** Ejecutado script reproducible `scripts/run_t11_baseline.py`
@@ -233,6 +235,57 @@ pp. 7–8 como evidencia necesaria para una cita completa. Los criterios de la r
 
 T12 sigue pendiente de respuestas reales del LLM. Estos cambios documentan el
 avance del 19 de noviembre y la continuación del pendiente de T10 del día 18.
+
+## Romina — T14: Condiciones experimentales A/B/C e invariantes, 21 de noviembre de 2026
+
+- **Auditoría de condiciones experimentales (A, B y C):** Se auditó exhaustivamente la implementación
+  de las tres condiciones de acuerdo con el protocolo y la metodología aprobada:
+  - Condición A (`A_sin_defensa`): línea base de control sin defensas frente a inyecciones indirectas;
+    mensaje único `user` en texto plano; sin exclusión de fragmentos por sospecha heurística.
+  - Condición B (`B_defensa_basica`): defensa estándar con separación de roles (`system` v1 + `user`),
+    delimitación explícita `\nCONTEXTO NO CONFIABLE:\n` y JSON de fragmentos; sin exclusión heurística.
+  - Condición C (`C_defensa_propuesta`): defensa en profundidad con filtrado heurístico activo
+    (exclusión de fragmentos sospechosos previa a la generación), aislamiento estricto en JSON
+    estructurado `{"pregunta": ..., "documentos_no_confiables": [...]}` y system prompt reforzado (v3).
+- **Estrategias completas y no factorial desagregado:** Las condiciones A, B y C comparan estrategias
+  de defensa completas e integradas; por diseño metodológico, las diferencias reflejan el efecto
+  conjunto de cada condición y no permiten atribuir de forma individual o aislada la mejora a cada
+  mecanismo defensivo por separado.
+- **Preservación del Prompt C v3:** Se confirmó la conservación estricta del prompt C v3 con formato
+  genérico de citación `[archivo.pdf p. N]`, indicando la extracción exclusiva de los campos `archivo`
+  y `pagina` de `documentos_no_confiables`, sin nombres de archivo hardcodeados. El cambio elimina
+  únicamente el ejemplo fijo de citación (`RCU-0161-2021.pdf`) para no inducir citas hacia una resolución
+  específica, sin afirmar que se elimine completamente el sesgo general del LLM. Las condiciones A y B
+  se preservan en su versión original v1 intactas.
+- **Verificación de invariantes compartidos:**
+  - Parámetros del modelo: idéntico proveedor (`mock`, `local` o `api`), modelo, temperatura fijada en `0`
+    y semilla fija en `42` configuradas como controles de reproducibilidad (sin afirmar determinismo absoluto
+    del hardware o backend), y `top_k=5`.
+  - Recuperación e invariante de hits pareados: todas las condiciones consumen exactamente el mismo índice
+    (`fallback_textual_tfidf_coseno_v1`) y la misma lista ordenada de hits recuperados por escenario.
+  - Filtros comunes de producto: idéntico umbral de evidencia (coseno ≥ 0.12), idéntica exclusión de fragmentos
+    con OCR pendiente (`ocr_revision_manual_pendiente=True`), idéntica exclusión de documentos históricos
+    (`historical_hit`), e idéntica política de abstención documental si no está verificada la vigencia.
+  - Validador común de citas: idéntica función y expresión regular `[archivo.pdf p. N]`, verificación estricta
+    de pertenencia a fragmentos admisibles (`allowed`), idéntico mensaje de abstención ante citas inválidas y
+    preservación íntegra de `raw_response` en trazas para auditoría.
+- **Garantía de variable independiente única:** Se garantizó y verificó que la única diferencia operativa
+  entre las condiciones corresponde a los mecanismos de defensa específicos definidos para cada una.
+- **Pruebas automatizadas de invariantes:** Se implementó una suite completa de pruebas automatizadas en
+  `tests/test_experimental_invariants.py` con 8 pruebas especializadas cubriendo: contrato y metadatos comunes,
+  recuperación pareada y reproducibilidad de hits, filtros previos de producto comunes, validador de citas y `raw_response`,
+  hiperparámetros del generador (temperatura 0 y semilla 42 como controles de reproducibilidad), manipulación aislada
+  de la variable independiente de defensa, preservación de prompt C v3 y diagnóstico del detector registrado en todos los modos.
+  Todas las pruebas pasaron satisfactoriamente (62 pasadas, 1 omitida en la suite completa de `pytest`).
+- **Matriz comparativa de condiciones:** Documentada formalmente en `docs/METODOLOGIA.md`, tabulando las
+  dimensiones operativas, roles, delimitaciones, prompts, filtros y parámetros invariantes.
+- **Estado de dependencias y tareas vinculadas:** T11 ya fue ejecutada con Ollama real (la corrida formal corresponde a las diez consultas reales con Ollama del PR #8, en `results/llm_baseline/`; el archivo `results/piloto_ollama_pr7.json` corresponde a un piloto independiente).
+  La tarea T12 corresponde a la evaluación humana de esas respuestas (mediante la rúbrica y cotejo de T10), no a
+  nuevas ejecuciones del LLM ni a la medición de ASR. La tarea T15 (detector heurístico con reglas avanzadas)
+  sigue reservada a León.
+- **Restricciones respetadas:** No se modificaron evidencias históricas de T11 ni de T10; no se alteró el corpus
+  ni el dataset gold; no se modificó la rúbrica T10; no se ejecutó ni simuló Ollama; no se tocó la lógica del detector
+  heurístico (reservado a León en T15); sin APIs pagadas, sin commits, sin push ni merge.
 
 ## Fase 9 — T16: Trazabilidad experimental y preparación para T17, 21 de noviembre de 2026
 - **Auditoría de trazabilidad previa**:
