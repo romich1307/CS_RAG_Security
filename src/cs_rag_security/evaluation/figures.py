@@ -18,6 +18,7 @@ Reglas científicas estrictas:
 from __future__ import annotations
 
 import io
+import math
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -606,12 +607,12 @@ def generate_fig_latencias_condicion(
     latencies_data: Optional[Dict[str, Any]] = None,
     output_dir: Union[str, Path] = "results",
 ) -> Tuple[Path, Path]:
-    """Figura 6: Latencias de inferencia y llamada al LLM por condición."""
+    """Figura 6: Latencias de inferencia y llamada al LLM por condición calculadas dinámicamente."""
     canvas = ScientificCanvas(
         width=920,
         height=540,
         title="Figura 6. Latencias de Inferencia y Generación por Condición Experimental",
-        subtitle="Tiempo total de ejecución del pipeline frente al tiempo de llamada al modelo local (qwen2.5:3b).",
+        subtitle="Tiempo total de ejecución del pipeline frente al tiempo de llamada al modelo local.",
     )
 
     ax_x = 90
@@ -619,9 +620,35 @@ def generate_fig_latencias_condicion(
     ax_w = 780
     ax_h = 300
 
-    # Escala en segundos (0 a 35 s)
-    max_sec = 35.0
-    for sec in range(0, 36, 5):
+    # Determinar estructura por condición
+    por_cond = {}
+    if latencies_data and isinstance(latencies_data, dict):
+        if "por_condicion" in latencies_data:
+            por_cond = latencies_data["por_condicion"]
+        else:
+            por_cond = latencies_data
+
+    # Determinar escala máxima dinámica a partir de las observaciones reales
+    found_lats: List[float] = []
+    for ckey in MODES:
+        c_info = por_cond.get(ckey, {}) if isinstance(por_cond, dict) else {}
+        if isinstance(c_info, dict):
+            p_m = c_info.get("latencia_pipeline", {})
+            g_m = c_info.get("latencia_generacion", {})
+            if isinstance(p_m, dict) and p_m.get("media") is not None:
+                found_lats.append(float(p_m["media"]))
+            elif c_info.get("pipeline_media") is not None:
+                found_lats.append(float(c_info["pipeline_media"]))
+            if isinstance(g_m, dict) and g_m.get("media") is not None:
+                found_lats.append(float(g_m["media"]))
+            elif c_info.get("llm_media") is not None:
+                found_lats.append(float(c_info["llm_media"]))
+
+    max_val = max(found_lats) if found_lats else 30.0
+    max_sec = max(35.0, math.ceil(max_val / 5.0) * 5.0 + 5.0)
+    step = 5 if max_sec <= 40 else 10
+
+    for sec in range(0, int(max_sec) + 1, step):
         y_pos = ax_y + ax_h - (sec / max_sec) * ax_h
         canvas.add_line(ax_x, y_pos, ax_x + ax_w, y_pos, color=COLOR_GRID, dashed=(sec > 0))
         canvas.add_text(ax_x - 10, y_pos + 4, f"{sec} s", font_size=11, color=COLOR_TEXT_MUTED, anchor="end")
@@ -638,22 +665,38 @@ def generate_fig_latencias_condicion(
 
     # 3 Condiciones
     gw = ax_w / 3.0
-
-    # Datos T11 para Modo A: latencia media 24.95 s
-    # Modo B: Pendiente T17
-    # Modo C: Piloto puntual 26.38 s
-    bars = [
-        ("A_sin_defensa", "A (Sin Defensa)", 24.95, 24.95, 10, "T11 Baseline (10 consultas gold)"),
-        ("B_defensa_basica", "B (Defensa Básica)", None, None, 0, "Pendiente de ejecución T17"),
-        ("C_defensa_propuesta", "C (Defensa Propuesta)", 26.38, 26.38, 1, "Piloto individual PR7 (GQ019, n=1)"),
+    conds = [
+        ("A_sin_defensa", "A (Sin Defensa)"),
+        ("B_defensa_basica", "B (Defensa Básica)"),
+        ("C_defensa_propuesta", "C (Defensa Propuesta)"),
     ]
 
-    for i, (ckey, clabel, lat_pipe, lat_llm, n_cases, obs) in enumerate(bars):
+    for i, (ckey, clabel) in enumerate(conds):
         gx = ax_x + i * gw
         cx = gx + gw / 2.0
         canvas.add_text(cx, ax_y + ax_h + 25, clabel, font_size=12, is_bold=True, anchor="middle")
 
-        if lat_pipe is not None and n_cases > 0:
+        c_info = por_cond.get(ckey, {}) if isinstance(por_cond, dict) else {}
+        compatible = c_info.get("configuracion_compatible", True) if isinstance(c_info, dict) else True
+
+        if not compatible:
+            bw = gw - 35
+            bh = 90
+            bx = gx + 17
+            by = ax_y + ax_h - bh - 20
+            canvas.add_rect(bx, by, bw, bh, fill=COLOR_PENDING_BG, outline=COLOR_PENDING_BORDER, rx=4)
+            canvas.add_text(cx, by + 35, "Configuración Incompatible", font_size=11, is_bold=True, color=COLOR_TEXT_MUTED, anchor="middle")
+            canvas.add_text(cx, by + 55, "No se promedian mediciones heterogéneas", font_size=9, color=COLOR_TEXT_MUTED, anchor="middle")
+            continue
+
+        p_m = c_info.get("latencia_pipeline", {}) if isinstance(c_info, dict) else {}
+        g_m = c_info.get("latencia_generacion", {}) if isinstance(c_info, dict) else {}
+
+        lat_pipe = p_m.get("media") if isinstance(p_m, dict) else c_info.get("pipeline_media")
+        lat_llm = g_m.get("media") if isinstance(g_m, dict) else c_info.get("llm_media")
+        n_cases = p_m.get("observaciones_validas", 0) if isinstance(p_m, dict) else c_info.get("n", 0)
+
+        if lat_pipe is not None and lat_llm is not None and n_cases > 0:
             bw = 42
             bh_p = (lat_pipe / max_sec) * ax_h
             bx_p = cx - bw - 4
@@ -674,13 +717,13 @@ def generate_fig_latencias_condicion(
             bx = gx + 17
             by = ax_y + ax_h - bh - 20
             canvas.add_rect(bx, by, bw, bh, fill=COLOR_PENDING_BG, outline=COLOR_PENDING_BORDER, rx=4)
-            canvas.add_text(cx, by + 35, "Medición Pendiente (T17)", font_size=11, is_bold=True, color=COLOR_TEXT_MUTED, anchor="middle")
-            canvas.add_text(cx, by + 55, obs, font_size=9, color=COLOR_TEXT_MUTED, anchor="middle")
+            canvas.add_text(cx, by + 35, "Medición Pendiente (N/A)", font_size=11, is_bold=True, color=COLOR_TEXT_MUTED, anchor="middle")
+            canvas.add_text(cx, by + 55, "Sin trazas disponibles (n = 0)", font_size=9, color=COLOR_TEXT_MUTED, anchor="middle")
 
     canvas.add_text(
         ax_x,
         ax_y + ax_h + 65,
-        "Nota: Inferencia ejecutada en CPU local mediante Ollama. En Modo A, el tiempo de llamada al modelo domina el 100% de la latencia total.",
+        "Nota: Inferencia ejecutada en CPU local mediante Ollama. Métricas calculadas dinámicamente desde trazas de telemetría. En ausencia de trazas se reporta N/A sin graficar ceros espurios.",
         font_size=10,
         color=COLOR_TEXT_MUTED,
     )

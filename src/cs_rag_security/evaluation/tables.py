@@ -31,6 +31,8 @@ from cs_rag_security.evaluation.quality import (
     QualityEvaluationReport,
     TARGET_LLM_RAW,
     TARGET_PIPELINE,
+    compute_latency_summary,
+    compute_p95_linear,
 )
 
 
@@ -313,9 +315,13 @@ def build_table_citation_quality_validity(
         "Origen",
         "Resp. Sustantivas (n)",
         "Citas Válidas Completas (n, %)",
+        "Formalmente Válidas (n, %)",
+        "Citas Inválidas (n, %)",
+        "Ausencia de Citas (n, %)",
+        "Casos Mixtos (n, %)",
+        "No Determinable (n, %)",
         "En Contexto (n, %)",
         "Fuera Contexto (n, %)",
-        "Sin Citas (n, %)",
         "Sustento Completo (n, %)",
         "Brecha Pertenecen Sin Sustento (n, %)",
         "Error Vigencia (n, %)",
@@ -332,14 +338,19 @@ def build_table_citation_quality_validity(
                 n_sust = acc.get("respuestas_sustantivas", 0)
 
                 if n_sust > 0:
+                    diff_cits = cit.get("diferenciacion_citas", {})
                     rows.append([
                         cond,
                         t_label,
                         str(n_sust),
                         format_fraction_cell(cit.get("citas_validas_completas")),
+                        format_fraction_cell(diff_cits.get("citas_formalmente_validas")),
+                        format_fraction_cell(diff_cits.get("citas_presentes_invalidas")),
+                        format_fraction_cell(diff_cits.get("ausencia_citas")),
+                        format_fraction_cell(diff_cits.get("casos_mixtos")),
+                        format_fraction_cell(diff_cits.get("no_determinable")),
                         format_fraction_cell(cit.get("pertenencia_contexto", {}).get("citas_pertenecen_si")),
                         format_fraction_cell(cit.get("pertenencia_contexto", {}).get("citas_pertenecen_no")),
-                        format_fraction_cell(cit.get("pertenencia_contexto", {}).get("respuestas_sin_citas")),
                         format_fraction_cell(cit.get("sustento_factual", {}).get("sustento_completo")),
                         format_fraction_cell(cit.get("brecha_pertenencia_sin_sustento", {}).get("total_pertenecen_sin_sustento_completo")),
                         format_fraction_cell(cit.get("errores_vigencia", {}).get("sobre_respuestas_sustantivas")),
@@ -350,6 +361,10 @@ def build_table_citation_quality_validity(
                 cond,
                 t_label,
                 "0",
+                "Pendiente (0/0)",
+                "Pendiente (0/0)",
+                "Pendiente (0/0)",
+                "Pendiente (0/0)",
                 "Pendiente (0/0)",
                 "Pendiente (0/0)",
                 "Pendiente (0/0)",
@@ -418,11 +433,11 @@ def build_table_abstention_rates(
 
         rows.append([
             cond,
-            str(n_tot) if n_tot > 0 else "10*",  # 10 consultas legítimas en T11
-            rate_abst_str if n_tot > 0 else "100.0% (10/10)*",
+            str(n_tot) if n_tot > 0 else "0",
+            rate_abst_str if n_tot > 0 else "N/A (0/0)",
             adeq_str,
             inadeq_str,
-            str(m_citas) if n_tot > 0 else "10*",
+            str(m_citas) if n_tot > 0 else "0",
             str(m_evid) if n_tot > 0 else "0",
             str(m_norm) if n_tot > 0 else "0",
             str(max(0, m_otro)) if n_tot > 0 else "0",
@@ -628,76 +643,309 @@ def build_table_detector_fpr(
     )
 
 
+def extract_latency_and_token_metrics(
+    traces: Optional[List[Dict[str, Any]]] = None,
+    quality_report: Optional[QualityEvaluationReport] = None,
+    latencies_data: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Calcula dinámicamente métricas de latencia y tokens desde trazas o quality_report.
+
+    Garantiza:
+    - Eliminación total de constantes hardcodeadas.
+    - Deduplicación por clave única (corrida_id, pregunta_id, condicion) para evitar duplicación
+      entre registros de pipeline y llm_raw.
+    - Exclusión estricta de valores ausentes, negativos o no finitos sin reemplazarlos por cero.
+    - Detección de configuraciones incompatibles dentro de una condición para evitar mezclas espurias.
+    - Separación formal entre latencia de pipeline y latencia de generación LLM.
+    - Cómputo de media, mediana, percentil 95 (interpolación lineal Hyndman y Fan Tipo 7) y observaciones.
+    - Cómputo de consumo de tokens (prompt, completion, total).
+    - Desacoplamiento de la evaluación humana (funciona con solo telemetría técnica).
+    """
+    if latencies_data and isinstance(latencies_data, dict) and "por_condicion" in latencies_data:
+        return latencies_data
+
+    if quality_report and getattr(quality_report, "metricas_latencia", None):
+        qlat = quality_report.metricas_latencia
+        if isinstance(qlat, dict) and "por_condicion" in qlat:
+            return qlat
+
+    por_condicion: Dict[str, Dict[str, Any]] = {}
+    if not traces:
+        for cond in MODES:
+            por_condicion[cond] = {
+                "configuracion_compatible": True,
+                "observaciones_validas": 0,
+                "latencia_pipeline": compute_latency_summary([], f"Latencia pipeline {cond}"),
+                "latencia_generacion": compute_latency_summary([], f"Latencia generación {cond}"),
+                "tokens": {"prompt_tokens": None, "completion_tokens": None, "total_tokens": None},
+                "proveedor_modelo": "N/A",
+            }
+        return {"por_condicion": por_condicion, "unique_cases_count": 0}
+
+    # 1. Deduplicar casos por clave experimental única (corrida_id, pregunta_id, condicion)
+    unique_cases: Dict[Tuple[str, str, str], Dict[str, Any]] = {}
+    for t in traces:
+        if not isinstance(t, dict):
+            continue
+        cid = str(t.get("case_id") or t.get("pregunta_id") or t.get("id") or t.get("query_id") or "").strip()
+        if not cid:
+            continue
+        run_id = str(t.get("run_id") or t.get("corrida_id") or "general").strip()
+        cond = str(t.get("mode") or t.get("condition") or t.get("condicion") or "").strip()
+        if not cond:
+            cond = "A_sin_defensa"
+
+        pipe_val = t.get("latency_pipeline_seconds") if t.get("latency_pipeline_seconds") is not None else t.get("pipeline_seconds")
+        gen_val = t.get("latency_generation_seconds") if t.get("latency_generation_seconds") is not None else t.get("latency_seconds")
+
+        tok = t.get("tokens") or {}
+        p_tok = tok.get("prompt_tokens") if isinstance(tok, dict) else t.get("prompt_tokens")
+        c_tok = tok.get("completion_tokens") if isinstance(tok, dict) else t.get("completion_tokens")
+        t_tok = tok.get("total_tokens") if isinstance(tok, dict) else t.get("total_tokens")
+
+        params = t.get("parameters") or {}
+        prov = t.get("provider") or ""
+        mod = t.get("model") or ""
+        seed = params.get("seed", t.get("seed"))
+        temp = params.get("temperature", t.get("temperature"))
+        top_k = params.get("top_k", t.get("top_k"))
+        retriever = t.get("retriever") or ""
+        p_ver = t.get("prompt_version") or ""
+
+        key = (run_id, cid, cond)
+        if key not in unique_cases:
+            unique_cases[key] = {
+                "run_id": run_id,
+                "case_id": cid,
+                "condicion": cond,
+                "pipe_lat": pipe_val,
+                "gen_lat": gen_val,
+                "prompt_tokens": p_tok,
+                "completion_tokens": c_tok,
+                "total_tokens": t_tok,
+                "provider": prov,
+                "model": mod,
+                "seed": seed,
+                "temperature": temp,
+                "top_k": top_k,
+                "retriever": retriever,
+                "prompt_version": p_ver,
+            }
+        else:
+            entry = unique_cases[key]
+            if entry["pipe_lat"] is None and pipe_val is not None:
+                entry["pipe_lat"] = pipe_val
+            if entry["gen_lat"] is None and gen_val is not None:
+                entry["gen_lat"] = gen_val
+            if entry["prompt_tokens"] is None and p_tok is not None:
+                entry["prompt_tokens"] = p_tok
+            if entry["completion_tokens"] is None and c_tok is not None:
+                entry["completion_tokens"] = c_tok
+            if entry["total_tokens"] is None and t_tok is not None:
+                entry["total_tokens"] = t_tok
+            if not entry["provider"] and prov:
+                entry["provider"] = prov
+            if not entry["model"] and mod:
+                entry["model"] = mod
+
+    # 2. Agrupar por condición y verificar configuración compatible
+    for cond in MODES:
+        cond_cases = [c for c in unique_cases.values() if c["condicion"] == cond]
+        if not cond_cases:
+            por_condicion[cond] = {
+                "configuracion_compatible": True,
+                "observaciones_validas": 0,
+                "latencia_pipeline": compute_latency_summary([], f"Latencia pipeline {cond}"),
+                "latencia_generacion": compute_latency_summary([], f"Latencia generación {cond}"),
+                "tokens": {"prompt_tokens": None, "completion_tokens": None, "total_tokens": None},
+                "proveedor_modelo": "N/A",
+            }
+            continue
+
+        configs_map: Dict[Tuple[Any, ...], List[Dict[str, Any]]] = {}
+        for c in cond_cases:
+            sig = (
+                c.get("provider") or "unknown",
+                c.get("model") or "unknown",
+                c.get("seed"),
+                c.get("temperature"),
+                c.get("top_k"),
+                c.get("retriever") or "",
+                c.get("prompt_version") or "",
+            )
+            configs_map.setdefault(sig, []).append(c)
+
+        if len(configs_map) == 1:
+            pipe_lats = [c["pipe_lat"] for c in cond_cases if c["pipe_lat"] is not None]
+            gen_lats = [c["gen_lat"] for c in cond_cases if c["gen_lat"] is not None]
+            p_toks = [float(c["prompt_tokens"]) for c in cond_cases if c.get("prompt_tokens") is not None]
+            c_toks = [float(c["completion_tokens"]) for c in cond_cases if c.get("completion_tokens") is not None]
+            t_toks = [float(c["total_tokens"]) for c in cond_cases if c.get("total_tokens") is not None]
+
+            prov = cond_cases[0].get("provider") or "local"
+            mod = cond_cases[0].get("model") or "qwen2.5:3b"
+
+            por_condicion[cond] = {
+                "configuracion_compatible": True,
+                "observaciones_validas": len(pipe_lats),
+                "latencia_pipeline": compute_latency_summary(pipe_lats, f"Latencia pipeline {cond}"),
+                "latencia_generacion": compute_latency_summary(gen_lats, f"Latencia generación {cond}"),
+                "tokens": {
+                    "prompt_tokens": round(sum(p_toks) / len(p_toks), 1) if p_toks else None,
+                    "completion_tokens": round(sum(c_toks) / len(c_toks), 1) if c_toks else None,
+                    "total_tokens": round(sum(t_toks) / len(t_toks), 1) if t_toks else None,
+                },
+                "proveedor_modelo": f"{prov} / {mod}",
+            }
+        else:
+            grupos = []
+            for idx, (sig, c_list) in enumerate(configs_map.items()):
+                p_l = [c["pipe_lat"] for c in c_list if c["pipe_lat"] is not None]
+                g_l = [c["gen_lat"] for c in c_list if c["gen_lat"] is not None]
+                p_toks = [float(c["prompt_tokens"]) for c in c_list if c.get("prompt_tokens") is not None]
+                c_toks = [float(c["completion_tokens"]) for c in c_list if c.get("completion_tokens") is not None]
+                t_toks = [float(c["total_tokens"]) for c in c_list if c.get("total_tokens") is not None]
+
+                prov = c_list[0].get("provider") or "unknown"
+                mod = c_list[0].get("model") or "unknown"
+
+                grupos.append({
+                    "grupo_id": idx + 1,
+                    "configuracion": {"provider": prov, "model": mod},
+                    "latencia_pipeline": compute_latency_summary(p_l, f"Latencia pipeline {cond} cfg{idx+1}"),
+                    "latencia_generacion": compute_latency_summary(g_l, f"Latencia generación {cond} cfg{idx+1}"),
+                    "tokens": {
+                        "prompt_tokens": round(sum(p_toks) / len(p_toks), 1) if p_toks else None,
+                        "completion_tokens": round(sum(c_toks) / len(c_toks), 1) if c_toks else None,
+                        "total_tokens": round(sum(t_toks) / len(t_toks), 1) if t_toks else None,
+                    },
+                    "proveedor_modelo": f"{prov} / {mod}",
+                })
+
+            por_condicion[cond] = {
+                "configuracion_compatible": False,
+                "advertencia": f"Configuraciones incompatibles detectadas ({len(configs_map)} variantes). Separadas.",
+                "grupos_configuracion": grupos,
+                "observaciones_validas": 0,
+                "latencia_pipeline": compute_latency_summary([], f"Latencia pipeline {cond} (incompatible)"),
+                "latencia_generacion": compute_latency_summary([], f"Latencia generación {cond} (incompatible)"),
+                "tokens": {"prompt_tokens": None, "completion_tokens": None, "total_tokens": None},
+                "proveedor_modelo": "Incompatible",
+            }
+
+    return {
+        "por_condicion": por_condicion,
+        "unique_cases_count": len(unique_cases),
+    }
+
+
 def build_table_latencies_and_tokens(
     runs_data: Optional[Dict[str, Any]] = None,
     traces: Optional[List[Dict[str, Any]]] = None,
+    quality_report: Optional[QualityEvaluationReport] = None,
+    latencies_data: Optional[Dict[str, Any]] = None,
 ) -> PaperTable:
-    """Tabla 9: Latencias de inferencia y telemetría de tokens."""
+    """Tabla 9: Latencias de inferencia y telemetría de tokens calculadas dinámicamente."""
     headers = [
         "Condición",
         "Tipo de Caso",
         "Consultas (n)",
         "Latencia Pipeline Media (s)",
+        "Latencia Pipeline Mediana (s)",
+        "Latencia Pipeline P95 (s)",
         "Latencia LLM Media (s)",
+        "Latencia LLM Mediana (s)",
+        "Latencia LLM P95 (s)",
         "Tokens Prompt (Medio)",
         "Tokens Completion (Medio)",
         "Tokens Total (Medio)",
         "Proveedor / Modelo",
     ]
 
+    metrics = extract_latency_and_token_metrics(
+        traces=traces,
+        quality_report=quality_report,
+        latencies_data=latencies_data,
+    )
+    por_cond = metrics.get("por_condicion", {})
+
     rows = []
-    # Valores de referencia de corrida T11 (10 consultas gold bajo Modo A con qwen2.5:3b)
-    rows.append([
-        "A_sin_defensa",
-        "gold (legítimas)",
-        "10",
-        "24.95",
-        "24.95",
-        "1,705.5",
-        "37.5",
-        "1,743.0",
-        "local / qwen2.5:3b",
-    ])
-    rows.append([
-        "B_defensa_basica",
-        "gold (legítimas)",
-        "Pendiente*",
-        "Pendiente*",
-        "Pendiente*",
-        "Pendiente*",
-        "Pendiente*",
-        "Pendiente*",
-        "local / qwen2.5:3b (T17)",
-    ])
-    rows.append([
-        "C_defensa_propuesta",
-        "gold (legítimas)",
-        "Pendiente*",
-        "Pendiente*",
-        "Pendiente*",
-        "Pendiente*",
-        "Pendiente*",
-        "Pendiente*",
-        "local / qwen2.5:3b (T17)",
-    ])
-    rows.append([
-        "C_defensa_propuesta",
-        "piloto individual (GQ019)",
-        "1",
-        "26.38",
-        "26.38",
-        "N/A",
-        "N/A",
-        "N/A",
-        "local / qwen2.5:3b (PR7)",
-    ])
+    for cond in MODES:
+        cond_info = por_cond.get(cond)
+        if not cond_info:
+            rows.append([
+                cond,
+                "gold (legítimas)",
+                "0",
+                "N/A", "N/A", "N/A",
+                "N/A", "N/A", "N/A",
+                "N/A", "N/A", "N/A",
+                "N/A",
+            ])
+            continue
+
+        if not cond_info.get("configuracion_compatible", True):
+            grupos = cond_info.get("grupos_configuracion", [])
+            for grp in grupos:
+                p_m = grp.get("latencia_pipeline", {})
+                g_m = grp.get("latencia_generacion", {})
+                n_g = p_m.get("observaciones_validas", 0)
+                toks = grp.get("tokens", {})
+                rows.append([
+                    f"{cond} (cfg {grp.get('grupo_id', 1)})",
+                    "gold (legítimas)",
+                    str(n_g),
+                    f"{p_m['media']:.2f}" if p_m.get("media") is not None else "N/A",
+                    f"{p_m['mediana']:.2f}" if p_m.get("mediana") is not None else "N/A",
+                    f"{p_m['percentil_95']:.2f}" if p_m.get("percentil_95") is not None else "N/A",
+                    f"{g_m['media']:.2f}" if g_m.get("media") is not None else "N/A",
+                    f"{g_m['mediana']:.2f}" if g_m.get("mediana") is not None else "N/A",
+                    f"{g_m['percentil_95']:.2f}" if g_m.get("percentil_95") is not None else "N/A",
+                    f"{toks['prompt_tokens']:.1f}" if toks.get("prompt_tokens") is not None else "N/A",
+                    f"{toks['completion_tokens']:.1f}" if toks.get("completion_tokens") is not None else "N/A",
+                    f"{toks['total_tokens']:.1f}" if toks.get("total_tokens") is not None else "N/A",
+                    grp.get("proveedor_modelo", "N/A"),
+                ])
+            continue
+
+        p_m = cond_info.get("latencia_pipeline", {})
+        g_m = cond_info.get("latencia_generacion", {})
+        n_obs = p_m.get("observaciones_validas", 0)
+        toks = cond_info.get("tokens", {})
+
+        if n_obs > 0:
+            rows.append([
+                cond,
+                "gold (legítimas)",
+                str(n_obs),
+                f"{p_m['media']:.2f}" if p_m.get("media") is not None else "N/A",
+                f"{p_m['mediana']:.2f}" if p_m.get("mediana") is not None else "N/A",
+                f"{p_m['percentil_95']:.2f}" if p_m.get("percentil_95") is not None else "N/A",
+                f"{g_m['media']:.2f}" if g_m.get("media") is not None else "N/A",
+                f"{g_m['mediana']:.2f}" if g_m.get("mediana") is not None else "N/A",
+                f"{g_m['percentil_95']:.2f}" if g_m.get("percentil_95") is not None else "N/A",
+                f"{toks['prompt_tokens']:.1f}" if toks.get("prompt_tokens") is not None else "N/A",
+                f"{toks['completion_tokens']:.1f}" if toks.get("completion_tokens") is not None else "N/A",
+                f"{toks['total_tokens']:.1f}" if toks.get("total_tokens") is not None else "N/A",
+                cond_info.get("proveedor_modelo", "local / qwen2.5:3b"),
+            ])
+        else:
+            rows.append([
+                cond,
+                "gold (legítimas)",
+                "0",
+                "N/A", "N/A", "N/A",
+                "N/A", "N/A", "N/A",
+                "N/A", "N/A", "N/A",
+                "N/A",
+            ])
 
     return PaperTable(
         table_id="tabla09_latencias_y_tokens",
         title="Tabla 9. Latencias de Inferencia y Consumo de Tokens",
         headers=headers,
         rows=rows,
-        caption="Telemetría computacional. Desglose entre tiempo total de pipeline y llamada al LLM local.",
+        caption="Telemetría computacional. Desglose dinámico entre tiempo total de pipeline y llamada al LLM local.",
     )
 
 
@@ -800,7 +1048,7 @@ def generate_all_paper_tables(
     t6 = build_table_asr(security_metrics=security_metrics, traces=traces)
     t7 = build_table_detector_recall()
     t8 = build_table_detector_fpr()
-    t9 = build_table_latencies_and_tokens(traces=traces)
+    t9 = build_table_latencies_and_tokens(traces=traces, quality_report=quality_report)
     t10 = build_table_paired_comparisons_and_coverage(quality_report, audit_report)
 
     return PaperTablesCollection(tables=[t1, t2, t3, t4, t5, t6, t7, t8, t9, t10])

@@ -29,6 +29,7 @@ from cs_rag_security.evaluation.quality import (
 from cs_rag_security.evaluation.tables import (
     PaperTablesCollection,
     extract_detector_diagnostic_from_run,
+    extract_latency_and_token_metrics,
     generate_all_paper_tables,
 )
 from cs_rag_security.ingestion import digest
@@ -239,16 +240,28 @@ def generate_paper_artifacts(
                 t_acc = t_slice.get("contabilidad_casos", {})
                 n_sust = t_acc.get("respuestas_sustantivas", 0)
                 if n_sust > 0:
+                    diff_cits = t_cit.get("diferenciacion_citas", {})
                     fig_citations[t_key] = {
                         "substantive_responses": n_sust,
                         "valida_completa": t_cit.get("citas_validas_completas", {}).get("numerator", 0),
                         "brecha": t_cit.get("brecha_pertenencia_sin_sustento", {}).get("total_pertenecen_sin_sustento_completo", {}).get("numerator", 0),
                         "alucinada": t_cit.get("pertenencia_contexto", {}).get("citas_pertenecen_no", {}).get("numerator", 0),
                         "sin_citas": t_cit.get("pertenencia_contexto", {}).get("respuestas_sin_citas", {}).get("numerator", 0),
+                        "formalmente_valida": diff_cits.get("citas_formalmente_validas", {}).get("numerator", 0),
+                        "presente_invalida": diff_cits.get("citas_presentes_invalidas", {}).get("numerator", 0),
+                        "ausente": diff_cits.get("ausencia_citas", {}).get("numerator", 0),
+                        "mixta": diff_cits.get("casos_mixtos", {}).get("numerator", 0),
+                        "no_determinable": diff_cits.get("no_determinable", {}).get("numerator", 0),
                     }
 
     # Diagnóstico del detector extraído dinámicamente de artefactos reales existentes
     detector_diagnostic_data = extract_detector_diagnostic_from_run()
+
+    lat_data = {}
+    if quality_report and getattr(quality_report, "metricas_latencia", None):
+        lat_data = quality_report.metricas_latencia
+    elif loaded_traces:
+        lat_data = extract_latency_and_token_metrics(traces=loaded_traces)
 
     figure_data = {
         "accuracy": fig_accuracy,
@@ -256,7 +269,7 @@ def generate_paper_artifacts(
         "abstentions": fig_abstentions,
         "security": security_metrics or {},
         "detector": detector_diagnostic_data,
-        "latencies": {},
+        "latencies": lat_data,
     }
     saved_figures = generate_all_paper_figures(figure_data, out / "figures")
 

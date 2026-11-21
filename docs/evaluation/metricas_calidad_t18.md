@@ -20,12 +20,24 @@ El módulo centralizado que implementa esta especificación es:
 
 ---
 
-## 2. Unidades de Medida y Contabilidad de Casos
+## 2. Unidades de Medida, Identidad y Contabilidad de Casos
 
-Cada registro en la plantilla de evaluación ([plantilla_anotacion_qa.csv](plantilla_anotacion_qa.csv))
-corresponde al juicio de un anotador sobre una salida.
+### 2.1 Identidad Unívoca de Casos Experimentales (Clave Compuesta)
 
-### 2.1 Estados de Revisión y Criterios de Inclusión / Exclusión
+Para garantizar la reproducibilidad y evitar colisiones entre corridas, condiciones u orígenes de respuesta, cada unidad de análisis experimental se identifica unívocamente mediante la **clave compuesta**:
+
+$$\text{Clave Experimental} = \langle \texttt{corrida\_id}, \texttt{pregunta\_id}, \texttt{condición} \rangle$$
+
+Cuando se analiza el flujo de la respuesta a través del sistema, se distingue adicionalmente el **origen de la respuesta** (`target`):
+- `pipeline`: Salida final procesada y sanitizada entregada por el sistema.
+- `llm_raw`: Salida textual original generada por el modelo de lenguaje antes de los filtros.
+
+> [!IMPORTANT]
+> **Preservación Estricta de Salidas A/B/C**:
+> Una misma pregunta evaluada en las tres condiciones (**A_sin_defensa**, **B_defensa_basica**, **C_defensa_propuesta**) genera **tres pares independientes de salida original y salida final**, es decir, **seis registros de evaluación completos**.
+> Los motivos de abstención, latencias y telemetría de una condición **jamás sobrescriben los de otra**, ni dentro de la misma corrida ni entre corridas diferentes. El cruce con las trazas de **T16** respeta estrictamente esta clave compuesta jerárquica.
+
+### 2.2 Estados de Revisión y Criterios de Inclusión / Exclusión
 
 | Estado (`estado_revision`) | Criterio de Inclusión | Tratamiento en Métricas |
 |---|---|---|
@@ -34,7 +46,7 @@ corresponde al juicio de un anotador sobre una salida.
 | `anotado` | Juicio completado por un evaluador individual. | **Incluido**. Forma parte del conjunto evaluable si no existe una fila de consenso posterior. |
 | `consensuado` | Juicio acordado entre evaluadores para resolver discrepancias. | **Incluido con máxima prioridad**. Prevalece y reemplaza a las anotaciones individuales del mismo caso. |
 
-### 2.2 Denominadores Base
+### 2.3 Denominadores Base
 
 - **Total de registros cargados** ($N_{\text{total}}$): Total de filas analizadas en el dataset.
 - **Consultas legítimas evaluables** ($N_{\text{eval}}$):
@@ -126,6 +138,48 @@ $$Brecha_{\text{sin\_sustento}} = \frac{\sum \mathbb{I}(\texttt{cita\_pertenece 
 #### E. Errores de Vigencia Normativa
 Respuestas que afirman vigencia sin verificación documental completa:
 $$Rate_{\text{error\_vigencia}} = \frac{\sum \mathbb{I}(\texttt{error\_vigencia == 'si'})}{N_{\text{sust}}}$$
+
+#### F. Diferenciación Formal de Citas (Desacople de Sustento Fáctico)
+
+Para no confundir la **validez formal de citación** (cumplimiento del formato y pertenencia a fragmentos aceptados) con el **sustento factual** (si el contenido respalda semánticamente la afirmación), se separan explícitamente cinco categorías diagnósticas:
+
+1. **Ausencia de citas** (`ausencia_citas`): La respuesta sustantiva no incluye ningún marcador de citación (`[archivo.pdf p. N]`).
+2. **Citas presentes pero formalmente inválidas** (`citas_invalidas`): La respuesta contiene citas, pero ninguna pertenece a los fragmentos aceptados por el pipeline (alucinación o fabricación completa de referencias).
+3. **Citas formalmente válidas** (`citas_formalmente_validas`): Todas las citas pertenecen al contexto aceptado.
+4. **Casos mixtos** (`mixtas`): La respuesta incluye al menos una cita válida y al menos una cita inválida fuera de contexto.
+5. **No determinable** (`no_determinable`): Se reserva para información histórica (como la corrida inicial de T11) o trazas donde el motivo registrado fue `citas_invalidas_o_ausentes` pero no se cuenta con los conteos ni listas de citas necesarias para discernir entre ausencia e invalidez formal. **Bajo ninguna circunstancia se clasifica automáticamente una cita no determinable como cita inválida.**
+
+---
+
+### 3.4 Métricas de Latencia Desacopladas
+
+Para caracterizar el costo computacional de las defensas y de la generación, se computan métricas estadísticas sobre dos ejes independientes:
+- **Latencia del Pipeline** ($t_{\text{pipeline}}$): Tiempo total de ejecución de la consulta de extremo a extremo en segundos (recuperación, filtros de seguridad, armado de prompt, generación y validación de citas).
+- **Latencia de Generación** ($t_{\text{generacion}}$): Tiempo consumido exclusivamente por el modelo de lenguaje (LLM local o remoto) para emitir los tokens.
+
+#### Parámetros Estadísticos Implementados:
+1. **Media** ($\mu$): Promedio aritmético de las observaciones válidas.
+2. **Mediana** ($\text{Med}$): Valor central ordenado (percentil 50).
+3. **Percentil 95** ($P_{95}$): Cuantifica la cola superior de latencia.
+4. **Observaciones válidas** ($N_{\text{valid}}$): Conteo de ejecuciones efectivas con medición.
+
+#### Documentación del Método de Cálculo del Percentil 95:
+Se implementa formalmente la **interpolación lineal entre los dos rangos más cercanos** (definición Hyndman y Fan, 1996, Tipo 7), equivalente al cálculo estándar de `numpy.percentile(..., method='linear')`, R (Tipo 7) y `statistics.quantiles(..., method='inclusive')`:
+Dado un vector ordenado de latencias limpias $x_0 \le x_1 \le \dots \le x_{N-1}$:
+- Si $N = 1$: $P_{95} = x_0$.
+- Si $N > 1$: se calcula el rango continuo $r = 0.95 \times (N - 1)$. Siendo $i = \lfloor r \rfloor$ y $f = r - i$:
+  $$P_{95} = x_i + f \times (x_{i+1} - x_i)$$
+
+#### Criterios de Inclusión, Exclusión y No Duplicación:
+- **Exclusión estricta**: Se descartan valores ausentes (`null`, cadenas vacías), negativos ($< 0$) o no finitos (`NaN`, `Inf`). **Nunca se sustituyen valores faltantes por cero**, ya que distorsionaría artificialmente la media y el percentil. Se conservan estrictamente valores válidos iguales a cero (como `temperature=0` o `seed=0`), sin tratarlos como falsy ni descartarlos.
+- **Desacoplamiento de la evaluación humana**: La latencia técnica (pipeline y generación) mide el costo computacional del sistema y se calcula directamente sobre la telemetría disponible, sin depender de que la revisión humana esté completada (`estado_revision == 'anotado'` o `'consensuado'`) ni de que las respuestas hayan sido calificadas.
+- **No duplicación entre salidas raw y pipeline**: Las latencias pertenecen a la ejecución del caso experimental $\langle \texttt{corrida\_id}, \texttt{pregunta\_id}, \texttt{condición} \rangle$. Al evaluar ambos orígenes de respuesta (`target='pipeline'` y `target='llm_raw'`), la latencia se contabiliza **exactamente una sola vez por caso experimental**.
+- **Agrupación y separación de configuraciones incompatibles**: Las métricas se calculan:
+  1. Globalmente por condición experimental (**A**, **B**, **C**).
+  2. Por corrida y condición, verificando la compatibilidad estricta de configuración experimental (proveedor, modelo, semilla, recuperador, top-k, temperatura, versión de prompt).
+  3. Si se detectan configuraciones heterogéneas dentro de una misma condición o corrida, el sistema **las separa en grupos homogéneos independientes** y evita mezclarlas en el agregado comparativo principal, reportándolas como separadas para impedir promedios espurios entre modelos o parámetros dispares.
+- **Resolución unívoca y compatible de trazas**: Los fallbacks históricos en `load_traces_dict` y `load_annotations` operan únicamente cuando la coincidencia es inequívoca y compatible. Ante colisiones entre corridas, condiciones o registros duplicados, se reporta telemetría no disponible (`None`) evitando cruzamientos indebidos.
+- **Conteo original de citas saneadas (T16)**: Ante trazas saneadas por T16 donde `citations_raw` fue filtrado para no conservar referencias inválidas, `citations_count` reconstruye fielmente el conteo original total ($N_{\text{orig}} = |\text{citations\_raw}_{\text{saneado}}| + \text{citations\_invalid\_count}$), distinguiendo adecuadamente citas inválidas presentes de ausencia de citas.
 
 ---
 

@@ -14,6 +14,8 @@ Implementa las métricas de calidad de respuestas basadas en la rúbrica oficial
 
 import csv
 import json
+import math
+import statistics
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -66,6 +68,20 @@ GROUNDING_PARTIAL: str = 'parcial'
 GROUNDING_NONE: str = 'ninguna'
 GROUNDING_NO_CITATIONS: str = 'sin_citas'
 GROUNDING_NA: str = 'no_aplica'
+
+# Categorías formales de diferenciación de citas
+CITATION_CAT_ABSENT: str = 'ausencia_citas'
+CITATION_CAT_INVALID_PRESENT: str = 'citas_invalidas'
+CITATION_CAT_FORMALLY_VALID: str = 'citas_formalmente_validas'
+CITATION_CAT_MIXED: str = 'mixtas'
+CITATION_CAT_INDETERMINATE: str = 'no_determinable'
+VALID_CITATION_CATEGORIES: Set[str] = {
+    CITATION_CAT_ABSENT,
+    CITATION_CAT_INVALID_PRESENT,
+    CITATION_CAT_FORMALLY_VALID,
+    CITATION_CAT_MIXED,
+    CITATION_CAT_INDETERMINATE,
+}
 
 # Normalización de cadenas para tolerancia a acentos o espacios
 STRING_NORMALIZATION: Dict[str, str] = {
@@ -129,6 +145,132 @@ def fraction(numerator: Optional[int], denominator: int, description: str = "") 
     }
 
 
+def compute_p95_linear(sorted_clean_values: List[float]) -> Optional[float]:
+    """Calcula el percentil 95 mediante interpolación lineal entre los dos rangos más cercanos.
+
+    Método formal:
+    Dado un conjunto de N valores ordenados x_0 <= x_1 <= ... <= x_{N-1}:
+    - Si N == 1, p95 = x_0.
+    - Si N > 1, se calcula el rango continuo r = 0.95 * (N - 1).
+      Sea i = floor(r) y f = r - i.
+      p95 = x_i + f * (x_{i+1} - x_i) si i + 1 < N, de lo contrario x_{N-1}.
+    Este método coincide con Hyndman y Fan (1996) Tipo 7, el estándar por defecto en
+    numpy.percentile(..., method='linear'), R (tipo 7), Python statistics.quantiles (method='inclusive')
+    y bibliotecas científicas de referencia.
+    """
+    n = len(sorted_clean_values)
+    if n == 0:
+        return None
+    if n == 1:
+        return round(sorted_clean_values[0], 4)
+    rank = 0.95 * (n - 1)
+    i = int(rank)
+    f = rank - i
+    if i + 1 < n:
+        res = sorted_clean_values[i] + f * (sorted_clean_values[i + 1] - sorted_clean_values[i])
+    else:
+        res = sorted_clean_values[-1]
+    return round(res, 4)
+
+
+def compute_latency_summary(latencies: List[Any], label: str = "") -> Dict[str, Any]:
+    """Calcula media, mediana, percentil 95 y número de observaciones válidas para una serie de latencias.
+
+    Criterios de inclusión/exclusión:
+    - Excluye estrictamente valores ausentes (None, vacío), negativos (< 0) o no finitos (NaN, Inf).
+    - Bajo ninguna circunstancia reemplaza valores faltantes por cero.
+    - Si no existen observaciones válidas, reporta valores None sin inventar estimaciones.
+    """
+    clean: List[float] = []
+    for val in latencies:
+        if val is None or val == '':
+            continue
+        try:
+            f = float(val)
+        except (ValueError, TypeError):
+            continue
+        if math.isnan(f) or math.isinf(f) or f < 0:
+            continue
+        clean.append(f)
+
+    n = len(clean)
+    if n == 0:
+        return {
+            'observaciones_validas': 0,
+            'media': None,
+            'mediana': None,
+            'percentil_95': None,
+            'descripcion': label,
+        }
+
+    clean.sort()
+    media = round(sum(clean) / n, 4)
+    mediana = round(statistics.median(clean), 4)
+    p95 = compute_p95_linear(clean)
+
+    return {
+        'observaciones_validas': n,
+        'media': media,
+        'mediana': mediana,
+        'percentil_95': p95,
+        'descripcion': label,
+    }
+
+
+def classify_citation_status(
+    cita_pertenece: str = '',
+    total_citations: Optional[int] = None,
+    invalid_citations: Optional[int] = None,
+    citations_valid_bool: Optional[bool] = None,
+    abstention_reason: str = '',
+) -> str:
+    """Clasifica el estado formal de citas separando ausencia, inválidas, formalmente válidas, mixtas e indeterminadas.
+
+    Reglas metodológicas:
+    - Ausencia de citas (ausencia_citas): total_citations == 0 o cita_pertenece == 'sin_citas'.
+    - Citas formalmente válidas (citas_formalmente_validas): total_citations > 0 con invalid_citations == 0,
+      o cita_pertenece == 'si'.
+    - Citas presentes pero inválidas (citas_invalidas): total_citations > 0 y todas son inválidas
+      (invalid_citations == total_citations) o cita_pertenece == 'no' (sin evidencias de citas mixtas).
+    - Casos mixtos (mixtas): total_citations > 1 con 0 < invalid_citations < total_citations.
+    - No determinable (no_determinable): información histórica con 'citas_invalidas_o_ausentes' donde faltan
+      conteos o evidencias detalladas, impidiendo distinguir entre ausencia e invalidez formal.
+    """
+    # 1. Si disponemos de conteos cuantitativos de T16
+    if total_citations is not None:
+        if total_citations == 0:
+            return CITATION_CAT_ABSENT
+        if invalid_citations is not None:
+            if invalid_citations == 0:
+                return CITATION_CAT_FORMALLY_VALID
+            if invalid_citations == total_citations:
+                return CITATION_CAT_INVALID_PRESENT
+            if 0 < invalid_citations < total_citations:
+                return CITATION_CAT_MIXED
+        if citations_valid_bool is True:
+            return CITATION_CAT_FORMALLY_VALID
+        if citations_valid_bool is False and invalid_citations is None:
+            return CITATION_CAT_INVALID_PRESENT
+
+    # 2. Si se basa en la rúbrica humana (cita_pertenece_contexto)
+    norm_pert = normalize_value(cita_pertenece)
+    if norm_pert == CITATION_NO_CITATIONS:
+        return CITATION_CAT_ABSENT
+    if norm_pert == CITATION_IN_CONTEXT_YES:
+        return CITATION_CAT_FORMALLY_VALID
+    if norm_pert == CITATION_IN_CONTEXT_NO:
+        if total_citations and invalid_citations and 0 < invalid_citations < total_citations:
+            return CITATION_CAT_MIXED
+        return CITATION_CAT_INVALID_PRESENT
+
+    # 3. Si solo se cuenta con motivo de abstención de T16 o histórico
+    if abstention_reason and ('citas_invalidas_o_ausentes' in abstention_reason or abstention_reason == ABSTENTION_REASON_INVALID_CITATIONS):
+        # Información histórica que no permite discernir entre ausencia e invalidez
+        return CITATION_CAT_INDETERMINATE
+
+    return ''
+
+
 @dataclass
 class EvaluationRecord:
     """Representa una fila individual de anotación humana según la rúbrica oficial T10 v0.2."""
@@ -162,6 +304,21 @@ class EvaluationRecord:
     # Metadatos derivados / asociados
     condicion: str = 'general'
     target: str = TARGET_PIPELINE  # 'pipeline' o 'llm_raw'
+
+    # Telemetría de citas, latencias y configuración experimental compatible (T16)
+    citations_count: Optional[int] = None
+    citations_invalid_count: Optional[int] = None
+    citations_valid: Optional[bool] = None
+    citations_category: str = ''
+    latency_pipeline_seconds: Optional[float] = None
+    latency_generation_seconds: Optional[float] = None
+    provider: Optional[str] = None
+    model: Optional[str] = None
+    seed: Optional[int] = None
+    retriever: Optional[str] = None
+    top_k: Optional[int] = None
+    temperature: Optional[float] = None
+    prompt_version: Optional[str] = None
 
     def __post_init__(self):
         # Normalizar valores léxicos
@@ -228,14 +385,124 @@ class EvaluationRecord:
         """Indica si el sistema emitió una abstención evaluable."""
         return self.is_evaluable and self.tipo_salida == OUTPUT_ABSTENTION
 
+    @property
+    def experimental_case_key(self) -> Tuple[str, str, str]:
+        """Clave compuesta corrida_id + pregunta_id + condición que identifica unívocamente el caso experimental."""
+        cid = self.pregunta_id or self.caso_ciego_id or self.evaluacion_id
+        return (self.corrida_id or 'general', cid, self.condicion or 'general')
 
-def load_traces_dict(traces_source: Union[str, Path, List[Dict[str, Any]]]) -> Dict[str, Dict[str, Any]]:
-    """Carga y mapea trazas experimentales por ID de pregunta/caso para fundamentar motivos de abstención."""
+    @property
+    def full_case_key(self) -> Tuple[str, str, str, str]:
+        """Clave unívoca considerando adicionalmente el origen de la respuesta (pipeline vs llm_raw)."""
+        run_id, cid, cond = self.experimental_case_key
+        return (run_id, cid, cond, self.target)
+
+
+class TracesIndex(dict):
+    """Índice de trazas experimentales con resolución estricta de unicidad y compatibilidad.
+
+    Garantiza:
+    - Indexación inequívoca por clave compuesta completa (run_id, case_id, condicion).
+    - Detección explícita de registros duplicados para la misma clave exacta.
+    - Fallbacks históricos únicamente cuando la coincidencia es inequívoca y compatible.
+    - Rechazo inmediato ante ambigüedades (múltiples corridas o condiciones para una misma consulta sin especificar).
+    - Reporte de telemetría no disponible (None) ante coincidencias ausentes, ambiguas o incompatibles.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.duplicates: Set[Tuple[str, str, str]] = set()
+        self.ambiguities: Set[Any] = set()
+
+    def resolve(
+        self,
+        run_key: str = '',
+        cid_key: str = '',
+        cond_key: str = '',
+    ) -> Optional[Dict[str, Any]]:
+        """Resuelve una traza de manera unívoca y compatible.
+
+        Retorna None si la traza está ausente, si es ambigua, si hay duplicados,
+        o si los parámetros especificados son incompatibles con la traza candidata.
+        """
+        run_k = str(run_key or '').strip()
+        cid_k = str(cid_key or '').strip()
+        cond_k = str(cond_key or '').strip()
+
+        if not cid_k:
+            return None
+
+        # 1. Búsqueda exacta si se dispone de corrida y condición
+        if run_k and cond_k and cond_k != 'general':
+            exact_k = (run_k, cid_k, cond_k)
+            if exact_k in self.duplicates:
+                return None  # Duplicado en la fuente de trazas -> no unívoco
+            if exact_k in self:
+                return self[exact_k]
+            # Si no coincide exactamente, no buscar en otra corrida o condición
+            return None
+
+        # 2. Búsqueda por (cid_k, cond_k) si no se especificó run_k
+        if cond_k and cond_k != 'general':
+            if run_k:
+                return None  # run_k fue dada pero no hubo match exacto -> incompatible
+            key_cc = (cid_k, cond_k)
+            if key_cc in self.ambiguities:
+                return None  # Ambigüedad: existe en múltiples corridas
+            if key_cc in self:
+                cand = self[key_cc]
+                t_cond = str(cand.get('mode') or cand.get('condition') or cand.get('condicion') or '').strip()
+                if cond_k != t_cond:
+                    return None
+                return cand
+            return None
+
+        # 3. Búsqueda por (run_k, cid_k) si no se especificó cond_k
+        if run_k:
+            if cond_k and cond_k != 'general':
+                return None  # cond_k fue dada pero no hubo match exacto -> incompatible
+            key_rc = (run_k, cid_k)
+            if key_rc in self.ambiguities:
+                return None  # Ambigüedad: existe en múltiples condiciones
+            if key_rc in self:
+                cand = self[key_rc]
+                t_run = str(cand.get('run_id') or cand.get('corrida_id') or '').strip()
+                if run_k != t_run:
+                    return None
+                return cand
+            return None
+
+        # 4. Fallback por cid_k simple únicamente si en todo el universo de trazas es unívoco
+        if cid_k in self.ambiguities:
+            return None
+        if cid_k in self:
+            cand = self[cid_k]
+            t_run = str(cand.get('run_id') or cand.get('corrida_id') or '').strip()
+            t_cond = str(cand.get('mode') or cand.get('condition') or cand.get('condicion') or '').strip()
+            if run_k and t_run and run_k != t_run:
+                return None
+            if cond_k and cond_k != 'general' and t_cond and cond_k != t_cond:
+                return None
+            return cand
+
+        return None
+
+
+def load_traces_dict(traces_source: Union[str, Path, List[Dict[str, Any]]]) -> TracesIndex:
+    """Carga y mapea trazas experimentales indexándolas estrictamente por unicidad y compatibilidad.
+
+    Garantiza:
+    - Indexación inequívoca por clave compuesta (run_id, case_id, condicion).
+    - Impedir que motivos de abstención o telemetría de una condición sobrescriban los de otra.
+    - Soporte de fallbacks históricos únicamente cuando la coincidencia es unívoca y compatible.
+    - Detección de ambigüedades y duplicados, reportando None (telemetría no disponible).
+    - Preservación de conteos cuantitativos de citas y latencias desacopladas.
+    """
     traces_data: List[Dict[str, Any]] = []
     if isinstance(traces_source, (str, Path)):
         p = Path(traces_source)
         if not p.exists():
-            return {}
+            return TracesIndex()
         if p.suffix.lower() == '.json':
             content = json.loads(p.read_text(encoding='utf-8'))
             traces_data = content if isinstance(content, list) else content.get('traces', [])
@@ -245,14 +512,60 @@ def load_traces_dict(traces_source: Union[str, Path, List[Dict[str, Any]]]) -> D
     elif isinstance(traces_source, list):
         traces_data = traces_source
     else:
-        return {}
+        return TracesIndex()
 
-    by_id: Dict[str, Dict[str, Any]] = {}
+    index = TracesIndex()
+    exact_map: Dict[Tuple[str, str, str], List[Dict[str, Any]]] = {}
+    cid_cond_map: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
+    run_cid_map: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
+    cid_map: Dict[str, List[Dict[str, Any]]] = {}
+
     for t in traces_data:
-        tid = t.get('id') or t.get('pregunta_id') or t.get('case_id')
-        if tid:
-            by_id[str(tid)] = t
-    return by_id
+        run_id = str(t.get('run_id') or t.get('corrida_id') or '').strip()
+        cid = str(t.get('case_id') or t.get('pregunta_id') or t.get('id') or '').strip()
+        cond = str(t.get('mode') or t.get('condition') or t.get('condicion') or '').strip()
+
+        if not cid:
+            continue
+
+        exact_k = (run_id, cid, cond)
+        exact_map.setdefault(exact_k, []).append(t)
+
+        if cond:
+            cid_cond_map.setdefault((cid, cond), []).append(t)
+        if run_id:
+            run_cid_map.setdefault((run_id, cid), []).append(t)
+        cid_map.setdefault(cid, []).append(t)
+
+    # 1. Claves exactas (run_id, case_id, condicion)
+    for exact_k, t_list in exact_map.items():
+        if len(t_list) == 1:
+            index[exact_k] = t_list[0]
+        else:
+            index.duplicates.add(exact_k)
+
+    # 2. Claves (case_id, condicion) - unívocas únicamente si no colisionan entre corridas
+    for cc_k, t_list in cid_cond_map.items():
+        if len(t_list) == 1:
+            index[cc_k] = t_list[0]
+        else:
+            index.ambiguities.add(cc_k)
+
+    # 3. Claves (run_id, case_id) - unívocas únicamente si no colisionan entre condiciones
+    for rc_k, t_list in run_cid_map.items():
+        if len(t_list) == 1:
+            index[rc_k] = t_list[0]
+        else:
+            index.ambiguities.add(rc_k)
+
+    # 4. Fallback case_id simple - unívoco únicamente si no colisiona en todo el universo
+    for c_k, t_list in cid_map.items():
+        if len(t_list) == 1:
+            index[c_k] = t_list[0]
+        else:
+            index.ambiguities.add(c_k)
+
+    return index
 
 
 def load_annotations(
@@ -265,7 +578,7 @@ def load_annotations(
     Permite incorporar opcionalmente un mapa de desenmascaramiento ciego (blind_mapping)
     para asociar caso_ciego_id con su condición experimental real (A, B, C) y target,
     así como fuentes de trazas experimentales reales (traces_source) de T16 para fundamentar
-    los diagnósticos canónicos de abstención.
+    los diagnósticos canónicos de abstención y enriquecer con telemetría de citas y latencias.
     """
     records_data: List[Dict[str, Any]] = []
 
@@ -295,8 +608,8 @@ def load_annotations(
         elif isinstance(blind_mapping, dict):
             mapping_dict = blind_mapping
 
-    traces_dict: Dict[str, Dict[str, Any]] = load_traces_dict(traces_source) if traces_source else {}
-    cached_trace_files: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    traces_dict: Dict[Any, Dict[str, Any]] = load_traces_dict(traces_source) if traces_source else {}
+    cached_trace_files: Dict[str, Dict[Any, Dict[str, Any]]] = {}
 
     records: List[EvaluationRecord] = []
     for raw in records_data:
@@ -315,21 +628,202 @@ def load_annotations(
         target = raw.get('target') or raw.get('origen_respuesta') or mapped_target or ''
         motivo_abs = raw.get('motivo_abstencion') or raw.get('abstention_reason') or mapped_motivo or ''
 
-        # Fundamentar abstención en trazas reales de T16 si no fue provisto en la anotación
-        if not motivo_abs:
-            qid = raw.get('pregunta_id', '') or caso_id
-            if qid in traces_dict:
-                motivo_abs = traces_dict[qid].get('abstention_reason') or ''
-            ref_salida = raw.get('referencia_salida', '')
-            if not motivo_abs and ref_salida and '#' in ref_salida:
-                file_part, key_part = ref_salida.split('#', 1)
-                trace_file_path = Path(file_part)
-                if trace_file_path.exists():
-                    if file_part not in cached_trace_files:
-                        cached_trace_files[file_part] = load_traces_dict(trace_file_path)
-                    sub_id = key_part.split('.')[0] if '.' in key_part else key_part
-                    if sub_id in cached_trace_files[file_part]:
-                        motivo_abs = cached_trace_files[file_part][sub_id].get('abstention_reason') or ''
+        # Buscar traza asociada mediante clave unívoca y compatible
+        matched_trace: Optional[Dict[str, Any]] = None
+        run_key = str(raw.get('corrida_id') or '').strip()
+        q_key = str(raw.get('pregunta_id') or caso_id).strip()
+        cond_key = str(cond).strip()
+
+        if traces_dict:
+            if isinstance(traces_dict, TracesIndex):
+                matched_trace = traces_dict.resolve(run_key, q_key, cond_key)
+            else:
+                if run_key and q_key and cond_key and (run_key, q_key, cond_key) in traces_dict:
+                    matched_trace = traces_dict[(run_key, q_key, cond_key)]
+                elif q_key and cond_key and (q_key, cond_key) in traces_dict:
+                    cand = traces_dict[(q_key, cond_key)]
+                    t_run = str(cand.get('run_id') or cand.get('corrida_id') or '').strip()
+                    if not run_key or not t_run or run_key == t_run:
+                        matched_trace = cand
+
+        # También verificar referencia_salida con #
+        ref_salida = raw.get('referencia_salida', '')
+        if not matched_trace and ref_salida and '#' in ref_salida:
+            file_part, key_part = ref_salida.split('#', 1)
+            trace_file_path = Path(file_part)
+            if trace_file_path.exists():
+                if file_part not in cached_trace_files:
+                    cached_trace_files[file_part] = load_traces_dict(trace_file_path)
+                sub_id = key_part.split('.')[0] if '.' in key_part else key_part
+                tf_dict = cached_trace_files[file_part]
+                if isinstance(tf_dict, TracesIndex):
+                    matched_trace = tf_dict.resolve(run_key, sub_id, cond_key)
+                elif tf_dict:
+                    if run_key and sub_id and cond_key and (run_key, sub_id, cond_key) in tf_dict:
+                        matched_trace = tf_dict[(run_key, sub_id, cond_key)]
+                    elif sub_id and cond_key and (sub_id, cond_key) in tf_dict:
+                        cand = tf_dict[(sub_id, cond_key)]
+                        t_run = str(cand.get('run_id') or cand.get('corrida_id') or '').strip()
+                        if not run_key or not t_run or run_key == t_run:
+                            matched_trace = cand
+
+        if matched_trace and not motivo_abs:
+            motivo_abs = matched_trace.get('abstention_reason') or ''
+
+        # Telemetría de citas cuantitativas de T16
+        c_count: Optional[int] = None
+        c_inv: Optional[int] = None
+        c_valid: Optional[bool] = None
+
+        if matched_trace:
+            inv_val = matched_trace.get('citations_invalid_count')
+            if inv_val is None:
+                inv_val = matched_trace.get('invalid_citations_count')
+            if inv_val is not None and str(inv_val).strip() != '':
+                try:
+                    c_inv = int(inv_val)
+                except (ValueError, TypeError):
+                    pass
+
+            cv = matched_trace.get('citations_valid')
+            if cv is not None:
+                if isinstance(cv, str):
+                    c_valid = cv.lower() == 'true'
+                else:
+                    c_valid = bool(cv)
+
+            # Regla de saneamiento T16: citations_raw solo conserva citas formalmente válidas
+            # pertenecientes al contexto admisible; las inválidas han sido filtradas para evitar fuga.
+            # Por tanto, el conteo original de citas es:
+            #   original_citations_count = len(citations_raw_saneadas) + citations_invalid_count
+            raw_cits = matched_trace.get('citations_raw')
+            trace_c_count = matched_trace.get('citations_count')
+            tc_int: Optional[int] = None
+            if trace_c_count is not None and str(trace_c_count).strip() != '':
+                try:
+                    tc_int = int(trace_c_count)
+                except (ValueError, TypeError):
+                    pass
+
+            if isinstance(raw_cits, list):
+                valid_count = len(raw_cits)
+                invalid_count = c_inv if (c_inv is not None and c_inv > 0) else 0
+                c_count = valid_count + invalid_count
+                if tc_int is not None and tc_int > c_count:
+                    c_count = tc_int
+            elif tc_int is not None:
+                if c_inv is not None and c_inv > 0 and tc_int < c_inv:
+                    c_count = tc_int + c_inv
+                else:
+                    c_count = tc_int
+            elif c_inv is not None and c_inv > 0:
+                c_count = c_inv
+
+        # Fallback a columnas presentes directamente en la anotación
+        if c_inv is None and raw.get('citations_invalid_count') is not None and str(raw.get('citations_invalid_count')).strip() != '':
+            try:
+                c_inv = int(raw['citations_invalid_count'])
+            except (ValueError, TypeError):
+                pass
+        if c_count is None and raw.get('citations_count') is not None and str(raw.get('citations_count')).strip() != '':
+            try:
+                c_count = int(raw['citations_count'])
+            except (ValueError, TypeError):
+                pass
+        if c_valid is None and raw.get('citations_valid') is not None and str(raw.get('citations_valid')).strip() != '':
+            val_str = str(raw['citations_valid']).strip().lower()
+            c_valid = val_str == 'true'
+
+        cit_cat = classify_citation_status(
+            cita_pertenece=raw.get('cita_pertenece_contexto', ''),
+            total_citations=c_count,
+            invalid_citations=c_inv,
+            citations_valid_bool=c_valid,
+            abstention_reason=motivo_abs,
+        )
+
+        # Telemetría de latencias desacopladas
+        pipe_lat: Optional[float] = None
+        gen_lat: Optional[float] = None
+        if matched_trace:
+            p_val = matched_trace.get('latency_pipeline_seconds') if matched_trace.get('latency_pipeline_seconds') is not None else matched_trace.get('pipeline_seconds')
+            if p_val is not None and str(p_val).strip() != '':
+                try:
+                    pf = float(p_val)
+                    if pf >= 0 and not (math.isnan(pf) or math.isinf(pf)):
+                        pipe_lat = pf
+                except (ValueError, TypeError):
+                    pass
+
+            g_val = matched_trace.get('latency_generation_seconds') if matched_trace.get('latency_generation_seconds') is not None else matched_trace.get('latency_seconds')
+            if g_val is not None and str(g_val).strip() != '':
+                try:
+                    gf = float(g_val)
+                    if gf >= 0 and not (math.isnan(gf) or math.isinf(gf)):
+                        gen_lat = gf
+                except (ValueError, TypeError):
+                    pass
+
+        # Fallback si las latencias vinieron en raw
+        if pipe_lat is None:
+            p_raw = raw.get('latency_pipeline_seconds') if raw.get('latency_pipeline_seconds') is not None else raw.get('pipeline_seconds')
+            if p_raw is not None and str(p_raw).strip() != '':
+                try:
+                    pf = float(p_raw)
+                    if pf >= 0 and not (math.isnan(pf) or math.isinf(pf)):
+                        pipe_lat = pf
+                except (ValueError, TypeError):
+                    pass
+        if gen_lat is None:
+            g_raw = raw.get('latency_generation_seconds') if raw.get('latency_generation_seconds') is not None else raw.get('latency_seconds')
+            if g_raw is not None and str(g_raw).strip() != '':
+                try:
+                    gf = float(g_raw)
+                    if gf >= 0 and not (math.isnan(gf) or math.isinf(gf)):
+                        gen_lat = gf
+                except (ValueError, TypeError):
+                    pass
+
+        # Configuración experimental compatible (preservando valores válidos iguales a cero)
+        prov = raw.get('provider') if raw.get('provider') is not None else (matched_trace.get('provider') if matched_trace else None)
+        mod = raw.get('model') if raw.get('model') is not None else (matched_trace.get('model') if matched_trace else None)
+
+        ret_val = raw.get('retriever')
+        if ret_val is None and matched_trace:
+            ret_val = matched_trace.get('retriever') or matched_trace.get('index_method')
+        retriever = str(ret_val).strip() if ret_val is not None and str(ret_val).strip() != '' else None
+
+        s_val = raw.get('seed')
+        if s_val is None and matched_trace:
+            s_val = matched_trace.get('seed')
+            if s_val is None and isinstance(matched_trace.get('parameters'), dict):
+                s_val = matched_trace['parameters'].get('seed')
+        try:
+            seed = int(s_val) if s_val is not None and str(s_val).strip() != '' else None
+        except (ValueError, TypeError):
+            seed = None
+
+        tk_val = raw.get('top_k')
+        if tk_val is None and matched_trace:
+            tk_val = matched_trace.get('top_k')
+            if tk_val is None and isinstance(matched_trace.get('parameters'), dict):
+                tk_val = matched_trace['parameters'].get('top_k')
+        try:
+            top_k = int(tk_val) if tk_val is not None and str(tk_val).strip() != '' else None
+        except (ValueError, TypeError):
+            top_k = None
+
+        temp_val = raw.get('temperature')
+        if temp_val is None and matched_trace:
+            temp_val = matched_trace.get('temperature')
+            if temp_val is None and isinstance(matched_trace.get('parameters'), dict):
+                temp_val = matched_trace['parameters'].get('temperature')
+        try:
+            temp = float(temp_val) if temp_val is not None and str(temp_val).strip() != '' else None
+        except (ValueError, TypeError):
+            temp = None
+
+        p_ver = raw.get('prompt_version') if raw.get('prompt_version') is not None else (matched_trace.get('prompt_version') if matched_trace else None)
 
         record = EvaluationRecord(
             evaluacion_id=raw.get('evaluacion_id', ''),
@@ -359,6 +853,19 @@ def load_annotations(
             motivo_abstencion=motivo_abs,
             condicion=cond,
             target=target,
+            citations_count=c_count,
+            citations_invalid_count=c_inv,
+            citations_valid=c_valid,
+            citations_category=cit_cat,
+            latency_pipeline_seconds=pipe_lat,
+            latency_generation_seconds=gen_lat,
+            provider=prov,
+            model=mod,
+            seed=seed,
+            retriever=retriever,
+            top_k=top_k,
+            temperature=temp,
+            prompt_version=p_ver,
         )
         records.append(record)
 
@@ -379,8 +886,8 @@ def resolve_consensus_records(
     """
     grouped: Dict[Tuple[str, str, str, str], List[EvaluationRecord]] = {}
     for idx, r in enumerate(records):
-        case_id = r.caso_ciego_id or r.pregunta_id or r.evaluacion_id or f'row_{idx}'
-        key = (r.corrida_id, case_id, r.condicion, r.target)
+        case_id = r.pregunta_id or r.caso_ciego_id or r.evaluacion_id or f'row_{idx}'
+        key = (r.corrida_id or 'general', case_id, r.condicion or 'general', r.target)
         grouped.setdefault(key, []).append(r)
 
     resolved: List[EvaluationRecord] = []
@@ -391,7 +898,7 @@ def resolve_consensus_records(
         'cita_pertenece_contexto', 'cita_sustenta_respuesta', 'error_vigencia'
     )
 
-    for (_, case_id, condicion, target), items in grouped.items():
+    for (corrida_id, case_id, condicion, target), items in grouped.items():
         consensuados = [i for i in items if i.estado_revision == STATUS_CONSENSED]
         if consensuados:
             resolved.append(consensuados[-1])
@@ -416,8 +923,9 @@ def resolve_consensus_records(
             else:
                 evaluadores_list = [i.evaluador_id for i in anotados]
                 conflict_entry = {
-                    'corrida_id': items[0].corrida_id,
+                    'corrida_id': corrida_id,
                     'caso_id': case_id,
+                    'condicion': condicion,
                     'target': target,
                     'evaluadores': evaluadores_list,
                     'juicios': [
@@ -437,10 +945,10 @@ def resolve_consensus_records(
                 conflicts.append(conflict_entry)
                 # Mantener el caso en pendiente de consenso sin resolver arbitrariamente
                 conflict_record = EvaluationRecord(
-                    evaluacion_id=f"CONFLICT-{case_id}-{target}",
+                    evaluacion_id=f"CONFLICT-{corrida_id}-{case_id}-{condicion}-{target}",
                     corrida_id=items[0].corrida_id,
                     caso_ciego_id=items[0].caso_ciego_id,
-                    pregunta_id=items[0].pregunta_id,
+                    pregunta_id=items[0].pregunta_id or case_id,
                     evaluador_id="multiple_en_conflicto",
                     rubrica_version=items[0].rubrica_version,
                     referencia_caso=items[0].referencia_caso,
@@ -453,8 +961,21 @@ def resolve_consensus_records(
                     tipo_salida='',
                     calidad_respuesta='',
                     incidencia=f"Desacuerdo sin consenso entre evaluadores ({', '.join(evaluadores_list)})",
-                    condicion=items[0].condicion,
+                    condicion=condicion,
                     target=target,
+                    citations_count=items[0].citations_count,
+                    citations_invalid_count=items[0].citations_invalid_count,
+                    citations_valid=items[0].citations_valid,
+                    citations_category=items[0].citations_category,
+                    latency_pipeline_seconds=items[0].latency_pipeline_seconds,
+                    latency_generation_seconds=items[0].latency_generation_seconds,
+                    provider=items[0].provider,
+                    model=items[0].model,
+                    seed=items[0].seed,
+                    retriever=items[0].retriever,
+                    top_k=items[0].top_k,
+                    temperature=items[0].temperature,
+                    prompt_version=items[0].prompt_version,
                 )
                 resolved.append(conflict_record)
             continue
@@ -534,6 +1055,28 @@ def compute_slice_metrics(records: List[EvaluationRecord], slice_name: str = "")
         if r.cita_pertenece_contexto == CITATION_IN_CONTEXT_YES and r.cita_sustenta_respuesta == GROUNDING_NONE
     )
     n_in_context_insufficient = n_in_context_partial_ground + n_in_context_no_ground
+
+    # Diferenciación formal de citas (separación explícita sobre respuestas sustantivas)
+    n_cit_absent = sum(
+        1 for r in substantive_responses
+        if r.citations_category == CITATION_CAT_ABSENT or (not r.citations_category and r.cita_pertenece_contexto == CITATION_NO_CITATIONS)
+    )
+    n_cit_invalid_present = sum(
+        1 for r in substantive_responses
+        if r.citations_category == CITATION_CAT_INVALID_PRESENT or (not r.citations_category and r.cita_pertenece_contexto == CITATION_IN_CONTEXT_NO)
+    )
+    n_cit_formally_valid = sum(
+        1 for r in substantive_responses
+        if r.citations_category == CITATION_CAT_FORMALLY_VALID or (not r.citations_category and r.cita_pertenece_contexto == CITATION_IN_CONTEXT_YES)
+    )
+    n_cit_mixed = sum(
+        1 for r in substantive_responses
+        if r.citations_category == CITATION_CAT_MIXED
+    )
+    n_cit_indeterminate = sum(
+        1 for r in substantive_responses
+        if r.citations_category == CITATION_CAT_INDETERMINATE
+    )
 
     # Error de vigencia
     n_vigencia_error_substantive = sum(1 for r in substantive_responses if r.error_vigencia == 'si')
@@ -684,6 +1227,29 @@ def compute_slice_metrics(records: List[EvaluationRecord], slice_name: str = "")
                     'Total de respuestas con error de vigencia sobre consultas evaluables'
                 ),
             },
+            # Diferenciación formal de citas (desacoplada de sustento fáctico)
+            'diferenciacion_citas': {
+                'ausencia_citas': fraction(
+                    n_cit_absent, n_substantive,
+                    'Ausencia total de citas en respuestas sustantivas'
+                ),
+                'citas_presentes_invalidas': fraction(
+                    n_cit_invalid_present, n_substantive,
+                    'Citas presentes pero formalmente inválidas (fuera de fragmentos aceptados)'
+                ),
+                'citas_formalmente_validas': fraction(
+                    n_cit_formally_valid, n_substantive,
+                    'Citas presentes y formalmente válidas en fragmentos aceptados'
+                ),
+                'casos_mixtos': fraction(
+                    n_cit_mixed, n_substantive,
+                    'Casos mixtos con al menos una cita válida y una inválida'
+                ),
+                'no_determinable': fraction(
+                    n_cit_indeterminate, n_substantive,
+                    'Casos con etiqueta citas_invalidas_o_ausentes sin evidencia cuantitativa histórica suficiente'
+                ),
+            },
         },
     }
 
@@ -784,22 +1350,35 @@ def compute_paired_condition_comparison(
 def compare_paired_pipeline_vs_llm_raw(records: List[EvaluationRecord]) -> Dict[str, Any]:
     """Compara por pares de casos las discrepancias entre la respuesta del pipeline y la salida cruda del LLM.
 
-    Verifica de manera explícita si las abstenciones del pipeline corresponden al motivo canónico
-    de T16 citas_invalidas_o_ausentes, en lugar de asumir causas no sustentadas.
+    Utiliza la clave compuesta corrida_id + pregunta_id + condición para identificar inequívocamente cada
+    caso experimental. Una pregunta evaluada en A/B/C produce tres pares independientes de salida original
+    y salida final (6 registros en total).
+
+    Separa explícitamente las causas de abstención por citas:
+    - Ausencia de citas
+    - Citas presentes pero inválidas
+    - Casos mixtos
+    - No determinables (cuando la información histórica no permite distinguir)
     """
-    by_case: Dict[Tuple[str, str], Dict[str, EvaluationRecord]] = {}
+    by_case: Dict[Tuple[str, str, str], Dict[str, EvaluationRecord]] = {}
     for r in records:
-        cid = r.pregunta_id or r.caso_ciego_id or r.evaluacion_id
-        by_case.setdefault((r.corrida_id, cid), {})[r.target] = r
+        run_id, cid, cond = r.experimental_case_key
+        by_case.setdefault((run_id, cid, cond), {})[r.target] = r
 
     n_pairs = 0
     llm_correct_pipeline_abstained = 0
     llm_correct_pipeline_abstained_by_citations = 0
     llm_substantive_pipeline_abstained = 0
+
+    # Separación explícita de citas
+    llm_sin_citas_pipeline_abstained = 0
     llm_citas_invalidas_pipeline_abstained = 0
+    llm_citas_mixtas_pipeline_abstained = 0
+    llm_citas_no_determinable_pipeline_abstained = 0
+
     identical_calidad = 0
 
-    for _, targets in by_case.items():
+    for (run_id, cid, cond), targets in by_case.items():
         pipe_rec = targets.get(TARGET_PIPELINE)
         raw_rec = targets.get(TARGET_LLM_RAW)
         if pipe_rec and raw_rec and pipe_rec.is_evaluable and raw_rec.is_evaluable:
@@ -808,9 +1387,9 @@ def compare_paired_pipeline_vs_llm_raw(records: List[EvaluationRecord]) -> Dict[
                 pipe_rec.is_abstention
                 and (
                     pipe_rec.motivo_abstencion == ABSTENTION_REASON_INVALID_CITATIONS
+                    or 'citas_invalidas_o_ausentes' in pipe_rec.motivo_abstencion
                     or ABSTENTION_REASON_INVALID_CITATIONS in pipe_rec.justificacion
                     or ABSTENTION_REASON_INVALID_CITATIONS in pipe_rec.incidencia
-                    or 'citas_invalidas_o_ausentes' in pipe_rec.motivo_abstencion
                 )
             )
 
@@ -822,8 +1401,37 @@ def compare_paired_pipeline_vs_llm_raw(records: List[EvaluationRecord]) -> Dict[
             if raw_rec.is_substantive_response and pipe_rec.is_abstention:
                 llm_substantive_pipeline_abstained += 1
 
-            if raw_rec.cita_pertenece_contexto != CITATION_IN_CONTEXT_YES and pipe_rec.is_abstention:
-                llm_citas_invalidas_pipeline_abstained += 1
+            if pipe_rec.is_abstention:
+                cat = raw_rec.citations_category or pipe_rec.citations_category
+                if not cat:
+                    cat = classify_citation_status(
+                        cita_pertenece=raw_rec.cita_pertenece_contexto,
+                        total_citations=raw_rec.citations_count,
+                        invalid_citations=raw_rec.citations_invalid_count,
+                        citations_valid_bool=raw_rec.citations_valid,
+                        abstention_reason=pipe_rec.motivo_abstencion if is_citation_abstention else '',
+                    )
+
+                if is_citation_abstention:
+                    if cat == CITATION_CAT_ABSENT:
+                        llm_sin_citas_pipeline_abstained += 1
+                    elif cat == CITATION_CAT_INVALID_PRESENT:
+                        llm_citas_invalidas_pipeline_abstained += 1
+                    elif cat == CITATION_CAT_MIXED:
+                        llm_citas_mixtas_pipeline_abstained += 1
+                    elif cat == CITATION_CAT_INDETERMINATE:
+                        llm_citas_no_determinable_pipeline_abstained += 1
+                    elif raw_rec.cita_pertenece_contexto == CITATION_IN_CONTEXT_NO:
+                        llm_citas_invalidas_pipeline_abstained += 1
+                    elif raw_rec.cita_pertenece_contexto == CITATION_NO_CITATIONS:
+                        llm_sin_citas_pipeline_abstained += 1
+                else:
+                    if cat == CITATION_CAT_INVALID_PRESENT or raw_rec.cita_pertenece_contexto == CITATION_IN_CONTEXT_NO:
+                        llm_citas_invalidas_pipeline_abstained += 1
+                    elif cat == CITATION_CAT_ABSENT or raw_rec.cita_pertenece_contexto == CITATION_NO_CITATIONS:
+                        llm_sin_citas_pipeline_abstained += 1
+                    elif cat == CITATION_CAT_MIXED:
+                        llm_citas_mixtas_pipeline_abstained += 1
 
             if raw_rec.calidad_respuesta == pipe_rec.calidad_respuesta:
                 identical_calidad += 1
@@ -842,14 +1450,219 @@ def compare_paired_pipeline_vs_llm_raw(records: List[EvaluationRecord]) -> Dict[
             llm_substantive_pipeline_abstained, n_pairs,
             'Casos donde el LLM crudo generó respuesta sustantiva pero el pipeline aplicó abstención'
         ),
+        'desglose_citas_abstencion_pipeline': {
+            'llm_sin_citas_y_pipeline_abstuvo': fraction(
+                llm_sin_citas_pipeline_abstained, n_pairs,
+                'Casos donde el LLM crudo omitió citas y el pipeline se abstuvo'
+            ),
+            'llm_citas_invalidas_y_pipeline_abstuvo': fraction(
+                llm_citas_invalidas_pipeline_abstained, n_pairs,
+                'Casos donde el LLM crudo incluyó citas presentes pero formalmente inválidas y el pipeline se abstuvo'
+            ),
+            'llm_citas_mixtas_y_pipeline_abstuvo': fraction(
+                llm_citas_mixtas_pipeline_abstained, n_pairs,
+                'Casos donde el LLM crudo incluyó citas mixtas (válidas e inválidas) y el pipeline se abstuvo'
+            ),
+            'llm_citas_no_determinables_y_pipeline_abstuvo': fraction(
+                llm_citas_no_determinable_pipeline_abstained, n_pairs,
+                'Casos donde la información histórica no permite distinguir entre citas ausentes o inválidas'
+            ),
+        },
         'llm_citas_invalidas_y_pipeline_abstuvo': fraction(
             llm_citas_invalidas_pipeline_abstained, n_pairs,
-            'Casos donde el LLM crudo tuvo citas inválidas y el pipeline protegió absteniéndose'
+            'Casos donde el LLM crudo tuvo citas presentes pero inválidas y el pipeline protegió absteniéndose'
+        ),
+        'llm_sin_citas_y_pipeline_abstuvo': fraction(
+            llm_sin_citas_pipeline_abstained, n_pairs,
+            'Casos donde el LLM crudo omitió citas y el pipeline protegió absteniéndose'
+        ),
+        'llm_citas_no_determinables_y_pipeline_abstuvo': fraction(
+            llm_citas_no_determinable_pipeline_abstained, n_pairs,
+            'Casos donde no se puede determinar si las citas fueron ausentes o inválidas y el pipeline se abstuvo'
         ),
         'concordancia_calidad_respuesta': fraction(
             identical_calidad, n_pairs,
             'Casos donde la calidad asignada al LLM crudo y al pipeline fue idéntica'
         ),
+    }
+
+
+def _extract_case_config(case: Dict[str, Any]) -> Dict[str, Any]:
+    """Extrae y normaliza los parámetros de configuración experimental de un caso."""
+    return {
+        'provider': case.get('provider') or 'no_especificado',
+        'model': case.get('model') or 'no_especificado',
+        'seed': case.get('seed'),
+        'retriever': case.get('retriever') or 'no_especificado',
+        'top_k': case.get('top_k'),
+        'temperature': case.get('temperature'),
+        'prompt_version': case.get('prompt_version') or 'no_especificado',
+    }
+
+
+def _config_signature(cfg: Dict[str, Any]) -> Tuple[Any, ...]:
+    """Genera una firma hashable para verificar compatibilidad estricta de configuraciones."""
+    temp_val = float(cfg['temperature']) if cfg.get('temperature') is not None else None
+    return (
+        str(cfg.get('provider') or '').strip().lower(),
+        str(cfg.get('model') or '').strip(),
+        cfg.get('seed'),
+        str(cfg.get('retriever') or '').strip().lower(),
+        cfg.get('top_k'),
+        temp_val,
+        str(cfg.get('prompt_version') or '').strip(),
+    )
+
+
+def compute_quality_latencies(records: List[EvaluationRecord]) -> Dict[str, Any]:
+    """Calcula métricas agregadas de latencia (media, mediana, p95, n_validas) sin duplicaciones.
+
+    Garantiza:
+    - Agrupación por clave experimental única (corrida_id, pregunta_id, condicion) para evitar
+      duplicar latencias entre salidas raw y pipeline.
+    - Exclusión estricta de valores ausentes, negativos o no finitos sin reemplazarlos por cero.
+    - Separación formal entre latencia de pipeline y latencia de generación.
+    - Verificación rigurosa de compatibilidad de configuración experimental (provider, model, seed,
+      temperature, top_k, retriever, prompt_version).
+    - Separación de configuraciones incompatibles evitando mezclarlas en agregados comparativos.
+    - Conservación estricta de valores válidos iguales a cero (como temperature=0 y seed=0).
+    - Desacoplamiento de la disponibilidad o estado de la evaluación humana (pendiente/no evaluable).
+    - Documentación explícita del método de interpolación lineal para el percentil 95.
+    """
+    # 1. Deduplicar por caso experimental único (corrida_id, pregunta_id, condicion)
+    unique_cases: Dict[Tuple[str, str, str], Dict[str, Any]] = {}
+    for r in records:
+        key = r.experimental_case_key
+        if key not in unique_cases:
+            unique_cases[key] = {
+                'corrida_id': r.corrida_id or 'general',
+                'pregunta_id': r.pregunta_id or r.caso_ciego_id or r.evaluacion_id,
+                'condicion': r.condicion or 'general',
+                'latency_pipeline_seconds': r.latency_pipeline_seconds,
+                'latency_generation_seconds': r.latency_generation_seconds,
+                'provider': r.provider,
+                'model': r.model,
+                'seed': r.seed,
+                'retriever': r.retriever,
+                'top_k': r.top_k,
+                'temperature': r.temperature,
+                'prompt_version': r.prompt_version,
+            }
+        else:
+            case_entry = unique_cases[key]
+            if case_entry['latency_pipeline_seconds'] is None and r.latency_pipeline_seconds is not None:
+                case_entry['latency_pipeline_seconds'] = r.latency_pipeline_seconds
+            if case_entry['latency_generation_seconds'] is None and r.latency_generation_seconds is not None:
+                case_entry['latency_generation_seconds'] = r.latency_generation_seconds
+            if not case_entry['provider'] and r.provider:
+                case_entry['provider'] = r.provider
+            if not case_entry['model'] and r.model:
+                case_entry['model'] = r.model
+            if case_entry['seed'] is None and r.seed is not None:
+                case_entry['seed'] = r.seed
+            if not case_entry['retriever'] and r.retriever:
+                case_entry['retriever'] = r.retriever
+            if case_entry['top_k'] is None and r.top_k is not None:
+                case_entry['top_k'] = r.top_k
+            if case_entry['temperature'] is None and r.temperature is not None:
+                case_entry['temperature'] = r.temperature
+            if not case_entry['prompt_version'] and r.prompt_version:
+                case_entry['prompt_version'] = r.prompt_version
+
+    # 2. Métricas por condición con verificación de configuración compatible
+    por_condicion: Dict[str, Dict[str, Any]] = {}
+    for cond in CONDITIONS:
+        cond_cases = [c for c in unique_cases.values() if c['condicion'] == cond]
+        if not cond_cases:
+            por_condicion[cond] = {
+                'configuracion_compatible': True,
+                'configuracion': {},
+                'latencia_pipeline': compute_latency_summary([], f'Latencia del pipeline (s) en {cond}'),
+                'latencia_generacion': compute_latency_summary([], f'Latencia de generación LLM (s) en {cond}'),
+            }
+            continue
+
+        configs_map: Dict[Tuple[Any, ...], List[Dict[str, Any]]] = {}
+        for c in cond_cases:
+            cfg = _extract_case_config(c)
+            configs_map.setdefault(_config_signature(cfg), []).append(c)
+
+        if len(configs_map) == 1:
+            pipe_lats = [c['latency_pipeline_seconds'] for c in cond_cases if c['latency_pipeline_seconds'] is not None]
+            gen_lats = [c['latency_generation_seconds'] for c in cond_cases if c['latency_generation_seconds'] is not None]
+            por_condicion[cond] = {
+                'configuracion_compatible': True,
+                'configuracion': _extract_case_config(cond_cases[0]),
+                'latencia_pipeline': compute_latency_summary(pipe_lats, f'Latencia del pipeline (s) en {cond}'),
+                'latencia_generacion': compute_latency_summary(gen_lats, f'Latencia de generación LLM (s) en {cond}'),
+            }
+        else:
+            grupos: List[Dict[str, Any]] = []
+            for idx, (sig, c_list) in enumerate(configs_map.items()):
+                p_l = [c['latency_pipeline_seconds'] for c in c_list if c['latency_pipeline_seconds'] is not None]
+                g_l = [c['latency_generation_seconds'] for c in c_list if c['latency_generation_seconds'] is not None]
+                grupos.append({
+                    'grupo_id': idx + 1,
+                    'configuracion': _extract_case_config(c_list[0]),
+                    'latencia_pipeline': compute_latency_summary(p_l, f'Latencia pipeline {cond} cfg{idx+1}'),
+                    'latencia_generacion': compute_latency_summary(g_l, f'Latencia generación {cond} cfg{idx+1}'),
+                })
+            por_condicion[cond] = {
+                'configuracion_compatible': False,
+                'advertencia': f'Configuraciones incompatibles detectadas ({len(configs_map)} variantes). Separadas para evitar mezclas espurias.',
+                'grupos_configuracion': grupos,
+                'latencia_pipeline': compute_latency_summary([], f'Latencia pipeline {cond} (incompatible)'),
+                'latencia_generacion': compute_latency_summary([], f'Latencia generación {cond} (incompatible)'),
+            }
+
+    # 3. Métricas por corrida y condición (separando configuraciones incompatibles)
+    por_corrida_y_condicion: Dict[str, Dict[str, Any]] = {}
+    runs = sorted(set(c['corrida_id'] for c in unique_cases.values()))
+    for run_id in runs:
+        por_corrida_y_condicion[run_id] = {}
+        for cond in CONDITIONS:
+            rc_cases = [c for c in unique_cases.values() if c['corrida_id'] == run_id and c['condicion'] == cond]
+            if not rc_cases:
+                continue
+
+            configs_map_rc: Dict[Tuple[Any, ...], List[Dict[str, Any]]] = {}
+            for c in rc_cases:
+                cfg = _extract_case_config(c)
+                configs_map_rc.setdefault(_config_signature(cfg), []).append(c)
+
+            if len(configs_map_rc) == 1:
+                pipe_lats = [c['latency_pipeline_seconds'] for c in rc_cases if c['latency_pipeline_seconds'] is not None]
+                gen_lats = [c['latency_generation_seconds'] for c in rc_cases if c['latency_generation_seconds'] is not None]
+                por_corrida_y_condicion[run_id][cond] = {
+                    'configuracion_compatible': True,
+                    'configuracion': _extract_case_config(rc_cases[0]),
+                    'latencia_pipeline': compute_latency_summary(pipe_lats, f'Latencia pipeline {run_id} {cond}'),
+                    'latencia_generacion': compute_latency_summary(gen_lats, f'Latencia generación {run_id} {cond}'),
+                }
+            else:
+                grupos_rc: List[Dict[str, Any]] = []
+                for idx, (sig, c_list) in enumerate(configs_map_rc.items()):
+                    p_l = [c['latency_pipeline_seconds'] for c in c_list if c['latency_pipeline_seconds'] is not None]
+                    g_l = [c['latency_generation_seconds'] for c in c_list if c['latency_generation_seconds'] is not None]
+                    grupos_rc.append({
+                        'grupo_id': idx + 1,
+                        'configuracion': _extract_case_config(c_list[0]),
+                        'latencia_pipeline': compute_latency_summary(p_l, f'Latencia pipeline {run_id} {cond} cfg{idx+1}'),
+                        'latencia_generacion': compute_latency_summary(g_l, f'Latencia generación {run_id} {cond} cfg{idx+1}'),
+                    })
+                por_corrida_y_condicion[run_id][cond] = {
+                    'configuracion_compatible': False,
+                    'advertencia': f'Configuraciones incompatibles detectadas en corrida {run_id} ({len(configs_map_rc)} variantes). Separadas.',
+                    'grupos_configuracion': grupos_rc,
+                    'latencia_pipeline': compute_latency_summary([], f'Latencia pipeline {run_id} {cond} (incompatible)'),
+                    'latencia_generacion': compute_latency_summary([], f'Latencia generación {run_id} {cond} (incompatible)'),
+                }
+
+    return {
+        'metodo_calculo_p95': 'Interpolación lineal entre los dos rangos más cercanos (Hyndman y Fan Tipo 7 / numpy.percentile method="linear")',
+        'criterios_exclusion': 'Exclusión estricta de valores ausentes, negativos o no finitos (NaN/Inf). No reemplazo por cero.',
+        'por_condicion': por_condicion,
+        'por_corrida_y_condicion': por_corrida_y_condicion,
     }
 
 
@@ -865,6 +1678,7 @@ class QualityEvaluationReport:
     comparacion_origenes: Dict[str, Any]
     comparacion_condiciones: Dict[str, Any]
     emparejamiento_pipeline_vs_llm: Dict[str, Any]
+    metricas_latencia: Dict[str, Any] = field(default_factory=dict)
     desacuerdos_sin_consenso: List[Dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -878,6 +1692,7 @@ class QualityEvaluationReport:
             'comparacion_origenes': self.comparacion_origenes,
             'comparacion_condiciones': self.comparacion_condiciones,
             'emparejamiento_pipeline_vs_llm': self.emparejamiento_pipeline_vs_llm,
+            'metricas_latencia': self.metricas_latencia,
             'desacuerdos_sin_consenso': self.desacuerdos_sin_consenso,
         }
 
@@ -967,6 +1782,8 @@ class QualityEvaluationReport:
                 add_fraction_row('citas_brecha', m, frac)
             for m, frac in cit.get('errores_vigencia', {}).items():
                 add_fraction_row('citas_vigencia', m, frac)
+            for m, frac in cit.get('diferenciacion_citas', {}).items():
+                add_fraction_row('citas_diferenciacion', m, frac)
 
         # Extraer filas cruzadas (condición x origen)
         for cond, targets in self.cruzado_condicion_origen.items():
@@ -979,6 +1796,67 @@ class QualityEvaluationReport:
                 extract_metrics_to_rows('todas', target, sdata)
             for cond, sdata in self.por_condicion.items():
                 extract_metrics_to_rows(cond, 'todos', sdata)
+
+        # 5. Métricas de latencia por condición (sin duplicar observaciones entre raw y pipeline)
+        lat_por_cond = self.metricas_latencia.get('por_condicion', {})
+        for cond, lat_data in lat_por_cond.items():
+            compat = lat_data.get('configuracion_compatible', True)
+            if compat:
+                for tipo_lat in ('latencia_pipeline', 'latencia_generacion'):
+                    ldata = lat_data.get(tipo_lat, {})
+                    obs = ldata.get('observaciones_validas', 0)
+                    media = ldata.get('media')
+                    mediana = ldata.get('mediana')
+                    p95 = ldata.get('percentil_95')
+                    origen_tag = 'pipeline' if tipo_lat == 'latencia_pipeline' else 'llm_raw'
+
+                    rows.append({
+                        'condicion': cond, 'origen_respuesta': origen_tag, 'categoria': 'latencia',
+                        'metrica': f'{tipo_lat}_media_segundos', 'numerador': obs, 'denominador': obs,
+                        'valor': media, 'porcentaje': f"{media}s" if media is not None else 'N/A',
+                        'descripcion': f'Media de {tipo_lat} en segundos (n={obs})',
+                    })
+                    rows.append({
+                        'condicion': cond, 'origen_respuesta': origen_tag, 'categoria': 'latencia',
+                        'metrica': f'{tipo_lat}_mediana_segundos', 'numerador': obs, 'denominador': obs,
+                        'valor': mediana, 'porcentaje': f"{mediana}s" if mediana is not None else 'N/A',
+                        'descripcion': f'Mediana de {tipo_lat} en segundos (n={obs})',
+                    })
+                    rows.append({
+                        'condicion': cond, 'origen_respuesta': origen_tag, 'categoria': 'latencia',
+                        'metrica': f'{tipo_lat}_p95_segundos', 'numerador': obs, 'denominador': obs,
+                        'valor': p95, 'porcentaje': f"{p95}s" if p95 is not None else 'N/A',
+                        'descripcion': f'Percentil 95 de {tipo_lat} en segundos (n={obs}, interpolación lineal)',
+                    })
+            else:
+                for grp in lat_data.get('grupos_configuracion', []):
+                    gid = grp.get('grupo_id')
+                    for tipo_lat in ('latencia_pipeline', 'latencia_generacion'):
+                        ldata = grp.get(tipo_lat, {})
+                        obs = ldata.get('observaciones_validas', 0)
+                        media = ldata.get('media')
+                        mediana = ldata.get('mediana')
+                        p95 = ldata.get('percentil_95')
+                        origen_tag = 'pipeline' if tipo_lat == 'latencia_pipeline' else 'llm_raw'
+
+                        rows.append({
+                            'condicion': f"{cond}_cfg{gid}", 'origen_respuesta': origen_tag, 'categoria': 'latencia',
+                            'metrica': f'{tipo_lat}_media_segundos', 'numerador': obs, 'denominador': obs,
+                            'valor': media, 'porcentaje': f"{media}s" if media is not None else 'N/A',
+                            'descripcion': f'Media de {tipo_lat} grupo {gid} en segundos (n={obs})',
+                        })
+                        rows.append({
+                            'condicion': f"{cond}_cfg{gid}", 'origen_respuesta': origen_tag, 'categoria': 'latencia',
+                            'metrica': f'{tipo_lat}_mediana_segundos', 'numerador': obs, 'denominador': obs,
+                            'valor': mediana, 'porcentaje': f"{mediana}s" if mediana is not None else 'N/A',
+                            'descripcion': f'Mediana de {tipo_lat} grupo {gid} en segundos (n={obs})',
+                        })
+                        rows.append({
+                            'condicion': f"{cond}_cfg{gid}", 'origen_respuesta': origen_tag, 'categoria': 'latencia',
+                            'metrica': f'{tipo_lat}_p95_segundos', 'numerador': obs, 'denominador': obs,
+                            'valor': p95, 'porcentaje': f"{p95}s" if p95 is not None else 'N/A',
+                            'descripcion': f'Percentil 95 de {tipo_lat} grupo {gid} en segundos (n={obs}, interpolación lineal)',
+                        })
 
         return rows
 
@@ -1009,6 +1887,11 @@ class QualityEvaluationReport:
             ('Sustento factual completo (sustento / sustantivas)', ['validez_y_sustento_citas', 'sustento_factual', 'sustento_completo']),
             ('Citas en contexto pero sustento parcial/nulo', ['validez_y_sustento_citas', 'brecha_pertenencia_sin_sustento', 'total_pertenecen_sin_sustento_completo']),
             ('Errores de vigencia normativa (sobre sustantivas)', ['validez_y_sustento_citas', 'errores_vigencia', 'sobre_respuestas_sustantivas']),
+            ('Ausencia de citas (respuestas sustantivas sin citas)', ['validez_y_sustento_citas', 'diferenciacion_citas', 'ausencia_citas']),
+            ('Citas presentes pero inválidas (fuera de fragmentos)', ['validez_y_sustento_citas', 'diferenciacion_citas', 'citas_presentes_invalidas']),
+            ('Citas formalmente válidas (en fragmentos)', ['validez_y_sustento_citas', 'diferenciacion_citas', 'citas_formalmente_validas']),
+            ('Casos mixtos de citación (citas válidas e inválidas)', ['validez_y_sustento_citas', 'diferenciacion_citas', 'casos_mixtos']),
+            ('Citas no determinables (información histórica)', ['validez_y_sustento_citas', 'diferenciacion_citas', 'no_determinable']),
         ]
 
         table: List[Dict[str, str]] = []
@@ -1035,6 +1918,28 @@ class QualityEvaluationReport:
                 else:
                     row[cond] = "N/A"
             table.append(row)
+
+        # Filas de telemetría de latencias
+        lat_por_cond = self.metricas_latencia.get('por_condicion', {})
+        for tipo_lat, label in [
+            ('latencia_pipeline', 'Latencia del pipeline (media [mediana, p95] s)'),
+            ('latencia_generacion', 'Latencia de generación LLM (media [mediana, p95] s)'),
+        ]:
+            row_lat: Dict[str, str] = {'metrica': label, 'origen_respuesta': target}
+            for cond in CONDITIONS:
+                ldata = lat_por_cond.get(cond, {}).get(tipo_lat, {})
+                obs = ldata.get('observaciones_validas', 0)
+                media = ldata.get('media')
+                mediana = ldata.get('mediana')
+                p95 = ldata.get('percentil_95')
+                if obs > 0 and media is not None:
+                    row_lat[cond] = f"{media}s [med: {mediana}s, p95: {p95}s] (n={obs})"
+                elif not lat_por_cond.get(cond, {}).get('configuracion_compatible', True):
+                    row_lat[cond] = "Incompatible (separado)"
+                else:
+                    row_lat[cond] = "N/A (0/0)"
+            table.append(row_lat)
+
         return table
 
     def save_comparison_csv(self, path: Union[str, Path], target: str = TARGET_PIPELINE) -> None:
@@ -1062,7 +1967,7 @@ def evaluate_quality(
 
     Toma anotaciones humanas en CSV, JSON o lista de dicts, las normaliza según la rúbrica v0.2,
     resuelve filas de consenso y calcula métricas agregadas globales, por condición (A/B/C) y
-    por origen de respuesta (pipeline vs llm_raw).
+    por origen de respuesta (pipeline vs llm_raw), integrando latencias y diferenciación de citas.
     """
     records = load_annotations(annotations, blind_mapping, traces_source)
 
@@ -1124,7 +2029,10 @@ def evaluate_quality(
 
     emparejamiento = compare_paired_pipeline_vs_llm_raw(eval_records)
 
-    # 6. Manifiesto del informe
+    # 6. Métricas de latencia desacopladas y no duplicadas
+    metricas_latencia = compute_quality_latencies(eval_records)
+
+    # 7. Manifiesto del informe
     manifest = {
         'tarea': 'T18_metricas_calidad_respuestas',
         'fecha_evaluacion_utc': datetime.now(timezone.utc).isoformat(),
@@ -1135,6 +2043,7 @@ def evaluate_quality(
         'condiciones_reconocidas': list(CONDITIONS),
         'origenes_reconocidos': list(TARGETS),
         'desacuerdos_sin_consenso_detectados': len(conflicts),
+        'metodo_p95': metricas_latencia.get('metodo_calculo_p95'),
     }
     if manifest_info:
         manifest.update(manifest_info)
@@ -1148,5 +2057,6 @@ def evaluate_quality(
         comparacion_origenes=comparacion_origenes,
         comparacion_condiciones=comparacion_condiciones,
         emparejamiento_pipeline_vs_llm=emparejamiento,
+        metricas_latencia=metricas_latencia,
         desacuerdos_sin_consenso=conflicts,
     )

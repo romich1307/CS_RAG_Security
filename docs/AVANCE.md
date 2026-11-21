@@ -306,9 +306,15 @@ avance del 19 de noviembre y la continuación del pendiente de T10 del día 18.
   - El runner histórico de T11 ahora reutiliza directamente `ensure_unique_output_dir`, `extract_citations`, `determine_abstention_reason` y `get_git_commit` del módulo centralizado de trazabilidad, eliminando duplicación de código sin alterar sus artefactos históricos ni romper su suite de pruebas (`test_t11_baseline.py`).
 - **Contrato de integración y documentación para León (`docs/CONTRATO_TRAZABILIDAD.md`)**:
   - Se elaboró una especificación completa del contrato de trazabilidad, definiendo los esquemas JSON y CSV, una tabla explícita de campos obligatorios vs. opcionales, invariantes de inmutabilidad y un ejemplo de integración de extremo a extremo para el futuro runner experimental T17.
+- **Corrección a observación de León (PR #10 — Rechazos del proveedor y privacidad en Git)**:
+  - Se identificó el flujo de rechazo explícito del proveedor (`refusal`, `finish_reason='refusal'|'content_filter'`), el cual genera en el pipeline el motivo canónico de abstención `rechazo_del_modelo` (`ABSTENTION_REASON_MODEL_REFUSAL`).
+  - Cuando el proveedor devuelve un rechazo con texto libre propio (`refusal_msg`), ese detalle confidencial se conserva íntegramente en las trazas privadas (`private_traces.json`, `private_traces.csv`, `raw_traces.json`) y en `raw_response` para auditoría forense.
+  - En los artefactos saneados para Git (`traces.json`, `traces.csv`), se implementó la sustitución estricta del texto libre por el mensaje canónico estándar `STANDARD_MODEL_REFUSAL_RESPONSE` (`"Me abstengo: el modelo rechazó la consulta."`), garantizando que ni marcadores sintéticos ni detalles internos del proveedor se filtren en repositorios versionados.
+  - Se garantiza que el motivo de abstención (`rechazo_del_modelo`), `abstained=True`, `generation_performed=True` y todos los metadatos operativos (proveedor, modelo, tokens, latencias, hiperparámetros) se preservan intactos para el análisis en T18.
 - **Validación automatizada**:
-  - Implementada suite exhaustiva `tests/test_traceability.py` (20 pruebas unitarias) con datos sintéticos, cubriendo filtrado multicausal, versiones de prompt, detección dinámica, citas, abstenciones, procedencia, persistencia, verificación activa de `.gitignore` y allowlists de privacidad.
-  - 82 pruebas unitarias pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
+  - Implementada suite exhaustiva `tests/test_traceability.py` (23 pruebas unitarias) con datos sintéticos, cubriendo filtrado multicausal, versiones de prompt, detección dinámica, citas, abstenciones, procedencia, persistencia, verificación activa de `.gitignore`, allowlists de privacidad, y regresión estricta de segregación público/privado ante rechazos del proveedor con marcadores confidenciales.
+  - Pruebas adicionales en `tests/test_t11_baseline.py` para garantizar la misma protección en el preparador baseline.
+  - 98 pruebas unitarias pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
   - Verificación de formato y espacios limpia (`git diff --check`).
 
 ## Fase 10 — T18: Métricas de calidad de respuestas, 21 de noviembre de 2026
@@ -340,7 +346,43 @@ avance del 19 de noviembre y la continuación del pendiente de T10 del día 18.
   - 103 pruebas unitarias pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
   - Formato limpio y sin advertencias (`git diff --check`).
 
-## Fase 11 — T20: Auditoría experimental, tablas y figuras científicas, 21 de noviembre de 2026
+## Fase 11 — Corrección de Observaciones de León al PR #11 (T18), 21 de noviembre de 2026
+- **Integración con T16**:
+  - Se resolvieron los conflictos de integración con `origin/feature/t16-trazabilidad`, conservando íntegramente los avances de ambas tareas: la sanitización y confidencialidad estricta de rechazos del proveedor en trazas de T16 (`traces.json`, `traces.csv`), y la infraestructura de calidad y comparaciones de T18.
+- **Identidad de las evaluaciones (Clave compuesta y preservación de pares A/B/C)**:
+  - Se formalizó la clave compuesta unívoca `corrida_id + pregunta_id + condición` (`EvaluationRecord.experimental_case_key`), complementada con `target` (`pipeline` vs `llm_raw`).
+  - Se corrigió el cruce de evaluaciones humanas (`resolve_consensus_records`) y el cruce con trazas de T16 (`load_traces_dict` y `load_annotations`), asegurando que los motivos de abstención y metadatos de una condición (A, B o C) no sobrescriban jamás los de otra.
+  - Se garantizó que una pregunta evaluada en las tres condiciones A/B/C produzca tres pares independientes de salida original y salida final, es decir, seis registros evaluables en `compare_paired_pipeline_vs_llm_raw`.
+  - Se garantizó la separación completa entre corridas distintas (`corrida_id`), impidiendo colisiones de preguntas homónimas.
+- **Diferenciación rigurosa de citas**:
+  - Se implementó la función `classify_citation_status` y se añadieron campos y desglose estructurado (`validez_y_sustento_citas['diferenciacion_citas']` y `emparejamiento['desglose_citas_abstencion_pipeline']`) para separar explícitamente:
+    1. *Ausencia de citas* (`ausencia_citas`).
+    2. *Citas presentes pero formalmente inválidas* (`citas_invalidas`).
+    3. *Citas formalmente válidas* (`citas_formalmente_validas`).
+    4. *Casos mixtos* (`mixtas`), con citas tanto válidas como inválidas.
+    5. *No determinable* (`no_determinable`).
+  - Se prohibió clasificar automáticamente `citas_invalidas_o_ausentes` como citas inválidas. Cuando se procesa información histórica sin conteos o listas de citas (como el baseline T11), el resultado se reporta formalmente como `no_determinable`.
+  - Se mantiene la estricta distinción ortogonal entre validez formal (pertenencia de citas al contexto recuperado aceptado) y sustento factual real (si el texto de la cita respalda semánticamente la afirmación).
+- **Telemetría de latencias desacopladas y no duplicadas**:
+  - Se implementaron las funciones `compute_p95_linear` y `compute_latency_summary`, computando: Media ($\mu$), Mediana ($\text{Med}$), Percentil 95 ($P_{95}$) y número de observaciones válidas ($N_{\text{valid}}$).
+  - Se separó la latencia del pipeline (`latencia_pipeline`) de la latencia de generación del LLM (`latencia_generacion`).
+  - Se agruparon las métricas por condición experimental (A, B, C) y por corrida/condición con su configuración compatible (proveedor, modelo, temperatura, top-k, versión de prompt).
+  - Se documentó formalmente el método de cálculo del percentil 95: interpolación lineal entre los dos rangos más cercanos (Hyndman y Fan Tipo 7 / numpy linear).
+  - Se implementó la exclusión estricta de valores ausentes, negativos o no finitos (NaN, Inf), sin reemplazar en ningún caso valores faltantes por cero.
+  - Se evitó la duplicación de latencias al contabilizar casos con registros tanto de `pipeline` como de `llm_raw` mediante deduplicación previa por clave experimental única.
+- **Salidas agregadas compatibles con T20 y CLI**:
+  - Se actualizaron las exportaciones a JSON (`quality_metrics.json`), CSV tidy (`quality_metrics.csv`) y tabla comparativa (`quality_summary_comparison.csv`), integrando las métricas de latencia y la diferenciación de citas sin alterar el formato general para el artículo.
+  - Se actualizó el ejecutable `scripts/compute_quality_metrics.py` para imprimir los nuevos desgloses en terminal.
+- **Documentación formal**:
+  - Se actualizó [docs/evaluation/metricas_calidad_t18.md](evaluation/metricas_calidad_t18.md) documentando la clave compuesta, la diferenciación formal de citas y las fórmulas y supuestos de las métricas de latencia.
+- **Validación automatizada de regresión**:
+  - Se incorporaron 13 nuevas pruebas de regresión en `tests/test_quality_metrics.py` (34 pruebas unitarias en total para T18, 132 en toda la suite), cubriendo: una pregunta en A/B/C con 3 pares y 6 registros, no sobrescritura de motivos entre condiciones, preguntas en distintas corridas, diferenciación de citas y casos no determinables, cálculo de mediana y p95, filtrado de latencias ausentes/negativas/no finitas, no duplicación entre raw y pipeline, compatibilidad de telemetría T16, resolución unívoca/compatible ante coincidencias ausentes, ambiguas y duplicadas, separación de configuraciones incompatibles sin mezclas espurias, preservación de conteo original ante `citations_raw` saneado por T16, cálculo de latencias técnicas desacoplado de la revisión humana pendiente, conservación estricta de valores válidos iguales a cero (`temperature=0`, `seed=0`) y generación de artefactos T20.
+  - Conservadas intactas la rúbrica T10 y las evidencias históricas de T11. Sin llamadas a Ollama, sin commits, sin push ni merges adicionales.
+  - Suite completa de pytest pasando: 132 pruebas unitarias (`PYTHONPATH=src .venv/bin/python -m pytest`).
+  - Pruebas offline equivalentes a CI pasando (`PYTHONPATH=src .venv/bin/python -m pytest -q -m 'not corpus'`).
+  - Verificación `git diff --check` limpia y sin inconsistencias.
+
+## Fase 12 — T20: Auditoría experimental, tablas y figuras científicas, e integración final, 21 de noviembre de 2026
 - **Auditoría experimental de integridad científica (`src/cs_rag_security/evaluation/audit_experiment.py`)**:
   - **Procedencia y entorno**: Verificación de identificadores de corrida (`run_id`), commit base, estado git dirty, versión de Python y dependencias, marcas temporales UTC y presencia de documentación explicativa (`PROCEDENCIA.md`).
   - **Distinción entre código histórico y artefactos de datos**: Se auditan estrictamente los hashes de artefactos de datos originales (`index.json`, `gold_questions.json`, `attacks.jsonl`), distinguiendo la evolución legítima posterior del código en `src/` frente a cualquier alteración de evidencias históricas.
@@ -350,33 +392,31 @@ avance del 19 de noviembre y la continuación del pendiente de T10 del día 18.
   - **Auditoría estricta de privacidad**: Inspección exhaustiva de artefactos públicos para garantizar la ausencia total de enunciados literales de preguntas gold, fragmentos de texto del corpus UNSA, salidas crudas del modelo (`raw_response`) o credenciales/claves de API. Los mensajes de incidencia omiten el texto privado detectado para no reproducir fugas en los reportes, consignándose el descargo explícito de que el escaneo heurístico no constituye garantía matemática absoluta ni sustituye la revisión forense humana.
   - **Tratamiento de denominadores y estados**: Verificación de consistencia donde todo denominador cero genera estrictamente `null` / `None` / `Pendiente (0/0)`, sin divisiones por cero ni asunciones espurias de 0.0.
   - **Reporte consolidado**: Emisión de informes estructurados en JSON (`audit_report.json`) y Markdown (`audit_report.md`) con clasificación de incidencias por severidad (`error`, `advertencia`, `informativa`) y catálogo de limitaciones metodológicas.
-- **Generación de tablas científicas (`src/cs_rag_security/evaluation/tables.py`)**:
-  - Exportación en doble formato estandarizado: CSV plano para análisis cuantitativo y Markdown formateado con alineación dinámica para integración directa en manuscritos.
-  - **Extracción dinámica de métricas diagnósticas**: El recall (75.0%, 3/4), FPR (25.0%, 1/4) y las emisiones de marcador en mock (A: 4/4, B: 4/4, C: 1/4) se calculan dinámicamente desde artefactos reales existentes (`metrics.json` de `offline_20261117_final`), sin valores hardcodeados, y se etiquetan formalmente como resultados diagnósticos preliminares.
-  - **Tabla 1 (Configuración experimental)**: Parámetros del sistema, umbral de evidencia (0.12), filtros de OCR pendiente e histórico, y versiones de prompt.
-  - **Tabla 2 (Comparación A/B/C)**: Matriz de variables manipuladas, estructura de mensajes y mecanismos de aislamiento.
-  - **Tabla 3 (Exactitud de respuestas)**: Evaluación humana según Rúbrica v0.2 desacoplando la salida post-pipeline y la salida cruda del LLM (`llm_raw`). Ante evaluaciones pendientes en T12, reporta formalmente `Pendiente T12 (León)` sin inventar porcentajes.
-  - **Tabla 4 (Calidad y validez de citas)**: Pertenencia formal al contexto recuperado frente a sustento fáctico real de las afirmaciones, midiendo la brecha de falsa apariencia de respaldo.
-  - **Tabla 5 (Tasas de abstención)**: Tasa global de abstención y clasificación según los motivos canónicos de trazabilidad T16 (`citas_invalidas_o_ausentes`, `evidencia_insuficiente_o_no_fiable`, `normativa_no_verificada`). En Modo A (T11), se consigna estrictamente el motivo registrado `citas_invalidas_o_ausentes`, eliminando afirmaciones causales no demostradas.
-  - **Tabla 6 (ASR por condición)**: Tasa de éxito de ataques diferenciando explícitamente entre mediciones con LLM real (reportada como `Pendiente (T19 asignada a León)`) y diagnósticos sintéticos preliminares con mock (con advertencia de que no constituyen ASR de un LLM).
-  - **Tabla 7 y 8 (Rendimiento del detector heurístico)**: Sensibilidad / Recall y Tasa de Falsos Positivos / FPR etiquetados como diagnósticos preliminares con identificación de evasiones (a4) y falsas alarmas (b3).
-  - **Tabla 9 (Latencias y tokens)**: Telemetría computacional de pipeline y llamada al generador local con número de casos ($n$) explícito.
-  - **Tabla 10 (Comparaciones pareadas y cobertura)**: Síntesis de contrastes pareados entre condiciones, discrepancias pipeline vs. LLM crudo fundamentadas en el motivo formal registrado de T16 y estado de asignación de tareas del proyecto.
+- **Portabilidad Windows y normalización LF (Primera observación de León)**:
+  - Se identificó exactamente el archivo de datos afectado: `experiments/attacks.jsonl`.
+  - Se configuró la regla `experiments/attacks.jsonl text eol=lf` en `.gitattributes`, preservando intactas las reglas preexistentes para `validation.json` y los `.csv` de `llm_baseline`.
+  - Se comprobó la integridad criptográfica SHA-256 (`4235a3263ff411ac50b3261bc5fba689768161f935cce1a42f76136293309bf7`) respecto a los manifiestos históricos (`offline_20261117_final`), sin alterar los hashes registrados.
+  - Se incorporaron pruebas de portabilidad simulando checkouts con `core.autocrlf=true` y confirmando el rechazo de archivos alterados con CRLF sin desactivar la verificación criptográfica.
+- **Cálculo dinámico de latencias y telemetría (Segunda observación de León)**:
+  - Se eliminaron por completo las constantes hardcodeadas en `src/cs_rag_security/evaluation/tables.py` y `src/cs_rag_security/evaluation/figures.py` (`24.95`, `26.38`, `1705.5`, etc.).
+  - Se recalculan dinámicamente las latencias a partir exclusivamente de las trazas de telemetría suministradas o de `quality_metrics.json`.
+  - Se verificaron independientemente los valores de T11 reportados por León: media de pipeline de 25.21 s (25.2074 s) y media de llamada al LLM de 25.19 s (25.1924 s).
+  - La Tabla 9 y la Figura 6 reportan formalmente `N/A` ante ausencia de trazas o mediciones faltantes, sin graficar ceros espurios.
+  - Se desglosan formalmente Media, Mediana, Percentil 95 ($P_{95}$, interpolación lineal) y número de observaciones ($n$), reutilizando las funciones de T18.
+  - Se evita la duplicación de casos entre salidas `pipeline` y `llm_raw` mediante deduplicación por clave experimental única `(corrida_id, pregunta_id, condicion)`.
+  - Se detectan configuraciones incompatibles dentro de una misma condición, separándolas en filas/grupos independientes sin promediar ejecuciones heterogéneas.
+  - Se permite el cálculo técnico de latencias aun cuando la evaluación humana (T12) no esté completada.
+- **Compatibilidad con las correcciones de T18**:
+  - Se adaptaron la Tabla 4 y la Figura 2 para distinguir formalmente las categorías de citas introducidas por T18: *formalmente válidas*, *presentes pero inválidas*, *ausencia de citas*, *casos mixtos* y *no determinables*.
+  - Se respeta la clave compuesta y la no mezcla de configuraciones experimentales incompatibles.
+  - Se preservó la protección estricta contra fugas de información y rechazos privados del proveedor de T16.
 - **Generación de figuras científicas reproducibles (`src/cs_rag_security/evaluation/figures.py`)**:
-  - Renderizado dual simultáneo en formato vectorial SVG estándar y ráster de alta resolución PNG (mediante Pillow, declarado formalmente en `pyproject.toml` y con compatibilidad para Windows y CI sin fuentes del sistema X11).
+  - Renderizado dual simultáneo en formato vectorial SVG estándar y ráster de alta resolución PNG (mediante Pillow, compatible con CI sin X11).
   - Seis figuras generadas: `fig1_exactitud_abc`, `fig2_validez_citas`, `fig3_tasas_abstencion`, `fig4_asr_condicion`, `fig5_detector_metricas` y `fig6_latencias_condicion`.
-  - **Regla científica fundamental**: Ningún valor faltante, denominador cero o evaluación pendiente se grafica como 0%. Se implementaron áreas visuales informativas y recuadros de estado metodológico que consignan el motivo de ausencia de datos.
-  - **Ausencia de afirmaciones causales**: En `fig1` y `fig3`, se consigna estrictamente el motivo canónico registrado de T16 (`citas_invalidas_o_ausentes`), sin especulaciones causales no demostradas sobre la conducta interna del modelo.
+  - Regla científica fundamental: ningún valor faltante, denominador cero o evaluación pendiente se grafica como 0%.
+  - Ausencia de afirmaciones causales no demostradas en todas las visualizaciones.
 - **Orquestación, CLI y reproducibilidad (`src/cs_rag_security/evaluation/paper.py` y `scripts/generate_paper_artifacts.py`)**:
   - Orquestador desacoplado `generate_paper_artifacts` que ejecuta la auditoría, genera tablas, renderiza figuras y compila el manifiesto con hashes SHA-256 de todas las entradas y salidas generadas.
-  - **Bloqueo estricto ante corridas rechazadas**: Si la auditoría detecta errores críticos, la generación aborta (`RuntimeError`) para no producir resultados presentados como válidos; si se fuerza deliberadamente con `force=True`, los artefactos quedan explícitamente marcados con advertencia crítica de rechazo.
-  - **Blindaje de evidencias históricas contra `--force`**: La función `validate_output_directory_safety` bloquea terminantemente con `PermissionError` cualquier intento de utilizar `--force` para sobrescribir evidencias históricas (`llm_baseline`, `offline_*`), directorios de entrada, código fuente, datasets o áreas privadas (`*_local*`, `t12_evaluacion`).
-  - **Contrato de integración para T19**: Documentado formalmente en `DOCUMENTACION_REPRODUCCION.md` y `docs/METODOLOGIA.md` permitiendo la ingesta dinámica mediante `--security-metrics`.
-  - Documento de reproducción autónomo generado automáticamente (`DOCUMENTACION_REPRODUCCION.md`).
-  - Extensión de la CLI oficial `cs_rag_security.cli` admitiendo los comandos `audit-experiment` y `paper-artifacts`.
-- **Validación automatizada**:
-  - Implementada suite completa en `tests/test_audit_paper_artifacts.py` (18 pruebas unitarias e integración) cubriendo auditoría de corridas reales, denominadores cero, datos incompletos, corridas incompatibles, duplicados, límites de privacidad, no filtración de secretos en reportes, distinción de evolución legítima de código, bloqueo ante auditorías rechazadas, blindaje contra `--force` en evidencias históricas, ausencia de afirmaciones causales, generación de tablas CSV/MD, figuras SVG/PNG, integración con T18 y ausencia formal de T19.
-  - Declaración de `pillow>=10.0.0` en `pyproject.toml` validada.
-  - Ejecución de pruebas bajo `-m 'not corpus'` limpia y totalmente compatible con CI sin corpus privado.
-  - Suite completa pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
-  - Verificación de formato y espacios limpia (`git diff --check`).
+  - Bloqueo estricto ante corridas rechazadas por auditoría experimental y blindaje absoluto de evidencias históricas contra `--force`.
+  - Contrato de integración para T19 documentado formalmente.
+  - Extensión de la CLI oficial `cs_rag_security.cli` (`audit-experiment` y `paper-artifacts`).

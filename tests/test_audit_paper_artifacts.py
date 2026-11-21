@@ -57,9 +57,13 @@ from cs_rag_security.evaluation.figures import (
     generate_all_paper_figures,
     generate_fig_asr_condicion,
     generate_fig_exactitud_abc,
+    generate_fig_latencias_condicion,
 )
 from cs_rag_security.evaluation.paper import generate_paper_artifacts
 from cs_rag_security.evaluation.tables import (
+    build_table_citation_quality_validity,
+    build_table_latencies_and_tokens,
+    extract_latency_and_token_metrics,
     format_fraction_cell,
     format_markdown_table,
     generate_all_paper_tables,
@@ -667,3 +671,222 @@ def test_cli_execution_paper_artifacts(tmp_path):
     manifest = json.loads((out_dir / "manifest.json").read_text(encoding="utf-8"))
     assert len(manifest["hashes_salidas"]) > 0
     assert len(manifest["hashes_entradas"]) > 0
+
+
+def test_windows_crlf_and_gitattributes_portability(tmp_path):
+    """Verifica la compatibilidad multiplataforma y normalización LF de experiments/attacks.jsonl."""
+    # 1. Comprobar que .gitattributes contiene la regla para attacks.jsonl conservando reglas existentes
+    gitattrs_path = Path(".gitattributes")
+    assert gitattrs_path.exists(), "Falta el archivo .gitattributes en la raíz"
+    content = gitattrs_path.read_text(encoding="utf-8")
+    assert "experiments/attacks.jsonl text eol=lf" in content
+    assert "results/normative_policy_*/validation.json text eol=lf" in content
+    assert "results/llm_baseline/*.csv whitespace=-blank-at-eol" in content
+
+    # 2. Comprobar que attacks.jsonl en disco no contiene retornos de carro CRLF
+    attacks_file = Path("experiments/attacks.jsonl")
+    raw_bytes = attacks_file.read_bytes()
+    assert b"\r\n" not in raw_bytes, "experiments/attacks.jsonl contiene finales de línea CRLF en lugar de LF"
+
+    # 3. Comprobar que el hash SHA-256 en disco coincide exactamente con el manifiesto histórico
+    expected_hash = "4235a3263ff411ac50b3261bc5fba689768161f935cce1a42f76136293309bf7"
+    computed_hash = digest(attacks_file)
+    assert computed_hash == expected_hash, f"Hash discrepa: {computed_hash} != {expected_hash}"
+
+    # 4. Simulación de checkout en Windows con core.autocrlf=true:
+    # Si un archivo fuera convertido espuriamente a CRLF, la verificación criptográfica DEBE rechazarlo
+    crlf_content = raw_bytes.replace(b"\n", b"\r\n")
+    crlf_file = tmp_path / "attacks_crlf.jsonl"
+    crlf_file.write_bytes(crlf_content)
+
+    from cs_rag_security.evaluation.audit_experiment import _audit_single_file_hash, CODE_HASH_MISMATCH
+    status_crlf, issue_crlf = _audit_single_file_hash(expected_hash, crlf_file, "attacks_sha256", "test_win")
+    assert status_crlf["status"] == "mismatch"
+    assert issue_crlf is not None
+    assert issue_crlf.code == CODE_HASH_MISMATCH
+    assert issue_crlf.severity == "error"
+
+    # 5. Con LF (enforced por .gitattributes), la verificación criptográfica es verified
+    status_lf, issue_lf = _audit_single_file_hash(expected_hash, attacks_file, "attacks_sha256", "test_win")
+    assert status_lf["status"] == "verified"
+    assert issue_lf is None
+
+
+def test_t11_real_latencies_recalculated_dynamically(tmp_path):
+    """Verifica que las latencias de T11 se recalculan dinámicamente desde trazas reales sin hardcoding."""
+    traces_file = Path("results/llm_baseline/traces.json")
+    assert traces_file.exists(), "Falta el archivo de trazas históricas de T11"
+    traces = json.loads(traces_file.read_text(encoding="utf-8"))
+    assert len(traces) == 10
+
+    # 1. Tabla 9 construida exclusivamente desde las trazas
+    t9 = build_table_latencies_and_tokens(traces=traces)
+    assert t9.table_id == "tabla09_latencias_y_tokens"
+    assert len(t9.rows) >= 3
+
+    # Localizar fila de Modo A
+    row_a = [r for r in t9.rows if r[0] == "A_sin_defensa"][0]
+    # Consultas (n)
+    assert row_a[2] == "10"
+    # Latencia Pipeline Media (s): 25.2074 redondea formalmente a 25.21 s (verificando observación de León)
+    assert row_a[3] == "25.21"
+    # Latencia Pipeline Mediana (s)
+    assert row_a[4] == "23.12"
+    # Latencia LLM Media (s): 25.1924 redondea formalmente a 25.19 s (verificando observación de León)
+    assert row_a[6] == "25.19"
+    # Latencia LLM Mediana (s)
+    assert row_a[7] == "23.11"
+    # Tokens promedio dinámicos
+    assert row_a[9] == "255.9"   # Prompt tokens medio
+    assert row_a[10] == "201.0"  # Completion tokens medio
+    assert row_a[11] == "456.9"  # Total tokens medio
+    assert "qwen2.5:3b" in row_a[12]
+
+    # Modos B y C deben reportar N/A o 0 al no contar con trazas
+    row_b = [r for r in t9.rows if r[0] == "B_defensa_basica"][0]
+    assert row_b[2] == "0"
+    assert row_b[3] == "N/A"
+    assert row_b[6] == "N/A"
+
+    # 2. Figura 6 generada desde métricas extraídas dinámicamente
+    metrics = extract_latency_and_token_metrics(traces=traces)
+    svg_p, png_p = generate_fig_latencias_condicion(metrics, output_dir=tmp_path / "fig_test")
+    assert svg_p.exists()
+    assert png_p.exists()
+    svg_text = svg_p.read_text(encoding="utf-8")
+    assert "25.21 s" in svg_text
+    assert "25.19 s" in svg_text
+    assert "n = 10" in svg_text
+    # No deben figurar las constantes antiguas
+    assert "24.95 s" not in svg_text
+
+
+def test_synthetic_latencies_distinct_from_t11(tmp_path):
+    """Demuestra la ausencia total de constantes hardcodeadas procesando latencias sintéticas arbitrarias."""
+    synth_traces = [
+        {
+            "id": f"SYNTH_{i}",
+            "mode": "A_sin_defensa",
+            "pipeline_seconds": 15.5,
+            "latency_seconds": 12.0,
+            "tokens": {"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150},
+            "provider": "test_prov",
+            "model": "test_model:7b",
+        }
+        for i in range(5)
+    ]
+
+    t9 = build_table_latencies_and_tokens(traces=synth_traces)
+    row_a = [r for r in t9.rows if r[0] == "A_sin_defensa"][0]
+    assert row_a[2] == "5"
+    assert row_a[3] == "15.50"
+    assert row_a[4] == "15.50"
+    assert row_a[6] == "12.00"
+    assert row_a[7] == "12.00"
+    assert row_a[9] == "100.0"
+    assert row_a[10] == "50.0"
+    assert row_a[11] == "150.0"
+    assert row_a[12] == "test_prov / test_model:7b"
+
+    # Figura 6 con datos sintéticos
+    svg_p, _ = generate_fig_latencias_condicion(extract_latency_and_token_metrics(traces=synth_traces), output_dir=tmp_path)
+    svg_txt = svg_p.read_text(encoding="utf-8")
+    assert "15.50 s" in svg_txt
+    assert "12.00 s" in svg_txt
+    assert "n = 5" in svg_txt
+
+
+def test_absence_of_traces_reports_na(tmp_path):
+    """Verifica que ante ausencia total de trazas, Tabla 9 y Figura 6 informan formalmente N/A."""
+    t9 = build_table_latencies_and_tokens(traces=None, quality_report=None)
+    for r in t9.rows:
+        assert r[2] == "0"
+        assert r[3] == "N/A"
+        assert r[4] == "N/A"
+        assert r[5] == "N/A"
+        assert r[6] == "N/A"
+        assert r[7] == "N/A"
+        assert r[8] == "N/A"
+        assert r[9] == "N/A"
+        assert r[10] == "N/A"
+        assert r[11] == "N/A"
+
+    svg_p, _ = generate_fig_latencias_condicion(latencies_data=None, output_dir=tmp_path)
+    svg_txt = svg_p.read_text(encoding="utf-8")
+    assert "Medición Pendiente (N/A)" in svg_txt
+    assert "Sin trazas disponibles (n = 0)" in svg_txt
+
+
+def test_partially_available_latencies(tmp_path):
+    """Verifica el comportamiento cuando solo ciertas condiciones cuentan con trazas registradas."""
+    partial_traces = [
+        {"id": "GQ1", "mode": "A_sin_defensa", "pipeline_seconds": 18.0, "latency_seconds": 17.5},
+        {"id": "GQ2", "mode": "C_defensa_propuesta", "pipeline_seconds": 22.0, "latency_seconds": 20.0},
+    ]
+
+    t9 = build_table_latencies_and_tokens(traces=partial_traces)
+    row_a = [r for r in t9.rows if r[0] == "A_sin_defensa"][0]
+    row_b = [r for r in t9.rows if r[0] == "B_defensa_basica"][0]
+    row_c = [r for r in t9.rows if r[0] == "C_defensa_propuesta"][0]
+
+    assert row_a[2] == "1"
+    assert row_a[3] == "18.00"
+    assert row_b[2] == "0"
+    assert row_b[3] == "N/A"
+    assert row_c[2] == "1"
+    assert row_c[3] == "22.00"
+
+
+def test_incompatible_configurations_separated(tmp_path):
+    """Verifica que configuraciones incompatibles en una misma condición no se promedian espuriamente."""
+    incompat_traces = [
+        {"id": "G1", "mode": "A_sin_defensa", "pipeline_seconds": 10.0, "latency_seconds": 9.0, "model": "qwen2.5:3b"},
+        {"id": "G2", "mode": "A_sin_defensa", "pipeline_seconds": 30.0, "latency_seconds": 29.0, "model": "llama3:8b"},
+    ]
+
+    metrics = extract_latency_and_token_metrics(traces=incompat_traces)
+    cond_a = metrics["por_condicion"]["A_sin_defensa"]
+    assert cond_a["configuracion_compatible"] is False
+    assert len(cond_a["grupos_configuracion"]) == 2
+
+    t9 = build_table_latencies_and_tokens(traces=incompat_traces)
+    # Deben existir filas separadas para cada variante
+    cfg_rows = [r for r in t9.rows if "A_sin_defensa (cfg" in r[0]]
+    assert len(cfg_rows) == 2
+    assert cfg_rows[0][3] == "10.00"
+    assert cfg_rows[1][3] == "30.00"
+
+    # En Figura 6 se muestra advertencia de configuración incompatible
+    svg_p, _ = generate_fig_latencias_condicion(metrics, output_dir=tmp_path)
+    svg_txt = svg_p.read_text(encoding="utf-8")
+    assert "Configuración Incompatible" in svg_txt
+
+
+def test_deduplication_between_raw_and_pipeline():
+    """Verifica que registros de una misma consulta con salida raw y pipeline no dupliquen latencias."""
+    dup_traces = [
+        {"id": "GQ001", "mode": "A_sin_defensa", "run_id": "r1", "target": "pipeline", "pipeline_seconds": 20.0, "latency_seconds": 19.0},
+        {"id": "GQ001", "mode": "A_sin_defensa", "run_id": "r1", "target": "llm_raw", "pipeline_seconds": 20.0, "latency_seconds": 19.0},
+    ]
+
+    metrics = extract_latency_and_token_metrics(traces=dup_traces)
+    assert metrics["unique_cases_count"] == 1
+    cond_a = metrics["por_condicion"]["A_sin_defensa"]
+    assert cond_a["observaciones_validas"] == 1
+    assert cond_a["latencia_pipeline"]["media"] == 20.0
+
+
+def test_compatibility_with_t18_citation_differentiation():
+    """Verifica que Tabla 4 incluya las categorías formales de citas introducidas por T18."""
+    t4 = build_table_citation_quality_validity()
+    # Encabezados requeridos
+    assert "Formalmente Válidas (n, %)" in t4.headers
+    assert "Citas Inválidas (n, %)" in t4.headers
+    assert "Ausencia de Citas (n, %)" in t4.headers
+    assert "Casos Mixtos (n, %)" in t4.headers
+    assert "No Determinable (n, %)" in t4.headers
+
+    # Filas pendientes
+    for r in t4.rows:
+        assert r[2] == "0"
+        assert r[3] == "Pendiente (0/0)"

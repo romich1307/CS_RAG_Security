@@ -31,6 +31,7 @@ from cs_rag_security.traceability import (
     DISCARD_REASON_SCORE,
     DISCARD_REASON_NORMATIVE_UNVERIFIED,
     PROMPT_VERSIONS,
+    STANDARD_MODEL_REFUSAL_RESPONSE,
     build_run_manifest,
     build_trace_record,
     determine_abstention_reason,
@@ -1008,4 +1009,262 @@ def test_citation_sanitization_end_to_end_json_csv_segregation(tmp_path):
 
     priv_csv_text = (p_path / 'private_traces.csv').read_text(encoding='utf-8')
     assert 'fake_payload_exploit.pdf' in priv_csv_text
+
+
+def test_provider_refusal_sanitization_and_standard_message():
+    """Verifica que el rechazo del proveedor con texto libre se sustituya por el mensaje canónico estándar
+
+    en la traza saneada, manteniendo el motivo canónico 'rechazo_del_modelo' y los metadatos para T18.
+    """
+    record = {
+        'run_id': 'run_refusal_unit',
+        'case_id': 'GQ012',
+        'case_kind': 'gold',
+        'mode': 'C_defensa_propuesta',
+        'prompt_version': 'v3',
+        'provider': 'api',
+        'model': 'gpt-4o-mini',
+        'model_digest': None,
+        'parameters': {
+            'seed': 42,
+            'temperature': 0.0,
+            'top_k': 5,
+            'documental': True,
+            'evidence_threshold': 0.12,
+        },
+        'generation_performed': True,
+        'abstained': True,
+        'abstention_reason': ABSTENTION_REASON_MODEL_REFUSAL,
+        'response': 'Me abstengo: el modelo rechazó la consulta (No puedo procesar la solicitud por políticas internas).',
+        'raw_response': 'No puedo procesar la solicitud por políticas internas.',
+        'citations_raw': [],
+        'citations_final': [],
+        'citations_valid': False,
+        'citations_invalid_count': 0,
+        'invalid_citations_count': 0,
+        'allowed_citations': [],
+        'retrieved_chunks': [],
+        'accepted_chunks': [],
+        'discarded_chunks': [],
+        'evaluated_chunks': [],
+        'accepted_ids': [],
+        'discarded_ids': [],
+        'retrieved_ids': [],
+        'detector_version': 'heuristic_v1',
+        'detector_applied': True,
+        'detector_log': [],
+        'detector_suspicious_count': 0,
+        'any_detector_suspicious': False,
+        'latency_generation_seconds': 0.88,
+        'latency_pipeline_seconds': 0.95,
+        'latency_seconds': 0.88,
+        'pipeline_seconds': 0.95,
+        'tokens': {'prompt_tokens': 60, 'completion_tokens': 12, 'total_tokens': 72},
+    }
+
+    sanitized = sanitize_trace_record(record, redact_gold_response=True)
+
+    # 1. El texto libre del proveedor debe sustituirse por el mensaje estándar
+    assert sanitized['response'] == STANDARD_MODEL_REFUSAL_RESPONSE
+    assert sanitized['response'] == 'Me abstengo: el modelo rechazó la consulta.'
+    assert 'No puedo procesar la solicitud' not in sanitized['response']
+
+    # 2. El motivo de abstención debe conservarse intacto para T18
+    assert sanitized['abstention_reason'] == ABSTENTION_REASON_MODEL_REFUSAL
+    assert sanitized['abstention_reason'] == 'rechazo_del_modelo'
+    assert sanitized['abstained'] is True
+
+    # 3. Metadatos de telemetría y ejecución conservados íntegramente para T18
+    assert sanitized['provider'] == 'api'
+    assert sanitized['model'] == 'gpt-4o-mini'
+    assert sanitized['generation_performed'] is True
+    assert sanitized['tokens'] == {'prompt_tokens': 60, 'completion_tokens': 12, 'total_tokens': 72}
+    assert sanitized['latency_generation_seconds'] == 0.88
+    assert sanitized['parameters']['seed'] == 42
+    assert sanitized['prompt_version'] == 'v3'
+
+    # 4. raw_response no debe existir en el registro saneado
+    assert 'raw_response' not in sanitized
+
+
+def test_provider_refusal_synthetic_marker_confidentiality_and_segregation(tmp_path):
+    """Regresión estricta: verifica que un marcador confidencial sintético presente en el rechazo
+
+    del proveedor se conserve íntegramente en las trazas privadas (JSON y CSV) y se excluya
+    totalmente de las trazas saneadas públicas (JSON y CSV).
+    """
+    out_dir = tmp_path / 'public_run_refusal'
+    priv_dir = tmp_path / 'run_local_refusal'
+
+    confidential_marker = 'SYNTHETIC_CONFIDENTIAL_POLICY_REFUSAL_CANARY_TOKEN_998877'
+    provider_custom_text = f'Rechazo por directiva confidencial interna [{confidential_marker}].'
+    full_refusal_response = f'Me abstengo: el modelo rechazó la consulta ({provider_custom_text}).'
+
+    accepted_chunk = {
+        'chunk_id': 'chunk_ref_01:1',
+        'documento_id': 'RCU-0161-2021',
+        'archivo_pdf': 'RCU-0161-2021.pdf',
+        'pagina_pdf': 3,
+        'score': 0.85,
+        'ocr_revision_manual_pendiente': False,
+        'normativa_actual_verificada': True,
+    }
+
+    pipe_res = {
+        'question': '¿Pregunta que provocó rechazo del proveedor?',
+        'raw_response': provider_custom_text,
+        'response': full_refusal_response,
+        'abstained': True,
+        'provider': 'api',
+        'mode': 'C_defensa_propuesta',
+        'retrieved': [accepted_chunk],
+        'accepted_ids': ['chunk_ref_01:1'],
+        'detector_log': [],
+        'seconds': 0.72,
+        'generation_metadata': {
+            'provider': 'api',
+            'model': 'gpt-4o-mini',
+            'finish_reason': 'refusal',
+            'refusal': provider_custom_text,
+            'tokens': {'prompt_tokens': 55, 'completion_tokens': 18, 'total_tokens': 73},
+        },
+    }
+
+    raw_trace = build_trace_record(
+        run_id='run_confidential_refusal',
+        case_id='c_refusal_01',
+        mode='C_defensa_propuesta',
+        pipeline_result=pipe_res,
+        case_kind='synthetic_attack',
+        provider='api',
+        model='gpt-4o-mini',
+    )
+
+    # Verificación en traza privada cruda: conserva íntegramente el detalle y metadatos
+    assert raw_trace['abstained'] is True
+    assert raw_trace['abstention_reason'] == ABSTENTION_REASON_MODEL_REFUSAL
+    assert confidential_marker in raw_trace['response']
+    assert confidential_marker in raw_trace['raw_response']
+    assert raw_trace.get('generation_metadata', {}).get('refusal') == provider_custom_text
+
+    manifest = {'run_id': 'run_confidential_refusal', 'tarea': 'test_refusal_segregation'}
+
+    out_path, p_path = save_experimental_run(
+        output_dir=out_dir,
+        manifest=manifest,
+        raw_traces=[raw_trace],
+        private_dir=priv_dir,
+    )
+
+    # 1. Verificación de artefactos públicos para Git (traces.json y traces.csv)
+    pub_json_text = (out_path / 'traces.json').read_text(encoding='utf-8')
+    assert confidential_marker not in pub_json_text
+    assert provider_custom_text not in pub_json_text
+    assert 'raw_response' not in pub_json_text
+    assert 'generation_metadata' not in pub_json_text
+
+    pub_traces = json.loads(pub_json_text)
+    assert len(pub_traces) == 1
+    sanitized_t = pub_traces[0]
+    assert sanitized_t['response'] == STANDARD_MODEL_REFUSAL_RESPONSE
+    assert sanitized_t['response'] == 'Me abstengo: el modelo rechazó la consulta.'
+    assert sanitized_t['abstention_reason'] == 'rechazo_del_modelo'
+    assert sanitized_t['abstained'] is True
+    assert sanitized_t['generation_performed'] is True
+    assert sanitized_t['tokens'] == {'prompt_tokens': 55, 'completion_tokens': 18, 'total_tokens': 73}
+
+    pub_csv_text = (out_path / 'traces.csv').read_text(encoding='utf-8')
+    assert confidential_marker not in pub_csv_text
+    assert provider_custom_text not in pub_csv_text
+
+    with (out_path / 'traces.csv').open('r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        row = next(reader)
+        assert row['response'] == 'Me abstengo: el modelo rechazó la consulta.'
+        assert row['abstention_reason'] == 'rechazo_del_modelo'
+        assert row['abstained'] == 'True'
+        assert row['generation_performed'] == 'True'
+        assert row['prompt_tokens'] == '55'
+
+    # 2. Verificación de artefactos privados (private_traces.json y private_traces.csv)
+    priv_json_text = (p_path / 'private_traces.json').read_text(encoding='utf-8')
+    assert confidential_marker in priv_json_text
+    assert provider_custom_text in priv_json_text
+
+    priv_csv_text = (p_path / 'private_traces.csv').read_text(encoding='utf-8')
+    assert confidential_marker in priv_csv_text
+    assert provider_custom_text in priv_csv_text
+
+    with (p_path / 'private_traces.csv').open('r', encoding='utf-8') as f:
+        priv_reader = csv.DictReader(f)
+        priv_row = next(priv_reader)
+        assert confidential_marker in priv_row['response']
+        assert priv_row['abstention_reason'] == 'rechazo_del_modelo'
+
+
+def test_provider_refusal_end_to_end_pipeline_integration(monkeypatch, tmp_path):
+    """Prueba end-to-end con answer(): verifica que el flujo completo del pipeline produzca
+
+    la respuesta con detalle en pipeline_result, pero la traza saneada lo proteja debidamente.
+    """
+    import cs_rag_security.pipeline as pipeline_mod
+
+    canary_marker = 'PIPELINE_CANARY_REFUSAL_SECRET_334455'
+    provider_msg = f'Consulta bloqueada por políticas de seguridad [{canary_marker}]'
+
+    monkeypatch.setattr(pipeline_mod, 'generate', lambda *a, **kw: {
+        'text': provider_msg,
+        'metadata': {
+            'provider': 'local',
+            'model': 'qwen2.5:3b',
+            'finish_reason': 'refusal',
+            'refusal': provider_msg,
+            'tokens': {'prompt_tokens': 40, 'completion_tokens': 10, 'total_tokens': 50},
+        }
+    })
+
+    chunk = {
+        'chunk_id': 'c_pipe:1',
+        'documento_id': 'RCU-0504-2020',
+        'archivo_pdf': 'RCU-0504-2020.pdf',
+        'pagina_pdf': 2,
+        'score': 0.9,
+        'texto': 'Contenido normativo',
+        'ocr_revision_manual_pendiente': False,
+        'normativa_actual_verificada': True,
+    }
+    idx = Index([chunk])
+
+    pipe_res = answer(
+        index=idx,
+        question='¿Pregunta bloqueada?',
+        mode='C_defensa_propuesta',
+        provider='local',
+        documental=True,
+        hits=[chunk],
+    )
+
+    # 1. En pipeline_result se mantiene el detalle del proveedor
+    assert pipe_res['abstained'] is True
+    assert canary_marker in pipe_res['response']
+    assert pipe_res['raw_response'] == provider_msg
+
+    # 2. En build_trace_record se construye la traza privada
+    record = build_trace_record(
+        run_id='run_pipe_refusal',
+        case_id='c_pipe_01',
+        mode='C_defensa_propuesta',
+        pipeline_result=pipe_res,
+        case_kind='synthetic_attack',
+    )
+    assert record['abstained'] is True
+    assert record['abstention_reason'] == ABSTENTION_REASON_MODEL_REFUSAL
+    assert canary_marker in record['response']
+
+    # 3. En sanitize_trace_record se elimina el marcador y se emite el estándar
+    sanitized = sanitize_trace_record(record, redact_attack_response=True)
+    assert sanitized['response'] == STANDARD_MODEL_REFUSAL_RESPONSE
+    assert sanitized['response'] == 'Me abstengo: el modelo rechazó la consulta.'
+    assert sanitized['abstention_reason'] == 'rechazo_del_modelo'
+    assert canary_marker not in json.dumps(sanitized)
 

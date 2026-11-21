@@ -48,6 +48,9 @@ ABSTENTION_REASON_EMPTY_OUTPUT: str = 'modelo_vacio'
 ABSTENTION_REASON_NORMATIVE_UNVERIFIED: str = 'normativa_no_verificada'
 ABSTENTION_REASON_OTHER: str = 'abstencion_otra'
 
+# Mensaje canónico estándar para abstención por rechazo del modelo en artefactos públicos
+STANDARD_MODEL_REFUSAL_RESPONSE: str = 'Me abstengo: el modelo rechazó la consulta.'
+
 # Expresión regular canónica para extracción de citas [archivo.pdf p. N]
 CITATION_REGEX: re.Pattern = re.compile(r'\[([^\[\]]+\.pdf) p\. (\d+)\]')
 
@@ -523,6 +526,7 @@ def build_trace_record(
         'tokens': tokens_data,
         'retriever': pipeline_result.get('retriever', 'tfidf_cosine'),
         'warnings': pipeline_result.get('warnings', []),
+        'generation_metadata': gen_meta,
     }
 
     if extra_metadata:
@@ -626,8 +630,24 @@ def sanitize_trace_record(
     final_resp = record.get('response', '')
     abstained = bool(record.get('abstained', False))
     case_kind = record.get('case_kind', 'gold')
+    abstention_reason = record.get('abstention_reason', '')
 
-    if not abstained:
+    # Saneamiento de rechazos del proveedor: si el modelo rechazó la consulta, el proveedor puede
+    # haber retornado un detalle o texto libre propio (ej. "(No puedo procesar la solicitud...)").
+    # Ese detalle confidencial se preserva exclusivamente en las trazas privadas para auditoría,
+    # mientras que en los artefactos saneados para Git se sustituye estrictamente por el mensaje estándar.
+    is_model_refusal = (
+        abstention_reason == ABSTENTION_REASON_MODEL_REFUSAL
+        or (isinstance(final_resp, str) and 'rechazó la consulta' in final_resp)
+    )
+
+    if is_model_refusal:
+        final_resp = STANDARD_MODEL_REFUSAL_RESPONSE
+        abstention_reason = ABSTENTION_REASON_MODEL_REFUSAL
+        abstained = True
+    elif abstained:
+        pass
+    else:
         if case_kind == 'gold' and redact_gold_response:
             final_resp = '[CONTENIDO_CORPUS_PRIVADO_PROTEGIDO]'
         elif case_kind in ('synthetic_attack', 'attack') and redact_attack_response:
@@ -657,7 +677,7 @@ def sanitize_trace_record(
         'parameters': sanitized_params,
         'generation_performed': bool(record.get('generation_performed', False)),
         'abstained': abstained,
-        'abstention_reason': record.get('abstention_reason', ''),
+        'abstention_reason': abstention_reason,
         'citations_raw': sanitized_citations_raw,
         'citations_final': sanitized_citations_final,
         'citations_valid': bool(record.get('citations_valid', False)),
