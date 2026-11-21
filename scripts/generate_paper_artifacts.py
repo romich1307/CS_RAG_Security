@@ -89,7 +89,7 @@ def main():
         print(f"\n[ERROR DE PROTECCIÓN CONTRA SOBRESCRITURA] {e}", file=sys.stderr)
         sys.exit(1)
 
-    print("\n✓ Generación exitosa:")
+    print("\nArtefactos generados:")
     print(f"  - Reporte de auditoría: {args.output}/audit_report.json y .md")
     print(f"  - Tablas científicas (CSV y MD): {len(res['tables_saved'])} tablas en {args.output}/tables/")
     print(f"  - Figuras científicas (SVG y PNG): {len(res['figures_saved'])} figuras en {args.output}/figures/")

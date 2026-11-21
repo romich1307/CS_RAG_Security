@@ -660,7 +660,6 @@ def test_cli_execution_paper_artifacts(tmp_path):
 
     proc = subprocess.run(cmd, capture_output=True, text=True)
     assert proc.returncode == 0, f"Error en CLI: {proc.stderr}"
-    assert "✓ Generación exitosa:" in proc.stdout
     assert (out_dir / "manifest.json").exists()
     assert (out_dir / "audit_report.json").exists()
     assert (out_dir / "tables/tabla01_configuracion_experimental.csv").exists()
