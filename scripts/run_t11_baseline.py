@@ -26,6 +26,8 @@ from cs_rag_security.ingestion import digest, read_json
 from cs_rag_security.pipeline import answer
 from cs_rag_security.retrieval import Index
 from cs_rag_security.traceability import (
+    ABSTENTION_REASON_MODEL_REFUSAL,
+    STANDARD_MODEL_REFUSAL_RESPONSE,
     determine_abstention_reason,
     ensure_unique_output_dir,
     extract_citations,
@@ -145,10 +147,19 @@ def sanitize_record_for_git(record: dict) -> dict:
         {k: v for k, v in c.items() if k != 'texto'}
         for c in record.get('accepted_chunks', [])
     ]
+    final_resp = record.get('response', '')
+    abst_reason = record.get('abstention_reason', '')
+    if (
+        abst_reason == ABSTENTION_REASON_MODEL_REFUSAL
+        or (isinstance(final_resp, str) and 'rechazó la consulta' in final_resp)
+    ):
+        final_resp = STANDARD_MODEL_REFUSAL_RESPONSE
+        abst_reason = ABSTENTION_REASON_MODEL_REFUSAL
+
     sanitized = {
         'id': record['id'],
         'abstained': record['abstained'],
-        'abstention_reason': record['abstention_reason'],
+        'abstention_reason': abst_reason,
         'retrieved_chunks': retrieved,
         'accepted_chunks': accepted,
         'accepted_ids': record['accepted_ids'],
@@ -161,7 +172,7 @@ def sanitize_record_for_git(record: dict) -> dict:
         'latency_seconds': record['latency_seconds'],
         'pipeline_seconds': record['pipeline_seconds'],
         'tokens': record['tokens'],
-        'response': record['response'],
+        'response': final_resp,
     }
     return sanitized
 

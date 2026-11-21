@@ -82,6 +82,8 @@ Listas derivadas:
   > [!CAUTION]
   > `raw_response` es **estrictamente confidencial** y se conserva **únicamente en trazas privadas locales**. Nunca debe incluirse en artefactos versionados en Git.
 - `response` (*str*): Salida final post-pipeline (respuesta validada con citas o mensaje oficial de abstención).
+  > [!IMPORTANT]
+  > **Tratamiento confidencial de rechazos del proveedor:** Cuando el proveedor devuelve un rechazo con texto libre propio (`refusal` o `content_filter`), el detalle original del proveedor (`"Me abstengo: el modelo rechazó la consulta (<detalle>)."`) y el campo `raw_response` se preservan íntegramente de manera exclusiva en las trazas privadas locales (`private_traces.json`, `private_traces.csv`, `raw_traces.json`). En los artefactos públicos versionados para Git (`traces.json`, `traces.csv`), el texto libre se sustituye siempre por el mensaje canónico estándar: `"Me abstengo: el modelo rechazó la consulta."`, conservando intacto el motivo de abstención (`abstention_reason = "rechazo_del_modelo"`) y toda la telemetría operativa requerida para **T18**.
 - `abstained` (*bool*): `True` si el pipeline emitió abstención formal; `False` si validó la respuesta.
 - `abstention_reason` (*str*): Código canónico del motivo de abstención:
   - `evidencia_insuficiente_o_no_fiable`: Sin fragmentos admisibles tras el filtrado.

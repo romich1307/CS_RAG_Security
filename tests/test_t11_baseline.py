@@ -327,3 +327,31 @@ def test_prepare_t12_evaluation_success_with_exact_text_and_canonical_rubrica_v0
     assert row_llm_raw[header.index('rubrica_version')] == '0.2'
     assert '.response' in row_pipeline[header.index('referencia_salida')]
     assert '.raw_response' in row_llm_raw[header.index('referencia_salida')]
+
+
+def test_sanitize_record_for_git_provider_refusal():
+    """Verifica que sanitize_record_for_git sustituya texto propio de rechazo por el estándar."""
+    record = {
+        'id': 'GQ001',
+        'abstained': True,
+        'abstention_reason': 'rechazo_del_modelo',
+        'retrieved_chunks': [{'chunk_id': 'c1', 'texto': 'Texto que debe eliminarse'}],
+        'accepted_chunks': [{'chunk_id': 'c1', 'texto': 'Texto que debe eliminarse'}],
+        'accepted_ids': ['c1'],
+        'citations_raw': [],
+        'citations_final': [],
+        'citations_valid': False,
+        'model': 'qwen2.5:3b',
+        'provider': 'local',
+        'parameters': {'temperature': 0, 'seed': 42},
+        'latency_seconds': 0.5,
+        'pipeline_seconds': 0.6,
+        'tokens': None,
+        'response': 'Me abstengo: el modelo rechazó la consulta (Filtro confidencial del modelo).',
+    }
+    sanitized = sanitize_record_for_git(record)
+    assert sanitized['response'] == 'Me abstengo: el modelo rechazó la consulta.'
+    assert sanitized['abstention_reason'] == 'rechazo_del_modelo'
+    assert 'Filtro confidencial' not in sanitized['response']
+    assert 'texto' not in sanitized['retrieved_chunks'][0]
+    assert 'texto' not in sanitized['accepted_chunks'][0]
