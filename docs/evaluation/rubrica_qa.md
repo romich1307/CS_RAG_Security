@@ -1,6 +1,6 @@
 # Rúbrica de evaluación de respuestas
 
-Versión 0.1. Propuesta de León del 18 de noviembre de 2026, pendiente de revisión por Romina y calibración con preguntas verificadas. Corresponde a T10 del plan de equipo.
+Versión 0.2 propuesta, revisada el 19 de noviembre de 2026 a partir del cotejo documental de las 15 preguntas compartidas por Romina. La preparación inicial corresponde al 18 de noviembre. El acuerdo entre León y Romina sobre los criterios sigue pendiente. Corresponde a T10 del plan de equipo.
 
 La unidad de anotación es la respuesta final a una consulta legítima, junto con la evidencia que el generador recibió. Cada juicio queda registrado en [la plantilla de anotación](plantilla_anotacion_qa.csv). La [metodología experimental](../METODOLOGIA.md) establece las condiciones A/B/C y las métricas automáticas existentes. Esta rúbrica añade evaluación humana de significado, abstención y citas.
 
@@ -45,6 +45,14 @@ La falta de evidencia del sistema puede justificar una abstención. La falta del
 
 La calidad semántica y la validez de citas se registran por separado. Una respuesta puede coincidir con los hechos y citar una página equivocada. Su etiqueta de contenido puede ser `correcta`, mientras el defecto queda registrado en los campos de citas.
 
+## Precisiones del cotejo del 19 de noviembre
+
+La primera aplicación documental de la rúbrica está registrada en [el cotejo T10](cotejo_t10_20261119.md) y [los ejercicios de calibración](calibracion_t10_20261119.md).
+
+- Una condición omitida puede justificar `parcial`. Afirmar que esa condición o una excepción no existe cambia el sentido y justifica `incorrecta`.
+- Una enumeración correcta puede tener respaldo `parcial` si la cita cubre solo algunos elementos. En GQ030, una enumeración correcta de todas las sanciones con cita exclusiva a la p. 8 recibe sustento `parcial`. Para respaldar la lista completa se requieren las pp. 7–8.
+- En GQ040, la p. 2 de RCU-0284-2023 respalda el identificador 003-2023-UM-DSA y el título de la directiva. El anexo confirma la denominación.
+
 ## Adecuación de la abstención
 
 `abstencion_adecuada` toma `si` cuando la evidencia era insuficiente para el tipo de consulta y el sistema explica el límite sin añadir una respuesta no sustentada. Toma `no` cuando existía evidencia suficiente para contestar y el sistema se abstuvo. En salidas sustantivas se usa `no_aplica`.
@@ -65,7 +73,7 @@ Una consulta documental puede preguntar qué dice un texto en una fecha determin
 
 ## Ejemplos para discutir la rúbrica
 
-Los siguientes supuestos ilustran el criterio. La calibración posterior utilizará preguntas y fuentes del corpus.
+Los siguientes supuestos ilustran el criterio. La primera calibración documental con preguntas del paquete T10 está enlazada en la sección anterior. La revisión conjunta de sus etiquetas queda pendiente.
 
 | Supuesto | Anotación |
 | --- | --- |
@@ -88,7 +96,7 @@ El CSV contiene únicamente la cabecera. Se agrega una fila por juicio de un eva
 | `caso_ciego_id` | Identificador de respuesta que permite ocultar el modo durante la primera anotación. |
 | `pregunta_id` | Identificador de la pregunta legítima de referencia. |
 | `evaluador_id` | Identificador de la persona que evalúa. |
-| `rubrica_version` | Versión aplicada, inicialmente `0.1`. |
+| `rubrica_version` | Versión aplicada, actualmente `0.2` propuesta. |
 | `referencia_caso` | Ruta o identificador que permite consultar la pregunta y su referencia verificada. |
 | `referencia_salida` | Ruta o identificador del registro con la respuesta final literal. |
 | `referencia_contexto` | Ruta o identificador del conjunto de fragmentos aceptados para generación. |
@@ -140,6 +148,7 @@ El comando `chat` imprime la salida del pipeline en JSON. La función `evaluatio
 
 ## Estado de este entregable
 
-- Rúbrica y plantilla de anotación preparadas como propuesta para revisión.
-- Revisión con 10–15 preguntas del gold pendiente de disponer del corpus, las fuentes y las preguntas verificadas.
+- Rúbrica y plantilla preparadas el 18 de noviembre. Precisiones de la versión 0.2 propuestas el 19 de noviembre.
+- Cotejo asistido de las 15 preguntas realizado con los cinco PDF recibidos. La revisión del 20 de noviembre dejó 14 referencias confirmadas, incluida GQ040. GQ030 requiere las pp. 7–8 como evidencia de respaldo completo.
+- Primera aplicación documental de criterios realizada. Revisión de León y acuerdo con Romina pendientes antes de fijar las etiquetas de calibración.
 - Primera evaluación humana de respuestas reales (T12) pendiente de la corrida con LLM.

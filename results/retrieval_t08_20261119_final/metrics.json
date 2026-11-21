@@ -1,0 +1,126 @@
+{
+  "primary": {
+    "n_questions": 13,
+    "methods": {
+      "fallback_textual_tfidf_coseno_v1": {
+        "provider": "local_cpu_retrieval",
+        "hit_at_1": {
+          "numerator": 6,
+          "denominator": 13,
+          "value": 0.46153846153846156
+        },
+        "hit_at_3": {
+          "numerator": 9,
+          "denominator": 13,
+          "value": 0.6923076923076923
+        },
+        "hit_at_5": {
+          "numerator": 11,
+          "denominator": 13,
+          "value": 0.8461538461538461
+        },
+        "latency": {
+          "denominator": 65,
+          "unit": "seconds",
+          "median": 0.00517670001136139,
+          "p95_linear": 0.006268160021863877,
+          "mean": 0.005340827693446324
+        }
+      },
+      "onnx_minilm_multilingual_quint8_avx2_coseno_v1": {
+        "provider": "local_cpu_retrieval",
+        "hit_at_1": {
+          "numerator": 6,
+          "denominator": 13,
+          "value": 0.46153846153846156
+        },
+        "hit_at_3": {
+          "numerator": 11,
+          "denominator": 13,
+          "value": 0.8461538461538461
+        },
+        "hit_at_5": {
+          "numerator": 11,
+          "denominator": 13,
+          "value": 0.8461538461538461
+        },
+        "latency": {
+          "denominator": 65,
+          "unit": "seconds",
+          "median": 0.008475099981296808,
+          "p95_linear": 0.012720640003681182,
+          "mean": 0.008908150762391206
+        }
+      }
+    }
+  },
+  "exploratory_all_original_gold": {
+    "n_questions": 40,
+    "methods": {
+      "fallback_textual_tfidf_coseno_v1": {
+        "provider": "local_cpu_retrieval",
+        "hit_at_1": {
+          "numerator": 20,
+          "denominator": 40,
+          "value": 0.5
+        },
+        "hit_at_3": {
+          "numerator": 28,
+          "denominator": 40,
+          "value": 0.7
+        },
+        "hit_at_5": {
+          "numerator": 34,
+          "denominator": 40,
+          "value": 0.85
+        },
+        "latency": {
+          "denominator": 200,
+          "unit": "seconds",
+          "median": 0.0051924000144936144,
+          "p95_linear": 0.006345455037080682,
+          "mean": 0.005329144001880195
+        }
+      },
+      "onnx_minilm_multilingual_quint8_avx2_coseno_v1": {
+        "provider": "local_cpu_retrieval",
+        "hit_at_1": {
+          "numerator": 15,
+          "denominator": 40,
+          "value": 0.375
+        },
+        "hit_at_3": {
+          "numerator": 28,
+          "denominator": 40,
+          "value": 0.7
+        },
+        "hit_at_5": {
+          "numerator": 30,
+          "denominator": 40,
+          "value": 0.75
+        },
+        "latency": {
+          "denominator": 200,
+          "unit": "seconds",
+          "median": 0.008268549980130047,
+          "p95_linear": 0.011703094988479278,
+          "mean": 0.008354293997690547
+        }
+      }
+    }
+  },
+  "costs": {
+    "fallback_textual_tfidf_coseno_v1": {
+      "build_seconds": 0.09140039997873828,
+      "artifact_bytes": 1939686,
+      "storage": "JSON de fragmentos; TF-IDF se reconstruye al cargar"
+    },
+    "onnx_minilm_multilingual_quint8_avx2_coseno_v1": {
+      "build_or_load_seconds": 38.63933350000298,
+      "artifact_bytes": 5468544,
+      "vector_bytes_in_memory": 3508224,
+      "model_files_bytes": 127540164,
+      "storage": "JSON de fragmentos y matriz float32 NPY normalizada"
+    }
+  }
+}
