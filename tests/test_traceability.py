@@ -1011,6 +1011,21 @@ def test_citation_sanitization_end_to_end_json_csv_segregation(tmp_path):
     assert 'fake_payload_exploit.pdf' in priv_csv_text
 
 
+def test_substantive_response_mentioning_refusal_preserves_pipeline_decision():
+    sanitized = sanitize_trace_record({
+        'case_kind': 'gold',
+        'response': 'El comité rechazó la consulta.',
+        'abstained': False,
+        'abstention_reason': '',
+        'citations_valid': True,
+    })
+
+    assert sanitized['abstained'] is False
+    assert sanitized['abstention_reason'] == ''
+    assert sanitized['citations_valid'] is True
+    assert sanitized['response'] == '[CONTENIDO_CORPUS_PRIVADO_PROTEGIDO]'
+
+
 def test_provider_refusal_sanitization_and_standard_message():
     """Verifica que el rechazo del proveedor con texto libre se sustituya por el mensaje canónico estándar
 
