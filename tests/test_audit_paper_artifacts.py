@@ -1,0 +1,497 @@
+"""Pruebas automatizadas para la auditoría experimental, tablas y figuras científicas (T20).
+
+Verifica:
+- Auditoría exhaustiva de corridas reales (T11 baseline, offline mock, piloto PR7).
+- Tratamiento estricto de denominadores cero (sin divisiones por cero ni valores inventados).
+- Detección de datos incompletos y evaluaciones humanas pendientes (T12).
+- Detección de corridas incompatibles (discrepancia en hashes de índice o datasets).
+- Detección de ejecuciones duplicadas dentro de una misma corrida.
+- Detección rigurosa de fugas de privacidad (preguntas gold, texto de fragmentos, raw_response, API keys).
+- Generación y consistencia de tablas científicas en CSV y Markdown.
+- Generación y consistencia de figuras científicas en SVG y PNG.
+- Integración con métricas de calidad T18 (rúbrica v0.2).
+- Manejo formal de la ausencia de métricas de seguridad T19 (reporte como pendiente sin inventar datos).
+- Protección estricta contra sobrescritura accidental de resultados.
+- Ejecución reproducible mediante CLI y script con registro de hashes en manifiesto.
+"""
+
+import csv
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any, Dict, List
+
+import pytest
+from PIL import Image
+
+from cs_rag_security.evaluation.audit_experiment import (
+    CODE_DUPLICATE_CASE,
+    CODE_FILE_MISSING,
+    CODE_HASH_MISMATCH,
+    CODE_INCOMPATIBLE_RUNS,
+    CODE_MISSING_CASES,
+    CODE_MOCK_RUN_LIMITATION,
+    CODE_PENDING_EVALUATIONS,
+    CODE_PRIVACY_VIOLATION,
+    CODE_UNIMODAL_RUN,
+    RUN_TYPE_MOCK_OFFLINE,
+    RUN_TYPE_PILOT_LLM,
+    RUN_TYPE_REAL_LLM,
+    SEVERITY_ERROR,
+    SEVERITY_INFO,
+    SEVERITY_WARNING,
+    audit_experiments,
+    audit_human_evaluation_coverage,
+    audit_run,
+    check_privacy_compliance_in_data,
+)
+from cs_rag_security.evaluation.figures import (
+    generate_all_paper_figures,
+    generate_fig_asr_condicion,
+    generate_fig_exactitud_abc,
+)
+from cs_rag_security.evaluation.paper import generate_paper_artifacts
+from cs_rag_security.evaluation.tables import (
+    format_fraction_cell,
+    format_markdown_table,
+    generate_all_paper_tables,
+)
+
+
+def test_audit_real_and_mock_runs():
+    """Verifica la auditoría sobre las evidencias existentes en el repositorio."""
+    # 1. Baseline T11
+    res_t11 = audit_run("results/llm_baseline")
+    assert res_t11.run_type == RUN_TYPE_REAL_LLM
+    assert res_t11.parameters["provider"] == "local"
+    assert res_t11.parameters["model"] == "qwen2.5:3b"
+    assert res_t11.parameters["seed"] == 42
+    assert res_t11.parameters["temperature"] == 0
+    assert res_t11.parameters["top_k"] == 5
+    assert res_t11.parameters_compliant is True
+    assert res_t11.conditions_present == ["A_sin_defensa"]
+    assert res_t11.is_multimodal_abc is False
+    assert res_t11.cases_count == 10
+    assert res_t11.privacy_compliant is True
+    assert res_t11.hashes_status["index_sha256"]["status"] == "verified"
+    assert res_t11.hashes_status["gold_sha256"]["status"] == "verified"
+
+    # 2. Mock offline 20261117_final
+    res_mock = audit_run("results/offline_20261117_final")
+    assert res_mock.run_type == RUN_TYPE_MOCK_OFFLINE
+    assert res_mock.parameters["provider"] == "mock"
+    assert res_mock.is_multimodal_abc is True
+    assert len(res_mock.conditions_present) == 3
+    assert res_mock.cases_count == 48  # 40 gold + 8 sintéticos
+    assert any(i.code == CODE_MOCK_RUN_LIMITATION for i in res_mock.issues)
+
+    # 3. Piloto PR7
+    res_pilot = audit_run("results/piloto_ollama_pr7.json")
+    assert res_pilot.run_type == RUN_TYPE_PILOT_LLM
+    assert res_pilot.cases_count == 1
+
+
+def test_audit_zero_denominators_handling():
+    """Verifica que denominadores cero produzcan N/A o Pendiente sin lanzar divisiones por cero."""
+    # Celda de fracción con denominador 0
+    zero_frac = {"numerator": 0, "denominator": 0, "rate_percent": None, "value": None}
+    cell_text = format_fraction_cell(zero_frac, default_pending="Pendiente")
+    assert "Pendiente (0/0)" in cell_text
+
+    none_frac = {"numerator": None, "denominator": 0, "rate_percent": None, "value": None}
+    cell_none = format_fraction_cell(none_frac, default_pending="N/A")
+    assert "N/A (0/0)" in cell_none
+
+    # Fracción válida
+    valid_frac = {"numerator": 8, "denominator": 10, "rate_percent": 80.0, "value": 0.8}
+    assert format_fraction_cell(valid_frac) == "80.00% (8/10)"
+
+    # Formateo de tabla markdown con celdas None
+    headers = ["Metrica", "Valor"]
+    rows = [["Exactitud", None], ["Abstencion", "100.0%"]]
+    md = format_markdown_table(headers, rows)
+    assert "N/A" in md
+    assert "100.0%" in md
+
+
+def test_audit_incomplete_data_and_pending_cases(tmp_path):
+    """Verifica la detección de casos faltantes y la auditoría de anotaciones humanas pendientes."""
+    # 1. Detección de casos faltantes frente a lista esperada
+    expected = ["GQ001", "GQ002", "GQ003", "GQ004"]
+    # Simulamos una corrida que solo tiene GQ004
+    run_dir = tmp_path / "run_incomplete"
+    run_dir.mkdir()
+    manifest = {
+        "run_id": "incomplete_1",
+        "proveedor": "local",
+        "modelo": "qwen2.5:3b",
+        "parametros": {"seed": 42, "temperature": 0, "top_k": 5},
+    }
+    (run_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    traces = [{"case_id": "GQ004", "condition": "A_sin_defensa"}]
+    (run_dir / "traces.json").write_text(json.dumps(traces), encoding="utf-8")
+
+    res = audit_run(run_dir, expected_cases=expected)
+    assert any(i.code == CODE_MISSING_CASES for i in res.issues)
+    assert set(res.missing_expected_cases) == {"GQ001", "GQ002", "GQ003"}
+
+    # 2. Auditoría de anotaciones humanas reales de T12 (todas pendientes)
+    t12_csv = Path("results/t12_evaluacion/t12_evaluacion_ciega.csv")
+    if t12_csv.exists():
+        cov = audit_human_evaluation_coverage(t12_csv)
+        assert cov["status"] == "pendiente"
+        assert cov["total_registros"] == 20
+        assert cov["evaluables"] == 0
+        assert cov["pendientes"] == 20
+        assert cov["tasa_pendientes"] == "100.0%"
+
+
+def test_audit_incompatible_runs(tmp_path):
+    """Verifica que corridas con hashes de índice o gold distintos sean señaladas como incompatibles."""
+    run1 = tmp_path / "run_1"
+    run1.mkdir()
+    (run1 / "manifest.json").write_text(
+        json.dumps({
+            "run_id": "r1", "proveedor": "local", "modelo": "qwen2.5:3b",
+            "index_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "gold_sha256": "622eb3d76e5d56138358d20db376d6e62f61ac378b1c0d41dbc3a543c8210da2",
+        }),
+        encoding="utf-8",
+    )
+    (run1 / "traces.json").write_text(json.dumps([]), encoding="utf-8")
+
+    run2 = tmp_path / "run_2"
+    run2.mkdir()
+    (run2 / "manifest.json").write_text(
+        json.dumps({
+            "run_id": "r2", "proveedor": "local", "modelo": "qwen2.5:3b",
+            "index_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "gold_sha256": "622eb3d76e5d56138358d20db376d6e62f61ac378b1c0d41dbc3a543c8210da2",
+        }),
+        encoding="utf-8",
+    )
+    (run2 / "traces.json").write_text(json.dumps([]), encoding="utf-8")
+
+    rep = audit_experiments([run1, run2])
+    assert rep.overall_status == "rechazado"
+    assert any(i.code == CODE_INCOMPATIBLE_RUNS for i in rep.all_issues)
+    assert rep.cross_run_consistency["shared_index_hash"] is False
+
+
+def test_audit_duplicate_cases_detection(tmp_path):
+    """Verifica que se detecten tuplas (case_id, condition) duplicadas."""
+    run_dir = tmp_path / "run_dups"
+    run_dir.mkdir()
+    (run_dir / "manifest.json").write_text(
+        json.dumps({"run_id": "r_dup", "proveedor": "local", "modelo": "qwen2.5:3b"}),
+        encoding="utf-8",
+    )
+    # Misma consulta y misma condición dos veces
+    traces = [
+        {"case_id": "GQ004", "condition": "A_sin_defensa", "abstained": True},
+        {"case_id": "GQ004", "condition": "A_sin_defensa", "abstained": True},
+    ]
+    (run_dir / "traces.json").write_text(json.dumps(traces), encoding="utf-8")
+
+    res = audit_run(run_dir)
+    assert any(i.code == CODE_DUPLICATE_CASE for i in res.issues)
+    assert len(res.duplicates) == 1
+
+
+def test_audit_privacy_boundaries_detection():
+    """Verifica que se identifique cualquier exposición de datos privados."""
+    gold_q = ["¿Cuál es el procedimiento de convalidación académica según el RCU-0161-2021?"]
+
+    # 1. Exposición de raw_response
+    rec_raw = [{"case_id": "c1", "raw_response": "Texto confidencial del modelo"}]
+    ok, issues = check_privacy_compliance_in_data(rec_raw, gold_questions=gold_q, source_name="test_raw")
+    assert ok is False
+    assert any("raw_response" in i.message for i in issues)
+
+    # 2. Exposición de question
+    rec_q = [{"case_id": "c2", "question": "¿Pregunta no permitida?"}]
+    ok, issues = check_privacy_compliance_in_data(rec_q, gold_questions=gold_q, source_name="test_q")
+    assert ok is False
+    assert any("question" in i.message for i in issues)
+
+    # 3. Exposición de texto en fragmentos
+    rec_chunk = [{
+        "case_id": "c3",
+        "retrieved_chunks": [{"chunk_id": "ch1", "texto": "Fragmento privado del PDF"}],
+    }]
+    ok, issues = check_privacy_compliance_in_data(rec_chunk, gold_questions=gold_q, source_name="test_chunk")
+    assert ok is False
+    assert any("texto" in i.message for i in issues)
+
+    # 4. Enunciado literal de gold_questions
+    rec_gold = [{"case_id": "c4", "response": "¿Cuál es el procedimiento de convalidación académica según el RCU-0161-2021?"}]
+    ok, issues = check_privacy_compliance_in_data(rec_gold, gold_questions=gold_q, source_name="test_gold")
+    assert ok is False
+    assert any("pregunta gold" in i.message for i in issues)
+
+    # 5. Clave de API
+    rec_key = [{"case_id": "c5", "metadata": "sk-proj-1234567890abcdef"}]
+    ok, issues = check_privacy_compliance_in_data(rec_key, gold_questions=gold_q, source_name="test_key")
+    assert ok is False
+    assert any("credencial" in i.message for i in issues)
+
+    # 6. Registro saneado conforme
+    rec_clean = [{
+        "case_id": "GQ004",
+        "condition": "A_sin_defensa",
+        "abstained": True,
+        "abstention_reason": "citas_invalidas_o_ausentes",
+        "citations_valid": False,
+        "citations_invalid_count": 0,
+        "latency_pipeline_seconds": 24.5,
+    }]
+    ok, issues = check_privacy_compliance_in_data(rec_clean, gold_questions=gold_q, source_name="test_clean")
+    assert ok is True
+    assert len(issues) == 0
+
+
+def test_paper_tables_generation(tmp_path):
+    """Verifica la generación de las 10 tablas científicas en CSV y Markdown."""
+    tables_dir = tmp_path / "tables"
+    collection = generate_all_paper_tables()
+    assert len(collection.tables) == 10
+
+    saved = collection.save_all(tables_dir)
+    assert len(saved) == 10
+
+    for tid, (csv_p, md_p) in saved.items():
+        assert csv_p.exists() and csv_p.stat().st_size > 0
+        assert md_p.exists() and md_p.stat().st_size > 0
+
+        # Validar que el CSV se puede parsear sin error
+        with csv_p.open(encoding="utf-8") as f:
+            reader = csv.reader(f)
+            rows = list(reader)
+            assert len(rows) >= 2  # Encabezado + al menos 1 fila
+
+        # Validar que el Markdown contiene encabezados y separadores
+        md_content = md_p.read_text(encoding="utf-8")
+        assert "| " in md_content
+        assert "| ---" in md_content
+
+
+def test_scientific_figures_generation(tmp_path):
+    """Verifica la generación de las 6 figuras científicas en SVG y PNG."""
+    fig_dir = tmp_path / "figures"
+    saved = generate_all_paper_figures(output_dir=fig_dir)
+    assert len(saved) == 6
+
+    for fid, (svg_p, png_p) in saved.items():
+        assert svg_p.exists() and svg_p.stat().st_size > 0
+        assert png_p.exists() and png_p.stat().st_size > 0
+
+        # Validar estructura XML de SVG
+        svg_text = svg_p.read_text(encoding="utf-8")
+        assert svg_text.startswith("<svg")
+        assert svg_text.strip().endswith("</svg>")
+
+        # Validar carga de imagen PNG con Pillow
+        with Image.open(png_p) as img:
+            assert img.format == "PNG"
+            assert img.size[0] >= 800
+            assert img.size[1] >= 400
+
+
+def test_missing_values_not_plotted_as_zero(tmp_path):
+    """Verifica que valores faltantes o pendientes no se representen como 0% en figuras."""
+    fig_dir = tmp_path / "figs_no_zero"
+
+    # Figura 1 sin datos evaluables (T12 pendiente)
+    s1, p1 = generate_fig_exactitud_abc(accuracy_data={}, output_dir=fig_dir)
+    svg1 = s1.read_text(encoding="utf-8")
+    assert "Evaluación Humana Pendiente" in svg1
+    assert "Denominador evaluable: n=0" in svg1
+
+    # Figura 4 sin métricas de seguridad T19
+    s4, p4 = generate_fig_asr_condicion(security_data=None, output_dir=fig_dir)
+    svg4 = s4.read_text(encoding="utf-8")
+    assert "MÉTRICAS DE SEGURIDAD CON LLM REAL PENDIENTES" in svg4
+    assert "Jamás se grafica como 0% de ataque" in svg4
+
+
+def test_integration_with_t18_and_pending_t12(tmp_path):
+    """Verifica la integración con T18 y el tratamiento formal de T12 pendiente."""
+    out_dir = tmp_path / "paper_artifacts_t18"
+    res = generate_paper_artifacts(
+        output_dir=out_dir,
+        annotations_path="results/t12_evaluacion/t12_evaluacion_ciega.csv",
+        mapping_path="results/t12_evaluacion/t12_material_ciego.json",
+        traces_path="results/llm_baseline/traces.json",
+    )
+
+    manifest = res["manifest"]
+    assert manifest["auditoria_resumen"]["privacidad_conforme"] is True
+    assert (out_dir / "audit_report.json").exists()
+    assert (out_dir / "audit_report.md").exists()
+    assert (out_dir / "manifest.json").exists()
+    assert (out_dir / "DOCUMENTACION_REPRODUCCION.md").exists()
+    assert (out_dir / "tables").exists()
+    assert (out_dir / "figures").exists()
+
+    # Tabla 3 de exactitud debe reportar formalmente 'Pendiente T12'
+    t3_md = (out_dir / "tables/tabla03_exactitud_respuestas.md").read_text(encoding="utf-8")
+    assert "Pendiente" in t3_md
+    assert "0/0" in t3_md
+
+
+def test_absence_of_t19_metrics_handling(tmp_path):
+    """Verifica que ante la ausencia de métricas T19, el sistema informe N/A sin fallar ni inventar datos."""
+    out_dir = tmp_path / "paper_no_t19"
+    res = generate_paper_artifacts(
+        output_dir=out_dir,
+        security_metrics_path=None,
+    )
+
+    # Tabla 6 de ASR
+    t6_md = (out_dir / "tables/tabla06_seguridad_asr.md").read_text(encoding="utf-8")
+    assert "Pendiente (T19 asignada a León)" in t6_md
+    assert "mock_extractivo_v1" in t6_md
+    assert "NO mide obediencia de LLM" in t6_md
+
+
+def test_protection_against_accidental_overwrite(tmp_path):
+    """Verifica que se impida la sobrescritura accidental de evidencias existentes."""
+    out_dir = tmp_path / "existing_run"
+    out_dir.mkdir()
+    dummy_file = out_dir / "dummy.txt"
+    dummy_file.write_text("datos previos", encoding="utf-8")
+
+    # Sin force=True debe lanzar FileExistsError
+    with pytest.raises(FileExistsError):
+        generate_paper_artifacts(output_dir=out_dir, force=False)
+
+    # Con force=True debe permitir la regeneración
+    res = generate_paper_artifacts(output_dir=out_dir, force=True)
+    assert res["output_dir"] == str(out_dir)
+    assert (out_dir / "manifest.json").exists()
+
+
+def test_force_cannot_overwrite_protected_or_historical_paths():
+    """Verifica que --force no pueda sobrescribir evidencias históricas, datos ni áreas privadas (Punto 8)."""
+    # 1. Evidencia histórica de T11
+    with pytest.raises(PermissionError, match="Operación bloqueada"):
+        generate_paper_artifacts(output_dir="results/llm_baseline", force=True)
+
+    # 2. Evidencia histórica mock
+    with pytest.raises(PermissionError, match="Operación bloqueada"):
+        generate_paper_artifacts(output_dir="results/offline_20261117_final", force=True)
+
+    # 3. Directorio de datos
+    with pytest.raises(PermissionError, match="Operación bloqueada"):
+        generate_paper_artifacts(output_dir="data", force=True)
+
+    # 4. Directorio privado
+    with pytest.raises(PermissionError, match="Operación bloqueada"):
+        generate_paper_artifacts(output_dir="results/llm_baseline_local", force=True)
+
+
+def test_critical_audit_error_blocks_generation(tmp_path):
+    """Verifica que una corrida con errores críticos de auditoría no produzca resultados válidos (Punto 6)."""
+    bad_run = tmp_path / "bad_run"
+    bad_run.mkdir()
+    # Manifiesto con hash deliberadamente corrompido
+    (bad_run / "manifest.json").write_text(
+        json.dumps({
+            "run_id": "bad_run_1",
+            "proveedor": "local",
+            "modelo": "qwen2.5:3b",
+            "index_sha256": "hash_totalmente_corrompido_00000000000000000000000000000000",
+        }),
+        encoding="utf-8",
+    )
+    (bad_run / "traces.json").write_text(json.dumps([]), encoding="utf-8")
+
+    out_dir = tmp_path / "out_blocked"
+
+    # Sin force debe abortar con RuntimeError
+    with pytest.raises(RuntimeError, match="Generación abortada: la auditoría experimental detectó errores críticos"):
+        generate_paper_artifacts(output_dir=out_dir, run_paths=[bad_run], force=False)
+
+    # Con force=True genera artefactos explícitamente marcados como RECHAZADOS / NO VÁLIDOS
+    res = generate_paper_artifacts(output_dir=out_dir, run_paths=[bad_run], force=True)
+    assert res["manifest"]["valido_para_publicacion"] is False
+    assert "ARTEFACTOS DE AUDITORÍA RECHAZADOS" in res["manifest"].get("advertencia_critica", "")
+
+
+def test_no_causal_claims_in_mode_a_artifacts(tmp_path):
+    """Verifica que no se formulen afirmaciones causales no demostradas sobre las abstenciones de T11 (Punto 2)."""
+    out_dir = tmp_path / "out_causal_check"
+    generate_paper_artifacts(output_dir=out_dir)
+
+    t5_md = (out_dir / "tables/tabla05_tasas_abstencion.md").read_text(encoding="utf-8")
+    t10_md = (out_dir / "tables/tabla10_comparaciones_pareadas_y_cobertura.md").read_text(encoding="utf-8")
+    f1_svg = (out_dir / "figures/fig1_exactitud_abc.svg").read_text(encoding="utf-8")
+    f3_svg = (out_dir / "figures/fig3_tasas_abstencion.svg").read_text(encoding="utf-8")
+
+    # Ninguno debe atribuir causalidad no demostrada al prompt
+    all_content = t5_md + t10_md + f1_svg + f3_svg
+    assert "Asimetría Metodológica en Modo A" not in all_content
+    assert "Ausencia de directiva de citas formales en prompt de Modo A activa filtro" not in all_content
+    # Debe consignar el motivo canónico formal
+    assert "citas_invalidas_o_ausentes" in all_content
+    assert "no se formulan afirmaciones causales no demostradas" in all_content
+
+
+def test_privacy_audit_does_not_leak_detected_content():
+    """Verifica que el reporte de incidencias no reproduzca secretos ni textos privados detectados (Punto 9)."""
+    secret = "sk-proj-supersecreto1234567890abcdef"
+    gold_text = "¿Cuál es la regulación específica del régimen de matrícula según el RCU-0127-2020?"
+    dirty_records = [
+        {"case_id": "c1", "api_key": secret},
+        {"case_id": "c2", "response": gold_text},
+    ]
+
+    ok, issues = check_privacy_compliance_in_data(dirty_records, gold_questions=[gold_text], source_name="test")
+    assert ok is False
+    assert len(issues) >= 2
+
+    for iss in issues:
+        # El secreto y el texto gold NO deben figurar en el mensaje de la incidencia
+        assert secret not in iss.message
+        assert gold_text not in iss.message
+        assert "omitid" in iss.message.lower()
+
+
+def test_historical_code_evolution_distinguished_from_evidence_alteration():
+    """Verifica que la auditoría distinga la evolución legítima del código de una alteración de datos (Punto 5)."""
+    res = audit_run("results/llm_baseline")
+    # Los datos originales (índice y gold) deben estar íntegros
+    assert res.hashes_status["index_sha256"]["status"] == "verified"
+    assert res.hashes_status["gold_sha256"]["status"] == "verified"
+
+    # La evolución de código debe clasificarse como SEVERITY_INFO
+    code_issues = [i for i in res.issues if i.code == "HISTORICAL_CODE_EVOLUTION"]
+    assert len(code_issues) >= 1
+    assert code_issues[0].severity == SEVERITY_INFO
+    assert "evolución legítima" in code_issues[0].message
+
+
+def test_cli_execution_paper_artifacts(tmp_path):
+    """Verifica la ejecución mediante el script reproducible scripts/generate_paper_artifacts.py."""
+    out_dir = tmp_path / "cli_artifacts"
+    cmd = [
+        sys.executable,
+        "scripts/generate_paper_artifacts.py",
+        "--output",
+        str(out_dir),
+    ]
+
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    assert proc.returncode == 0, f"Error en CLI: {proc.stderr}"
+    assert "✓ Generación exitosa:" in proc.stdout
+    assert (out_dir / "manifest.json").exists()
+    assert (out_dir / "audit_report.json").exists()
+    assert (out_dir / "tables/tabla01_configuracion_experimental.csv").exists()
+    assert (out_dir / "figures/fig1_exactitud_abc.svg").exists()
+    assert (out_dir / "figures/fig1_exactitud_abc.png").exists()
+
+    # Validar que el manifiesto contiene los hashes de entradas y salidas
+    manifest = json.loads((out_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert len(manifest["hashes_salidas"]) > 0
+    assert len(manifest["hashes_entradas"]) > 0

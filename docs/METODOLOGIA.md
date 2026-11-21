@@ -125,3 +125,48 @@ paráfrasis, idiomas y conjuntos de validación independientes, múltiples semil
 revisión humana y un modelo real configurado. Umbral 0.12 es heurístico sin calibrar.
 El manifiesto actual identifica nombre de modelo en corridas locales; para un estudio
 publicable también se debe registrar su digest exacto y entorno de ejecución.
+
+## Auditoría experimental y generación de artefactos para el artículo científico (T20)
+
+Para garantizar la integridad científica y la verificabilidad de los resultados presentados
+en el artículo científico, se establece el marco automatizado de auditoría experimental y
+generación de artefactos (`src/cs_rag_security/evaluation/audit_experiment.py`, `tables.py`,
+`figures.py`, `paper.py` y `scripts/generate_paper_artifacts.py`).
+
+### 1. Marco de auditoría experimental
+- **Procedencia criptográfica**: Todo artefacto experimental publicable se audita contrastando los
+  hashes SHA-256 de los insumos en disco (`index.json`, `gold_questions.json`, `attacks.jsonl`,
+  código fuente `src/` y scripts ejecutables `scripts/`) contra los declarados en los manifiestos.
+- **Clasificación de corridas**: Se clasifican unívocamente las corridas según su naturaleza:
+  - `real_llm`: inferencia con modelo de lenguaje real (local u OpenAI-compatible) bajo protocolo formal.
+  - `pilot_llm`: corridas exploratorias individuales; no sustituyen la evaluación sistemática.
+  - `mock_offline`: simulación mock con generador extractivo; diagnóstico de flujo que no mide obediencia de LLM.
+  - `synthetic_test`: trazas sintéticas de pruebas unitarias.
+- **Invariantes y pareamiento**: Se valida que toda corrida comparativa respete idénticos parámetros
+  (`seed=42`, `temperature=0`, `top_k=5`) y que las consultas compartan exactamente los mismos
+  fragmentos recuperados (`hits`). Se audita la ausencia de ejecuciones duplicadas y el desbalance pareado.
+- **Privacidad estricta**: Se verifica automáticamente que ningún artefacto destinado a control de
+  versiones o publicación contenga textos de preguntas gold, fragmentos del corpus, salidas crudas del
+  modelo (`raw_response`) o credenciales/tokens de API.
+
+### 2. Reglas de reporte en tablas y figuras científicas
+- **Tratamiento estricto de denominadores cero**: Toda tasa o proporción con denominador cero genera
+  inequívocamente `null` / `N/A` / `Pendiente (0/0)`. Jamás se inventan datos ni se grafica una
+  evaluación pendiente como 0%.
+- **Separación Pipeline vs. LLM Raw**: Las tablas y figuras de exactitud y citas presentan de forma
+  desacoplada el desempeño de la salida final post-pipeline y la salida directa del generador (`raw_response`),
+  permitiendo cuantificar el efecto protector y los falsos rechazos introducidos por el validador estricto.
+- **Delimitación de métricas de seguridad (ASR)**:
+  - La medición de ASR con LLM real corresponde a la tarea T19 (asignada a León) y se reporta formalmente
+    como `Pendiente (T19 asignada a León)` hasta su ejecución empírica.
+  - Los resultados obtenidos con mock extractivo (A: 4/4, B: 4/4, C: 1/4) se identifican explícitamente
+    como diagnósticos sintéticos que no constituyen ASR ni demuestran robustez del modelo.
+- **Exportación dual reproducible**:
+  - Tablas: Formato CSV plano estándar (para análisis con R / Python) y Markdown estructurado con alineación.
+  - Figuras: Formato vectorial SVG estándar y formato ráster de alta resolución PNG (mediante Pillow,
+    sin dependencias de GUI ni bibliotecas no declaradas). Todo gráfico incluye barras, ejes, unidades,
+    denominadores muestrales ($n$) y notas metodológicas explícitas.
+- **Inmutabilidad y protección contra sobrescritura**: Toda generación de artefactos verifica la ruta de salida
+  y lanza `FileExistsError` si el directorio ya existe y contiene archivos, requiriendo autorización
+  explícita (`force=True`) para su regeneración. Cada paquete de resultados incluye un `manifest.json`
+  que acredita los hashes SHA-256 de todas las entradas consumidas y salidas producidas.
