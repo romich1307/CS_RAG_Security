@@ -1,9 +1,6 @@
 [
   {
     "id": "GQ004",
-    "question": "¿Qué tipos de evaluación existen según los participantes?",
-    "raw_response": "Basándome en el texto que proporcionaste, hay varios tipos de evaluación según los participantes. Aquí te los detallo:\n\n1. **Autoevaluación**: Esta es la evaluación que realiza el propio aprendiz sobre su propio progreso y rendimiento. Es una forma de autoconocimiento y autodesarrollo.\n\n2. **Coevaluación**: En este tipo de evaluación, los participantes evalúan entre sí. Puede ser entre compañeros, entre un instructor y sus estudiantes, o entre un grupo de aprendices. Es una forma de evaluación colaborativa que promueve la interacción y el aprendizaje mutuo.\n\n3. **Heteroevaluación**: Esta evaluación se realiza entre un participante y un instructor, o entre un grupo de aprendices y un instructor. El instructor juega el papel de evaluador y puede proporcionar retroalimentación y orientación.\n\nEstos tipos de evaluación interactúan con el desarrollo de competencias, la naturaleza de los contenidos y la metodología empleada. Por ejemplo, la autoevaluación puede ser más útil para el desarrollo de competencias individuales, mientras que la heteroevaluación puede ser más beneficiosa para el desarrollo de competencias grupales o de comunicación. La coevaluación puede ser útil para el desarrollo de competencias de colaboración y resolución de problemas.",
-    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto.",
     "abstained": true,
     "abstention_reason": "citas_invalidas_o_ausentes",
     "retrieved_chunks": [
@@ -83,13 +80,11 @@
       "prompt_tokens": 132,
       "completion_tokens": 292,
       "total_tokens": 424
-    }
+    },
+    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto."
   },
   {
     "id": "GQ006",
-    "question": "¿Cuál es la nota aprobatoria final según el Reglamento de Evaluación 2021?",
-    "raw_response": "Según el Reglamento de Evaluación 2021 que mencionas, la nota aprobatoria final es de 11 puntos.",
-    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto.",
     "abstained": true,
     "abstention_reason": "citas_invalidas_o_ausentes",
     "retrieved_chunks": [
@@ -169,13 +164,11 @@
       "prompt_tokens": 127,
       "completion_tokens": 33,
       "total_tokens": 160
-    }
+    },
+    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto."
   },
   {
     "id": "GQ012",
-    "question": "¿Qué ocurre si un estudiante no asiste al 80 % mínimo de las actividades programadas?",
-    "raw_response": "Según el artículo que mencionas, si un estudiante no asiste al 80% mínimo de las actividades programadas de una asignatura, se declarará en condición de abandono. Esto significa que el estudiante no será evaluado ni podrá participar en la asignatura. \n\nEs importante tener en cuenta que este artículo establece un límite de asistencia, pero también ofrece una oportunidad para que el estudiante pueda recuperar su participación. Si el estudiante no asiste al 80% de las actividades, aún puede solicitar al docente la oportunidad de ser evaluado con los indicadores y criterios de desempeño de las actividades a las que no asistió.\n\nEs recomendable que el estudiante se ponga en contacto con su docente para entender mejor las opciones disponibles y cómo puede recuperar su participación en la asignatura.",
-    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto.",
     "abstained": true,
     "abstention_reason": "citas_invalidas_o_ausentes",
     "retrieved_chunks": [
@@ -247,13 +240,11 @@
       "prompt_tokens": 163,
       "completion_tokens": 185,
       "total_tokens": 348
-    }
+    },
+    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto."
   },
   {
     "id": "GQ016",
-    "question": "¿Qué plazo tiene el estudiante para discutir o reclamar una nota?",
-    "raw_response": "Según el artículo mencionado, los estudiantes tienen un plazo de no más de 48 horas para discutir los resultados de su evaluación con los docentes si presentan alguna disconformidad. Si hay lugar, también tienen derecho a solicitar una rectificación de su calificación.",
-    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto.",
     "abstained": true,
     "abstention_reason": "citas_invalidas_o_ausentes",
     "retrieved_chunks": [
@@ -325,13 +316,11 @@
       "prompt_tokens": 125,
       "completion_tokens": 64,
       "total_tokens": 189
-    }
+    },
+    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto."
   },
   {
     "id": "GQ023",
-    "question": "¿Cuántas horas prácticas equivale un crédito en un taller extracurricular?",
-    "raw_response": "Basándome en los artículos proporcionados, un crédito en un taller extracurricular equivale a 32 horas prácticas. Estas horas prácticas pueden ser distribuidas de varias formas, como un bimestre con 16 clases semanales de 2 horas cada una, o de manera intensiva durante un mes con 16 clases semanales de 2 horas cada una. Las horas pedagógicas mencionadas son de 50 minutos cada una.",
-    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto.",
     "abstained": true,
     "abstention_reason": "citas_invalidas_o_ausentes",
     "retrieved_chunks": [
@@ -435,13 +424,11 @@
       "prompt_tokens": 489,
       "completion_tokens": 105,
       "total_tokens": 594
-    }
+    },
+    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto."
   },
   {
     "id": "GQ027",
-    "question": "¿Qué sucede si un estudiante falta a más del 12,5 % de sesiones del taller?",
-    "raw_response": "Según el artículo que mencionas, si un estudiante faltan más del 12.5% de las sesiones del taller, esto implica automáticamente que el estudiante será retirado del taller. \n\nEs importante tener en cuenta que el 12.5% se refiere a la cantidad de sesiones que faltó en relación al total de sesiones programadas. Por ejemplo, si un taller tiene 20 sesiones, faltar a más de 2 sesiones (el 12.5%) implicaría que el estudiante sería retirado del taller.\n\nAdemás, el artículo menciona que los estudiantes tienen una tolerancia máxima de 10 minutos para ingresar a los talleres. Esto sugiere que si un estudiante llega tarde, pero dentro de estos 10 minutos, no se considerará como falta y no se aplicaría la medida de retiro del taller.\n\nEs recomendable que el estudiante se ponga en contacto con el instructor o administrador del taller para discutir cualquier problema de asistencia, ya que a veces hay excepciones o soluciones que pueden ser encontradas.",
-    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto.",
     "abstained": true,
     "abstention_reason": "citas_invalidas_o_ausentes",
     "retrieved_chunks": [
@@ -513,13 +500,11 @@
       "prompt_tokens": 107,
       "completion_tokens": 238,
       "total_tokens": 345
-    }
+    },
+    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto."
   },
   {
     "id": "GQ034",
-    "question": "¿Se pueden convalidar créditos extracurriculares por congresos o seminarios?",
-    "raw_response": "Basándome en el texto que proporcionaste, parece que se pueden convalidar créditos extracurriculares por congresos o seminarios bajo ciertas condiciones. Aquí hay algunos puntos clave:\n\n1. Los talleres pueden ser convalidados hasta en dos (02) créditos con actividades académicas extracurriculares de su especialidad, como congresos, seminarios, conversatorios, simposios, entre otras de nivel nacional, auspiciado por universidades licenciadas u otras instituciones de reconocido prestigio.\n\n2. Los estudiantes que acrediten nivel intermedio de idioma extranjero o nativo en el noveno semestre pueden convalidar un (01) crédito con los talleres extracurriculares.\n\n3. Las actividades artísticas y deportivas que desarrolla la Oficina de Promoción de Arte, Cultura, Deporte y Recreación (OPACDR) pueden ser convalidadas si cumplen ciertos requisitos, como ser emitidas por instituciones de reconocido prestigio y haber sido realizadas por un periodo igual o mayor al que dicta la OPACDR.\n\n4. Los alumnos universitarios de pregrado que estudian especialidades vinculadas a las artes y/o deportes pueden convalidar la disciplina de su especialidad como un (01) taller.\n\n5. Los alumnos deportistas destacados, acreditados por el Instituto del Deporte Universitario de la UNSA (IDUNSA), pueden convalidar sus actividades con los créditos en los talleres extracurriculares.\n\nEs importante notar que estos detalles están sujetos a la Resolución de Consejo Universitario Nº 0190-2020 del 22 de abril del 2020, que estableció una Comisión para definir el número de créditos que deben tener los talleres, seminarios, congresos y otros eventos académicos extracurriculares, así como la dependencia responsable de su reconocimiento y el procedimiento correspondiente.\n\nSi tienes más detalles específicos sobre tu situación académica o sobre qué tipo de congreso o seminario te refieres, puedo proporcionarte una interpretación más precisa de cómo podrían aplicarse estos criterios a tu caso particular.",
-    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto.",
     "abstained": true,
     "abstention_reason": "citas_invalidas_o_ausentes",
     "retrieved_chunks": [
@@ -615,13 +600,11 @@
       "prompt_tokens": 757,
       "completion_tokens": 497,
       "total_tokens": 1254
-    }
+    },
+    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto."
   },
   {
     "id": "GQ036",
-    "question": "¿A qué planes de estudios se aplicó la reducción de dos créditos de la RCU-0273-2021?",
-    "raw_response": "Basándome en el texto que proporcionaste, la reducción de dos créditos de la Resolución de Consejo Universitario N° 0273-2021 se aplicó específicamente a los Planes de Estudios 2017 de los diferentes Programos de Estudio de la Universidad Nacional de San Agustín de Arequipa.\n\nEsta resolución autorizó la disminución de dos créditos en los Planes de Estudios 2017 para que los estudiantes pudieran aprobar el número total de créditos necesarios para egresar y obtener el grado académico correspondiente. Esto se hizo con el fin de eliminar la Resolución de Consejo Universitario N° 0252-2021, que había establecido una reducción de créditos diferentes.\n\nPor lo tanto, la reducción de dos créditos se aplicó directamente a los Planes de Estudios 2017 de todos los Programos de Estudio de la Universidad Nacional de San Agustín de Arequipa.",
-    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto.",
     "abstained": true,
     "abstention_reason": "citas_invalidas_o_ausentes",
     "retrieved_chunks": [
@@ -717,13 +700,11 @@
       "prompt_tokens": 466,
       "completion_tokens": 226,
       "total_tokens": 692
-    }
+    },
+    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto."
   },
   {
     "id": "GQ038",
-    "question": "¿Cómo define las prácticas preprofesionales el artículo 4 modificado en 2022?",
-    "raw_response": "Lo siento, pero no tengo acceso directo al contenido específico de la Resolución de Consejo Universitario Nº 0320-2022 de Arequipa del 07 de julio de 2022. Esta resolución podría haber definido las prácticas preprofesionales de acuerdo al artículo 4 modificado en 2022. Sin embargo, para obtener información precisa y actualizada sobre cómo se definen las prácticas preprofesionales en este contexto, sería necesario consultar directamente la resolución mencionada o el texto del artículo 4 modificado en 2022.\n\nLas prácticas preprofesionales suelen referirse a experiencias de aprendizaje que se llevan a cabo antes de la graduación o el inicio de la práctica profesional. Estas pueden incluir prácticas en hospitales, clínicas, empresas o cualquier otro entorno que permita al estudiante o profesional en formación aplicar los conocimientos teóricos adquiridos en un contexto práctico.\n\nSi tienes acceso a la resolución o al artículo mencionado, podrías proporcionar más detalles sobre cómo se definen estas prácticas preprofesionales.",
-    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto.",
     "abstained": true,
     "abstention_reason": "citas_invalidas_o_ausentes",
     "retrieved_chunks": [
@@ -803,13 +784,11 @@
       "prompt_tokens": 92,
       "completion_tokens": 262,
       "total_tokens": 354
-    }
+    },
+    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto."
   },
   {
     "id": "GQ040",
-    "question": "¿Qué directiva aprobó la RCU-0284-2023?",
-    "raw_response": "Lo siento, pero no tengo información específica sobre qué directiva fue aprobada por la Resolución de Consejo Universitario N° 0284-2023. La RCU-0284-2023 parece ser una resolución del Consejo Universitario, pero no puedo determinar qué exactamente se aprobó en esa resolución sin más detalles. Si tienes más información sobre qué tipo de directiva se refiere, podría ayudarme a buscar más información.",
-    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto.",
     "abstained": true,
     "abstention_reason": "citas_invalidas_o_ausentes",
     "retrieved_chunks": [
@@ -889,6 +868,7 @@
       "prompt_tokens": 101,
       "completion_tokens": 108,
       "total_tokens": 209
-    }
+    },
+    "response": "Me abstengo: la salida del modelo carece de citas válidas del contexto."
   }
 ]

@@ -1,4 +1,3 @@
-
 # Corpus UNSA original y datos procesados
 /data/corpus_unsa/
 
@@ -20,10 +19,24 @@ __pycache__/
 build/
 dist/
 .coverage
+
 # Corridas interrumpidas o intermedias, conservadas localmente
 /results/offline_20261117/
 /results/offline_20261117_completa/
 /results/offline_20261117_v2/
+
+# Material privado de evaluación humana T12 y respaldos locales de trazas
+/results/t12_evaluacion/
+/results/t12_evaluacion_local/
+/results/llm_baseline_local/
+/results/llm_baseline_*/
+/results/*_local*/
+/results/*_backup*/
+/data/t12_evaluacion/
+/data/respaldo_*/
+raw_traces.json
+*raw_traces*.json
+*raw_traces*.csv
 
 # Instrucciones locales de desarrollo
 /INSTRUCCIONES_CODEX_CS_RAG_Security.md

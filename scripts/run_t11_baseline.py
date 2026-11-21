@@ -3,20 +3,24 @@
 Condición experimental: A_sin_defensa (Baseline RAG sin mecanismos defensivos).
 Modelo: qwen2.5:3b vía Ollama local (http://127.0.0.1:11434/api/chat).
 Parámetros: temperature=0, seed=42, top_k=5, documental=True.
+
+Protección experimental:
+- Genera un directorio único por corrida (results/llm_baseline_<timestamp>).
+- Impide reutilizar o sobrescribir directorios existentes bajo cualquier circunstancia.
+- Protege los artefactos versionados retirando enunciados y textos privados.
 """
 
 import argparse
 import csv
-import hashlib
 import importlib.metadata
 import json
 import os
 import platform
 import re
 import subprocess
-import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional, Union
 
 from cs_rag_security.ingestion import digest, read_json
 from cs_rag_security.pipeline import answer
@@ -39,7 +43,7 @@ SELECTED_QUESTION_IDS = [
 TEST_QUESTION_ID = 'GQ001'
 
 
-def get_git_commit():
+def get_git_commit() -> str:
     try:
         res = subprocess.run(
             ['git', 'rev-parse', 'HEAD'],
@@ -73,7 +77,15 @@ def determine_abstention_reason(res: dict) -> str:
     return 'abstencion_otra'
 
 
-def execute_question(idx: Index, q_data: dict, mode: str, provider: str, top_k: int, documental: bool, seed: int):
+def execute_question(
+    idx: Index,
+    q_data: dict,
+    mode: str,
+    provider: str,
+    top_k: int,
+    documental: bool,
+    seed: int
+) -> dict:
     q_id = q_data['id']
     question = q_data['pregunta']
 
@@ -108,6 +120,7 @@ def execute_question(idx: Index, q_data: dict, mode: str, provider: str, top_k: 
         bool(final_citations) and all(c in allowed for c in final_citations)
     ) if not abstained else False
 
+    # Registro completo (para respaldo local)
     record = {
         'id': q_id,
         'question': question,
@@ -145,14 +158,57 @@ def execute_question(idx: Index, q_data: dict, mode: str, provider: str, top_k: 
         'parameters': gen_meta.get('parameters', {'temperature': 0, 'seed': seed}),
         'latency_seconds': gen_meta.get('latency_seconds', res.get('seconds')),
         'pipeline_seconds': res.get('seconds'),
-        'tokens': tokens,  # null si no fue reportado
+        'tokens': tokens,
     }
     return record
 
 
-def build_manifest(out_dir: Path, evaluated_ids: list, mode: str, provider: str, model: str, model_digest: str, top_k: int, documental: bool, seed: int, started_utc: str, finished_utc: str):
-    index_path = Path('data/vector_db/index.json')
-    gold_path = Path('data/corpus_unsa/03_Preguntas_Respuestas/gold_questions.json')
+def sanitize_record_for_git(record: dict) -> dict:
+    """Elimina enunciados gold, fragmentos de texto y salidas raw del LLM para cumplir reglas de privacidad."""
+    retrieved = [
+        {k: v for k, v in c.items() if k != 'texto'}
+        for c in record.get('retrieved_chunks', [])
+    ]
+    accepted = [
+        {k: v for k, v in c.items() if k != 'texto'}
+        for c in record.get('accepted_chunks', [])
+    ]
+    sanitized = {
+        'id': record['id'],
+        'abstained': record['abstained'],
+        'abstention_reason': record['abstention_reason'],
+        'retrieved_chunks': retrieved,
+        'accepted_chunks': accepted,
+        'accepted_ids': record['accepted_ids'],
+        'citations_raw': record['citations_raw'],
+        'citations_final': record['citations_final'],
+        'citations_valid': record['citations_valid'],
+        'model': record['model'],
+        'provider': record['provider'],
+        'parameters': record['parameters'],
+        'latency_seconds': record['latency_seconds'],
+        'pipeline_seconds': record['pipeline_seconds'],
+        'tokens': record['tokens'],
+        'response': record['response'],
+    }
+    return sanitized
+
+
+def build_manifest(
+    out_dir: Path,
+    evaluated_ids: list,
+    mode: str,
+    provider: str,
+    model: str,
+    model_digest: str,
+    top_k: int,
+    documental: bool,
+    seed: int,
+    started_utc: str,
+    finished_utc: str,
+    index_path: Path = Path('data/vector_db/index.json'),
+    gold_path: Path = Path('data/corpus_unsa/03_Preguntas_Respuestas/gold_questions.json')
+) -> dict:
     src_hashes = {str(p): digest(p) for p in sorted(Path('src').rglob('*.py'))}
 
     manifest = {
@@ -184,92 +240,27 @@ def build_manifest(out_dir: Path, evaluated_ids: list, mode: str, provider: str,
         'total_preguntas': len(evaluated_ids),
         'condiciones_experimentales': {
             'aislamiento_gold': 'La respuesta gold nunca se indexa, no se pasa al pipeline ni se envía al LLM.',
-            'verificacion_citas': 'Validador estricto compartido por A, B y C a nivel de pipeline: requiere formato [archivo.pdf p. N] perteneciente al conjunto de fragmentos aceptados. El modo A no utiliza instrucciones defensivas ni de citación en su prompt, por lo que respuestas sin citas válidas resultan en abstención del pipeline.',
+            'verificacion_citas': 'Validador estricto compartido por A, B y C a nivel de pipeline: requiere formato [archivo.pdf p. N] perteneciente al conjunto de fragmentos aceptados. En las 10 consultas ejecutadas del baseline A, al no incluir instrucciones de formato en el prompt, el modelo omitió citas válidas en esos 10 casos, resultando en abstención del pipeline.',
             'preservacion_fallos': 'Trazas completas con raw_response y respuesta validada, preservando abstenciones.',
-            'tratamiento_abstenciones': "Las abstenciones no se consideran automáticamente respuestas incorrectas; conforme a la rúbrica v0.1 se asigna calidad_respuesta = 'no_aplica' y se audita raw_response por separado.",
+            'tratamiento_abstenciones': "Las abstenciones no se consideran automáticamente respuestas incorrectas; conforme a la rúbrica v0.2 se asigna calidad_respuesta = 'no_aplica' y se audita raw_response por separado.",
         }
     }
     (out_dir / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8')
     return manifest
 
 
-def prepare_t12_blind_materials(out_dir: Path, records: list, corrida_id: str):
-    t12_cases = []
-    csv_rows = []
-
-    for idx, r in enumerate(records, start=1):
-        caso_ciego_id = f'CIEGO_{idx:02d}'
-        evaluacion_id = f'EVAL-T12-{idx:03d}'
-        q_id = r['id']
-
-        t12_cases.append({
-            'caso_ciego_id': caso_ciego_id,
-            'pregunta_id': q_id,
-            'pregunta': r['question'],
-            'tipo_consulta': 'documental',
-            'respuesta_a_evaluar': r['response'],
-            'raw_response_audit': r['raw_response'],
-            'abstained': r['abstained'],
-            'motivo_abstencion': r['abstention_reason'],
-            'evidencia_recuperada_sistema': r['accepted_chunks'],
-            # Nota: NUNCA se incluye 'respuesta_referencia' (gold) ni fuentes esperadas del gold en la evaluación a ciegas
-        })
-
-        csv_rows.append({
-            'evaluacion_id': evaluacion_id,
-            'corrida_id': corrida_id,
-            'caso_ciego_id': caso_ciego_id,
-            'pregunta_id': q_id,
-            'evaluador_id': 'leon',
-            'rubrica_version': '0.1',
-            'referencia_caso': f'results/llm_baseline/t12_material_ciego.json#{caso_ciego_id}',
-            'referencia_salida': f'results/llm_baseline/traces.json#{q_id}',
-            'referencia_contexto': f'results/llm_baseline/traces.json#{q_id}.accepted_chunks',
-            'referencia_manifiesto': 'results/llm_baseline/manifest.json',
-            'tipo_consulta': 'documental',
-            'evidencia_disponible': '',
-            'estado_revision': 'pendiente',
-            'tipo_salida': '',
-            'calidad_respuesta': '',
-            'abstencion_adecuada': '',
-            'cita_pertenece_contexto': '',
-            'cita_sustenta_respuesta': '',
-            'error_vigencia': '',
-            'justificacion': '',
-            'referencia_fuente': '',  # A ser completado por el evaluador en T12
-            'incidencia': '',
-            'revisado_por': '',
-            'fecha_revision': '',
-        })
-
-    (out_dir / 't12_material_ciego.json').write_text(json.dumps(t12_cases, ensure_ascii=False, indent=2), encoding='utf-8')
-
-    fieldnames = [
-        'evaluacion_id', 'corrida_id', 'caso_ciego_id', 'pregunta_id', 'evaluador_id',
-        'rubrica_version', 'referencia_caso', 'referencia_salida', 'referencia_contexto',
-        'referencia_manifiesto', 'tipo_consulta', 'evidencia_disponible', 'estado_revision',
-        'tipo_salida', 'calidad_respuesta', 'abstencion_adecuada', 'cita_pertenece_contexto',
-        'cita_sustenta_respuesta', 'error_vigencia', 'justificacion', 'referencia_fuente',
-        'incidencia', 'revisado_por', 'fecha_revision'
-    ]
-    with (out_dir / 't12_evaluacion_ciega.csv').open('w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(csv_rows)
-
-
 def write_traces_csv(out_dir: Path, records: list):
+    """Escribe trazas CSV con métricas, tokens y telemetría autorizada (sin texto privado)."""
     fieldnames = [
-        'id', 'question', 'abstained', 'abstention_reason', 'citations_valid',
+        'id', 'abstained', 'abstention_reason', 'citations_valid',
         'latency_seconds', 'pipeline_seconds', 'prompt_tokens', 'completion_tokens', 'total_tokens',
-        'model', 'provider', 'response', 'raw_response'
+        'model', 'provider', 'response'
     ]
     rows = []
     for r in records:
         tokens = r.get('tokens') or {}
         rows.append({
             'id': r['id'],
-            'question': r['question'],
             'abstained': r['abstained'],
             'abstention_reason': r['abstention_reason'],
             'citations_valid': r['citations_valid'],
@@ -281,7 +272,6 @@ def write_traces_csv(out_dir: Path, records: list):
             'model': r['model'],
             'provider': r['provider'],
             'response': r['response'],
-            'raw_response': r['raw_response'],
         })
     with (out_dir / 'traces.csv').open('w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -289,10 +279,106 @@ def write_traces_csv(out_dir: Path, records: list):
         writer.writerows(rows)
 
 
+def get_default_output_dir() -> Path:
+    timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
+    return Path('results') / f'llm_baseline_{timestamp}'
+
+
+def ensure_unique_output_dir(out_dir: Path) -> Path:
+    if out_dir.exists():
+        raise FileExistsError(
+            f"El directorio de salida ya existe y no puede ser reutilizado ni sobrescrito: {out_dir}"
+        )
+    out_dir.mkdir(parents=True, exist_ok=False)
+    return out_dir
+
+
+def run_baseline(
+    output_dir: Optional[Union[str, Path]] = None,
+    mode: str = 'A_sin_defensa',
+    model: str = 'qwen2.5:3b',
+    provider: str = 'local',
+    top_k: int = 5,
+    seed: int = 42,
+    model_digest: str = '357c53fb659c5076de1d65ccb0b397446227b71a42be9d1603d46168015c9e4b',
+    test_only: bool = False,
+    target_ids: Optional[list] = None,
+    index_path: Union[str, Path] = 'data/vector_db/index.json',
+    gold_path: Union[str, Path] = 'data/corpus_unsa/03_Preguntas_Respuestas/gold_questions.json',
+    save_raw_backup: bool = True,
+) -> Path:
+    if output_dir is None:
+        out_dir = get_default_output_dir()
+    else:
+        out_dir = Path(output_dir)
+
+    ensure_unique_output_dir(out_dir)
+
+    index_path = Path(index_path)
+    gold_path = Path(gold_path)
+
+    idx = Index.load(index_path)
+    gold_data = read_json(gold_path)
+    gold_by_id = {q['id']: q for q in gold_data['preguntas']}
+
+    if target_ids is None:
+        target_ids = [TEST_QUESTION_ID] if test_only else SELECTED_QUESTION_IDS
+
+    started_utc = datetime.now(timezone.utc).isoformat()
+    raw_records = []
+
+    for q_id in target_ids:
+        q_data = gold_by_id[q_id]
+        rec = execute_question(
+            idx=idx,
+            q_data=q_data,
+            mode=mode,
+            provider=provider,
+            top_k=top_k,
+            documental=True,
+            seed=seed,
+        )
+        raw_records.append(rec)
+
+    finished_utc = datetime.now(timezone.utc).isoformat()
+
+    # Sanitizar registros para versión Git
+    sanitized_records = [sanitize_record_for_git(r) for r in raw_records]
+
+    # Guardar traces.json sanitizado
+    traces_file = out_dir / ('test_traces.json' if test_only else 'traces.json')
+    traces_file.write_text(json.dumps(sanitized_records, ensure_ascii=False, indent=2), encoding='utf-8')
+
+    if not test_only:
+        write_traces_csv(out_dir, sanitized_records)
+        build_manifest(
+            out_dir=out_dir,
+            evaluated_ids=target_ids,
+            mode=mode,
+            provider=provider,
+            model=model,
+            model_digest=model_digest,
+            top_k=top_k,
+            documental=True,
+            seed=seed,
+            started_utc=started_utc,
+            finished_utc=finished_utc,
+            index_path=index_path,
+            gold_path=gold_path,
+        )
+
+        if save_raw_backup:
+            # Respaldo local privado fuera de Git
+            raw_traces_file = out_dir / 'raw_traces.json'
+            raw_traces_file.write_text(json.dumps(raw_records, ensure_ascii=False, indent=2), encoding='utf-8')
+
+    return out_dir
+
+
 def main():
     parser = argparse.ArgumentParser(description='Ejecutor T11 Baseline con Ollama')
     parser.add_argument('--test-only', action='store_true', help='Ejecutar únicamente la consulta piloto de prueba GQ001')
-    parser.add_argument('--output-dir', default='results/llm_baseline', help='Directorio de salida')
+    parser.add_argument('--output-dir', default=None, help='Directorio de salida único (por defecto: results/llm_baseline_<timestamp>)')
     parser.add_argument('--mode', default='A_sin_defensa', choices=['A_sin_defensa', 'B_defensa_basica', 'C_defensa_propuesta'])
     parser.add_argument('--model', default='qwen2.5:3b')
     parser.add_argument('--provider', default='local')
@@ -304,77 +390,18 @@ def main():
     os.environ['RAG_LOCAL_MODEL'] = args.model
     os.environ['RAG_LOCAL_URL'] = 'http://127.0.0.1:11434/api/chat'
 
-    out_dir = Path(args.output_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    idx = Index.load('data/vector_db/index.json')
-    gold_data = read_json('data/corpus_unsa/03_Preguntas_Respuestas/gold_questions.json')
-    gold_by_id = {q['id']: q for q in gold_data['preguntas']}
-
-    target_ids = [TEST_QUESTION_ID] if args.test_only else SELECTED_QUESTION_IDS
-
-    print(f"=== T11 Baseline Ollama ===")
-    print(f"Modo: {args.mode}")
-    print(f"Modelo: {args.model}")
-    print(f"Preguntas a ejecutar ({len(target_ids)}): {target_ids}")
-    print(f"Directorio de salida: {out_dir}")
-
-    started_utc = datetime.now(timezone.utc).isoformat()
-    records = []
-
-    for q_id in target_ids:
-        q_data = gold_by_id[q_id]
-        print(f"\n[{q_id}] Ejecutando: {q_data['pregunta'][:60]}...")
-        rec = execute_question(
-            idx=idx,
-            q_data=q_data,
-            mode=args.mode,
-            provider=args.provider,
-            top_k=args.top_k,
-            documental=True,
-            seed=args.seed
-        )
-        records.append(rec)
-        print(f" -> Latencia: {rec['latency_seconds']:.2f}s | Abstenido: {rec['abstained']} | Motivo: {rec['abstention_reason']}")
-        print(f" -> Tokens: {rec['tokens']}")
-        print(f" -> Citas raw: {rec['citations_raw']} | Citas final: {rec['citations_final']}")
-
-    finished_utc = datetime.now(timezone.utc).isoformat()
-
-    # Guardar traces.json
-    traces_file = out_dir / ('test_traces.json' if args.test_only else 'traces.json')
-    traces_file.write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding='utf-8')
-    print(f"\nGuardado: {traces_file}")
-
-    if not args.test_only:
-        write_traces_csv(out_dir, records)
-        print(f"Guardado: {out_dir / 'traces.csv'}")
-
-        corrida_id = f"corrida_t11_baseline_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
-        build_manifest(
-            out_dir=out_dir,
-            evaluated_ids=target_ids,
-            mode=args.mode,
-            provider=args.provider,
-            model=args.model,
-            model_digest=args.model_digest,
-            top_k=args.top_k,
-            documental=True,
-            seed=args.seed,
-            started_utc=started_utc,
-            finished_utc=finished_utc,
-        )
-        print(f"Guardado: {out_dir / 'manifest.json'}")
-
-        prepare_t12_blind_materials(
-            out_dir=out_dir,
-            records=records,
-            corrida_id=corrida_id
-        )
-        print(f"Guardado: {out_dir / 't12_material_ciego.json'}")
-        print(f"Guardado: {out_dir / 't12_evaluacion_ciega.csv'}")
-
-    print("\nEjecución finalizada con éxito.")
+    out_dir = run_baseline(
+        output_dir=args.output_dir,
+        mode=args.mode,
+        model=args.model,
+        provider=args.provider,
+        top_k=args.top_k,
+        seed=args.seed,
+        model_digest=args.model_digest,
+        test_only=args.test_only,
+    )
+    print(f"\nEjecución finalizada con éxito. Salida en: {out_dir}")
+    print("Nota: para preparar la evaluación humana T12 use: python scripts/prepare_t12_eval.py")
 
 
 if __name__ == '__main__':

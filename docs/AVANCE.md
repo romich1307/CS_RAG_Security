@@ -145,6 +145,37 @@ Sin push, sin APIs pagadas ni modelos descargados.
   - 37 pruebas pasando (`PYTHONPATH=src .venv/bin/python -m pytest`).
   - Verificación de formato y espacios limpia (`git diff --check`).
 
+## Fase 8 — Correcciones de revisión del PR #8 (León)
+
+### 1. Protección de las ejecuciones experimentales (Corrección 1)
+- **Directorio único por ejecución**: Se modificó `scripts/run_t11_baseline.py` para generar automáticamente rutas de salida únicas basadas en marcas de tiempo UTC (`results/llm_baseline_<timestamp>`), eliminando la ruta estática por defecto.
+- **Protección estricta contra sobrescritura**: La función `ensure_unique_output_dir()` valida la existencia del directorio y lanza `FileExistsError` ante cualquier intento de reutilización o sobrescritura, incluso ante rutas provistas manualmente mediante `--output-dir`.
+- **Pruebas automatizadas**: Se implementó la suite `tests/test_t11_baseline.py` (8 pruebas unitarias) que verifica la protección contra sobrescritura, la generación de rutas únicas y la ejecución desacoplada con mock (sin requerir servidor Ollama ni acceso a red).
+- **Preservación de evidencias**: Las evidencias y trazas originales de la corrida baseline se conservan íntegramente en el respaldo local `results/llm_baseline_local/`, excluido de control de versiones.
+
+### 2. Procedencia y reproducibilidad (Corrección 2)
+- **Preservación histórica del manifiesto**: Se mantiene `results/llm_baseline/manifest.json` original sin alterar sus valores históricos, conservando el registro del commit base `e039e51db5672dcbb8791453846fa5eb8306623c`.
+- **Documento de procedencia**: Se elaboró [PROCEDENCIA.md](../results/llm_baseline/PROCEDENCIA.md), explicando que el commit declarado corresponde al código base y que la ejecución utilizó modificaciones locales en `src/cs_rag_security/generation/__init__.py` posteriormente incorporadas formalmente en el commit original del PR #8 (`5a9b7f59eddb5231bbd079d4a857c59c93248b16`).
+- **Auditoría y verificación de hashes**: Se verificó que los hashes de los 8 módulos de `src/`, el índice (`index.json`: `0cf3a950...`) y el dataset gold (`gold_questions.json`: `622eb3d7...`) coinciden exactamente con los artefactos de la versión del PR #8 en disco y en el commit `5a9b7f5`.
+- **Distinción funcional vs. formato**: Se delimitó con precisión el cambio funcional (extracción de `prompt_eval_count` y `eval_count` a metadatos de tokens) de los cambios de formato (`.gitattributes` para espacios en blanco en CSV).
+- **Limitación de versión de script**: Se registró expresamente que el manifiesto histórico no incluía el hash SHA-256 de `scripts/run_t11_baseline.py`, constituyendo una limitación para verificar de forma aislada la versión exacta del script al momento de ejecución, deduciéndose su correspondencia a partir de los artefactos generados y su consolidación en el PR #8.
+
+### 3. Privacidad y material de evaluación T12 (Corrección 3)
+- **Saneamiento de artefactos versionados**: Se retiraron de `results/llm_baseline/traces.json` y `traces.csv` los textos literales de las preguntas del gold y las respuestas crudas del LLM (`raw_response`) que reproducen contenido del corpus privado.
+- **Conservación de telemetría autorizada**: Se mantienen en Git para las 10 consultas los identificadores (`GQ004`–`GQ040`), las 10 abstenciones con sus causas, latencias exactas de generación y pipeline, tokens de prompt y respuesta, y citas.
+- **Delimitación empírica del Modo A**: Se documenta que el resultado de 10 abstenciones obedece a la ausencia de directivas de citación formal en las 10 consultas evaluadas en esta corrida, sin formular generalizaciones sobre consultas futuras o modelos distintos.
+- **Trazas completas locales**: Las trazas íntegras con respuestas crudas y textos originales se preservan en almacenamiento local no versionado (`results/llm_baseline_local/`).
+- **Preparador local de evaluación T12**: Se desarrolló el script reproducible `scripts/prepare_t12_eval.py`, el cual verifica el hash SHA-256 del índice contra `manifest.json` y extrae los fragmentos textuales exactos desde `data/vector_db/index.json`. Ante cualquier discrepancia de hash o ausencia de identificadores, el script aborta sin inventar evidencia.
+- **Rúbrica v0.2 de origin/main y evaluación desacoplada**: Se respeta íntegramente la rúbrica v0.2 y la plantilla de 24 columnas estándar de `origin/main` ([rubrica_qa.md](evaluation/rubrica_qa.md), [plantilla_anotacion_qa.csv](evaluation/plantilla_anotacion_qa.csv)), generando en la preparación local de T12 filas pareadas para evaluar la respuesta del pipeline y la respuesta original del LLM.
+- **Material ciego estricto**: `results/t12_evaluacion/t12_material_ciego.json` no contiene respuestas de referencia gold ni fuentes esperadas.
+- **Blindaje en `.gitignore`**: Se configuraron exclusiones explícitas para `/results/t12_evaluacion/`, `/results/llm_baseline_local/`, `/results/llm_baseline_*/`, `raw_traces.json` y patrones de paquetes privados/locales.
+
+### 4. Validación final
+- **Métricas y telemetría**: Se comprobó que se mantienen exactamente las 10 consultas, 10 abstenciones por falta de citas, las 10 latencias y los tokens reportados.
+- **Suite de pruebas**: 45 pruebas pasando exitosamente (`PYTHONPATH=src .venv/bin/python -m pytest`).
+- **Verificación de estilo y formato**: `git diff --check` ejecutado sin advertencias.
+- **Confidencialidad**: Inspección de diferencias en Git libre de textos de preguntas gold, fragmentos del corpus o credenciales.
+
 Pendientes externos/científicos: configurar y ejecutar modelo local real; registrar
 digest/versión del servidor y hardware; ampliar ataques y validar en conjuntos
 independientes; revisión humana OCR, fidelidad semántica y vigencia; incorporar los
