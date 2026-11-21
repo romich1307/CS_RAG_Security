@@ -86,6 +86,20 @@ independientes; revisión humana OCR, fidelidad semántica y vigencia; incorpora
 tres textos ausentes solo tras obtener fuentes verificadas. No se atribuye eficacia
 de defensa frente a LLM con los resultados mock disponibles.
 
+## León — T06, 19 de noviembre de 2026
+
+Implementación y validación documental de T06 listas para revisión. Se verificó el
+paquete depurado completo: 12 hashes PDF coincidentes, 11 PDF oficiales, un histórico,
+137 páginas oficiales y 2.284 fragmentos. Se reforzó la exclusión por identificador,
+metadatos y relaciones de alcance total y se bloqueó el histórico en índices antiguos.
+Las derogaciones parciales conservan su alcance y las relaciones acompañan a los fragmentos.
+
+Se cotejaron las relaciones conocidas con las fuentes disponibles, incluido el
+artículo 4 del texto base RCU-0501-2020 y la parte resolutiva de RCU-0009-2026.
+Los tres documentos faltantes y la revisión OCR continúan expresamente pendientes.
+La consulta actual sin certificación se abstiene; los controles con mock no miden
+eficacia de un LLM. Véanse [relaciones y reglas](corpus/vigencia_y_relaciones.md)
+y [validación ejecutada](../results/normative_policy_20261119/validation.json).
 ## Avance de León — 19 de noviembre de 2026
 
 Se continuó T10, cuya preparación de rúbrica y plantilla se había realizado el

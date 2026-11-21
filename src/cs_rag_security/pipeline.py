@@ -2,6 +2,7 @@ import re
 import time
 from cs_rag_security.defenses import prepare
 from cs_rag_security.generation import generate
+from cs_rag_security.ingestion.normativa import historical_hit
 
 WARNINGS = ['Prototipo académico no oficial.', 'La procedencia institucional no certifica vigencia.',
             'OCR pendiente de revisión: cotejar cifras y artículos con el PDF.',
@@ -14,7 +15,7 @@ def answer(index, question, mode='C_defensa_propuesta', provider='mock', k=5, do
     retrieved = index.search(question, k) if hits is None else hits
     kept, messages, log = prepare(question, retrieved, mode)
     # Consulta normativa actual requiere verificación humana, independiente de la defensa.
-    reliable = [h for h in kept if h.get('score', 0) >= 0.12 and
+    reliable = [h for h in kept if not historical_hit(h) and h.get('score', 0) >= 0.12 and
                 (not h.get('ocr_revision_manual_pendiente', True)) and
                 (documental or h.get('normativa_actual_verificada', False))]
     abstain = not reliable
