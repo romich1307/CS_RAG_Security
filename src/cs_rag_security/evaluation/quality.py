@@ -488,6 +488,43 @@ class TracesIndex(dict):
         return None
 
 
+def attach_t11_provenance(path: Path, traces: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Recupera la clave de la corrida T11 desde el manifiesto histórico verificado."""
+    if path.name not in ('traces.json', 'traces.csv') or not traces:
+        return traces
+    identity_fields = ('run_id', 'corrida_id', 'mode', 'condition', 'condicion')
+    if any(any(trace.get(field) for field in identity_fields) for trace in traces):
+        return traces
+
+    try:
+        manifest = json.loads(path.with_name('manifest.json').read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return traces
+    if not isinstance(manifest, dict) or manifest.get('tarea') != 'T11_baseline_ollama':
+        return traces
+    condition = manifest.get('modo_experimental')
+    provider, model = manifest.get('proveedor'), manifest.get('modelo')
+    expected_ids = manifest.get('preguntas_evaluadas')
+    if condition not in CONDITIONS or not provider or not model or not isinstance(expected_ids, list):
+        return traces
+
+    observed_ids = {trace.get('id') for trace in traces}
+    if (
+        not all(isinstance(case_id, str) for case_id in expected_ids)
+        or len(observed_ids) != len(traces)
+        or len(expected_ids) != len(traces)
+        or observed_ids != set(expected_ids)
+        or any(trace.get('provider') != provider or trace.get('model') != model for trace in traces)
+    ):
+        return traces
+    try:
+        started = datetime.fromisoformat(manifest.get('started_utc', ''))
+    except (TypeError, ValueError):
+        return traces
+    run_id = f'corrida_{manifest["tarea"]}_{started:%Y%m%dT%H%M%S}'
+    return [{**trace, 'run_id': run_id, 'mode': condition} for trace in traces]
+
+
 def load_traces_dict(traces_source: Union[str, Path, List[Dict[str, Any]]]) -> TracesIndex:
     """Carga y mapea trazas experimentales indexándolas estrictamente por unicidad y compatibilidad.
 
@@ -509,6 +546,7 @@ def load_traces_dict(traces_source: Union[str, Path, List[Dict[str, Any]]]) -> T
         else:
             with p.open('r', encoding='utf-8', errors='replace') as f:
                 traces_data = list(csv.DictReader(f))
+        traces_data = attach_t11_provenance(p, traces_data)
     elif isinstance(traces_source, list):
         traces_data = traces_source
     else:
@@ -667,8 +705,12 @@ def load_annotations(
                         if not run_key or not t_run or run_key == t_run:
                             matched_trace = cand
 
-        if matched_trace and not motivo_abs:
-            motivo_abs = matched_trace.get('abstention_reason') or ''
+        if matched_trace:
+            motivo_abs = motivo_abs or matched_trace.get('abstention_reason') or ''
+            if cond == 'general':
+                trace_condition = matched_trace.get('mode') or matched_trace.get('condition') or matched_trace.get('condicion')
+                if trace_condition in CONDITIONS:
+                    cond = trace_condition
 
         # Telemetría de citas cuantitativas de T16
         c_count: Optional[int] = None
