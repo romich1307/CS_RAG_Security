@@ -919,6 +919,29 @@ def test_trace_fallbacks_absent_ambiguous_and_duplicates():
     assert by_id['e_ok'].latency_pipeline_seconds == 4.0
 
 
+def test_historical_t11_join_requires_matching_manifest(tmp_path):
+    historical = Path(__file__).resolve().parents[1] / 'results/llm_baseline'
+    manifest = json.loads((historical / 'manifest.json').read_text(encoding='utf-8'))
+    traces_path = tmp_path / 'traces.json'
+    traces_path.write_bytes((historical / 'traces.json').read_bytes())
+    manifest_path = tmp_path / 'manifest.json'
+    manifest_path.write_text(json.dumps(manifest), encoding='utf-8')
+    annotation = {
+        'evaluacion_id': 'EVAL-T12-001-pipeline',
+        'corrida_id': 'corrida_T11_baseline_ollama_20261120T053014',
+        'pregunta_id': 'GQ004',
+    }
+
+    matched = load_annotations([annotation], traces_source=traces_path)[0]
+    assert matched.condicion == 'A_sin_defensa'
+    assert matched.motivo_abstencion == 'citas_invalidas_o_ausentes'
+
+    manifest['modelo'] = 'otro_modelo'
+    manifest_path.write_text(json.dumps(manifest), encoding='utf-8')
+    unmatched = load_annotations([annotation], traces_source=traces_path)[0]
+    assert unmatched.motivo_abstencion == ''
+
+
 def test_compute_latencies_separates_incompatible_configurations():
     """Separa configuraciones incompatibles y evita mezclarlas en agregados comparativos."""
     # Dos casos en la misma corrida y condición pero con configuraciones dispares (distinto modelo y temperatura)
