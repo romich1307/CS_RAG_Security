@@ -20,6 +20,32 @@ from cs_rag_security.evaluation.quality import (
     load_annotations,
     resolve_consensus_records,
 )
+from cs_rag_security.evaluation.audit_experiment import (
+    CODE_MALFORMED_HASH,
+    HASH_STATUS_FILE_NOT_FOUND,
+    HASH_STATUS_MALFORMED,
+    HASH_STATUS_MISMATCH,
+    HASH_STATUS_VERIFIED,
+    AuditIssue,
+    ExperimentAuditReport,
+    RunAuditResult,
+    audit_experiments,
+    audit_run,
+    check_privacy_compliance_in_data,
+    is_valid_sha256,
+)
+from cs_rag_security.evaluation.tables import (
+    PaperTable,
+    PaperTablesCollection,
+    generate_all_paper_tables,
+)
+from cs_rag_security.evaluation.figures import (
+    ScientificCanvas,
+    generate_all_paper_figures,
+)
+from cs_rag_security.evaluation.paper import (
+    generate_paper_artifacts,
+)
 
 
 def fraction(num, den):

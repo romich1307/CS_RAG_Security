@@ -390,3 +390,42 @@ Véase [evaluación T12](evaluation/evaluacion_t12_20261121.md).
   - Suite completa de pytest pasando: 132 pruebas unitarias (`PYTHONPATH=src .venv/bin/python -m pytest`).
   - Pruebas offline equivalentes a CI pasando (`PYTHONPATH=src .venv/bin/python -m pytest -q -m 'not corpus'`).
   - Verificación `git diff --check` limpia y sin inconsistencias.
+
+## Fase 12 — T20: Auditoría experimental, tablas y figuras científicas, e integración final, 21 de noviembre de 2026
+- **Auditoría experimental de integridad científica (`src/cs_rag_security/evaluation/audit_experiment.py`)**:
+  - **Procedencia y entorno**: Verificación de identificadores de corrida (`run_id`), commit base, estado git dirty, versión de Python y dependencias, marcas temporales UTC y presencia de documentación explicativa (`PROCEDENCIA.md`).
+  - **Distinción entre código histórico y artefactos de datos**: Se auditan estrictamente los hashes de artefactos de datos originales (`index.json`, `gold_questions.json`, `attacks.jsonl`), distinguiendo la evolución legítima posterior del código en `src/` frente a cualquier alteración de evidencias históricas.
+  - **Verificación de invariantes**: Validación estricta de hiperparámetros experimentales fijados por metodología (semilla fija en `42`, temperatura fijada en `0` como controles de reproducibilidad, y `top_k=5`).
+  - **Condiciones A/B/C y pareamiento**: Detección de corridas unimodales frente a multimodales, verificación de versiones de prompt asociadas (A=v1, B=v1, C=v3), correspondencia pareada de consultas entre condiciones y detección de duplicados.
+  - **Segregación formal por tipo de corrida**: Clasificación inequívoca entre ejecuciones reales con LLM (`real_llm`), pilotos exploratorios (`pilot_llm`), simulaciones mock (`mock_offline`) y pruebas sintéticas (`synthetic_test`), sin mezclar jamás corridas heterogéneas en una misma métrica y advirtiendo formalmente que el mock extractivo no mide obediencia de LLM ni ASR.
+  - **Auditoría estricta de privacidad**: Inspección exhaustiva de artefactos públicos para garantizar la ausencia total de enunciados literales de preguntas gold, fragmentos de texto del corpus UNSA, salidas crudas del modelo (`raw_response`) o credenciales/claves de API. Los mensajes de incidencia omiten el texto privado detectado para no reproducir fugas en los reportes, consignándose el descargo explícito de que el escaneo heurístico no constituye garantía matemática absoluta ni sustituye la revisión forense humana.
+  - **Tratamiento de denominadores y estados**: Verificación de consistencia donde todo denominador cero genera estrictamente `null` / `None` / `Pendiente (0/0)`, sin divisiones por cero ni asunciones espurias de 0.0.
+  - **Reporte consolidado**: Emisión de informes estructurados en JSON (`audit_report.json`) y Markdown (`audit_report.md`) con clasificación de incidencias por severidad (`error`, `advertencia`, `informativa`) y catálogo de limitaciones metodológicas.
+- **Portabilidad Windows y normalización LF (Primera observación de León)**:
+  - Se identificó exactamente el archivo de datos afectado: `experiments/attacks.jsonl`.
+  - Se configuró la regla `experiments/attacks.jsonl text eol=lf` en `.gitattributes`, preservando intactas las reglas preexistentes para `validation.json` y los `.csv` de `llm_baseline`.
+  - Se comprobó la integridad criptográfica SHA-256 (`4235a3263ff411ac50b3261bc5fba689768161f935cce1a42f76136293309bf7`) respecto a los manifiestos históricos (`offline_20261117_final`), sin alterar los hashes registrados.
+  - Se incorporaron pruebas de portabilidad simulando checkouts con `core.autocrlf=true` y confirmando el rechazo de archivos alterados con CRLF sin desactivar la verificación criptográfica.
+- **Cálculo dinámico de latencias y telemetría (Segunda observación de León)**:
+  - Se eliminaron por completo las constantes hardcodeadas en `src/cs_rag_security/evaluation/tables.py` y `src/cs_rag_security/evaluation/figures.py` (`24.95`, `26.38`, `1705.5`, etc.).
+  - Se recalculan dinámicamente las latencias a partir exclusivamente de las trazas de telemetría suministradas o de `quality_metrics.json`.
+  - Se verificaron independientemente los valores de T11 reportados por León: media de pipeline de 25.21 s (25.2074 s) y media de llamada al LLM de 25.19 s (25.1924 s).
+  - La Tabla 9 y la Figura 6 reportan formalmente `N/A` ante ausencia de trazas o mediciones faltantes, sin graficar ceros espurios.
+  - Se desglosan formalmente Media, Mediana, Percentil 95 ($P_{95}$, interpolación lineal) y número de observaciones ($n$), reutilizando las funciones de T18.
+  - Se evita la duplicación de casos entre salidas `pipeline` y `llm_raw` mediante deduplicación por clave experimental única `(corrida_id, pregunta_id, condicion)`.
+  - Se detectan configuraciones incompatibles dentro de una misma condición, separándolas en filas/grupos independientes sin promediar ejecuciones heterogéneas.
+  - Se permite el cálculo técnico de latencias aun cuando la evaluación humana (T12) no esté completada.
+- **Compatibilidad con las correcciones de T18**:
+  - Se adaptaron la Tabla 4 y la Figura 2 para distinguir formalmente las categorías de citas introducidas por T18: *formalmente válidas*, *presentes pero inválidas*, *ausencia de citas*, *casos mixtos* y *no determinables*.
+  - Se respeta la clave compuesta y la no mezcla de configuraciones experimentales incompatibles.
+  - Se preservó la protección estricta contra fugas de información y rechazos privados del proveedor de T16.
+- **Generación de figuras científicas reproducibles (`src/cs_rag_security/evaluation/figures.py`)**:
+  - Renderizado dual simultáneo en formato vectorial SVG estándar y ráster de alta resolución PNG (mediante Pillow, compatible con CI sin X11).
+  - Seis figuras generadas: `fig1_exactitud_abc`, `fig2_validez_citas`, `fig3_tasas_abstencion`, `fig4_asr_condicion`, `fig5_detector_metricas` y `fig6_latencias_condicion`.
+  - Regla científica fundamental: ningún valor faltante, denominador cero o evaluación pendiente se grafica como 0%.
+  - Ausencia de afirmaciones causales no demostradas en todas las visualizaciones.
+- **Orquestación, CLI y reproducibilidad (`src/cs_rag_security/evaluation/paper.py` y `scripts/generate_paper_artifacts.py`)**:
+  - Orquestador desacoplado `generate_paper_artifacts` que ejecuta la auditoría, genera tablas, renderiza figuras y compila el manifiesto con hashes SHA-256 de todas las entradas y salidas generadas.
+  - Bloqueo estricto ante corridas rechazadas por auditoría experimental y blindaje absoluto de evidencias históricas contra `--force`.
+  - Contrato de integración para T19 documentado formalmente.
+  - Extensión de la CLI oficial `cs_rag_security.cli` (`audit-experiment` y `paper-artifacts`).

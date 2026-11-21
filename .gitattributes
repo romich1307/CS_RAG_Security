@@ -1,2 +1,3 @@
 results/normative_policy_*/validation.json text eol=lf
 results/llm_baseline/*.csv whitespace=-blank-at-eol
+experiments/attacks.jsonl text eol=lf
