@@ -87,9 +87,10 @@ def test_ensure_unique_output_dir_creates_new(tmp_path):
     assert new_dir.is_dir()
 
 
-def test_get_default_output_dir_generates_unique_paths():
-    p1 = get_default_output_dir()
-    assert 'results/llm_baseline_' in str(p1)
+def test_get_default_output_dir_uses_results_parent_and_baseline_prefix():
+    output_dir = get_default_output_dir()
+    assert output_dir.parent == Path('results')
+    assert output_dir.name.startswith('llm_baseline_')
 
 
 def test_run_baseline_refuses_overwrite(tmp_path):
@@ -217,6 +218,29 @@ def test_prepare_t12_evaluation_chunk_missing(tmp_path):
         )
     assert 'Fallo de correspondencia' in str(exc_info.value)
     assert 'No se inventa evidencia' in str(exc_info.value)
+
+
+def test_prepare_t12_evaluation_preserves_existing_annotations(tmp_path):
+    idx_file, _ = create_mock_environment(tmp_path)
+    manifest_file = tmp_path / 'manifest.json'
+    manifest_file.write_text(json.dumps({'hashes': {'index_sha256': compute_sha256(idx_file)}}),
+                             encoding='utf-8')
+    traces_file = tmp_path / 'traces.json'
+    traces_file.write_text('[]', encoding='utf-8')
+    out_dir = tmp_path / 't12_eval'
+    out_dir.mkdir()
+    annotations = out_dir / 't12_evaluacion_ciega.csv'
+    material = out_dir / 't12_material_ciego.json'
+    annotations.write_bytes(b'justificacion\r\nJuicio anotado\r\n')
+    material.write_bytes(b'[{"caso_ciego_id": "CIEGO_01"}]\n')
+    previous_annotations = annotations.read_bytes()
+    previous_material = material.read_bytes()
+
+    with pytest.raises(FileExistsError):
+        prepare_t12_evaluation(manifest_file, traces_file, idx_file, out_dir)
+
+    assert annotations.read_bytes() == previous_annotations
+    assert material.read_bytes() == previous_material
 
 
 def test_prepare_t12_evaluation_success_with_exact_text_and_canonical_rubrica_v02(tmp_path):

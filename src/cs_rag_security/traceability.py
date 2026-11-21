@@ -117,6 +117,8 @@ ALLOWED_TRACE_FIELDS = frozenset({
     'citations_raw',
     'citations_final',
     'citations_valid',
+    'citations_invalid_count',
+    'invalid_citations_count',
     'allowed_citations',
     'retrieved_chunks',
     'accepted_chunks',
@@ -428,6 +430,16 @@ def build_trace_record(
     )
     raw_citations_list = [{'archivo': c[0], 'pagina': int(c[1])} for c in raw_citations_tuples]
 
+    allowed_set = {
+        (str(h.get('archivo_pdf')), str(h.get('pagina_pdf')))
+        for h in accepted_chunks
+        if h.get('archivo_pdf') is not None and h.get('pagina_pdf') is not None
+    }
+    model_citations = raw_citations_tuples if raw_response is not None else final_citations_tuples
+    citations_invalid_count = sum(
+        1 for c in model_citations if (c[0], str(c[1])) not in allowed_set
+    )
+
     # Metadatos de generación y tokens
     resolved_provider = provider or pipeline_result.get('provider') or gen_meta.get('provider', 'mock')
     resolved_model = model or gen_meta.get('model') or ('qwen2.5:3b' if resolved_provider == 'local' else 'mock_extractivo_v1')
@@ -476,6 +488,8 @@ def build_trace_record(
         'citations_raw': raw_citations_list,
         'citations_final': final_citations_list,
         'citations_valid': citations_valid,
+        'citations_invalid_count': citations_invalid_count,
+        'invalid_citations_count': citations_invalid_count,
         'allowed_citations': allowed_citations_list,
         'retrieved_chunks': evaluated_chunks,
         'accepted_chunks': [
@@ -566,21 +580,48 @@ def sanitize_trace_record(
         else None
     )
 
+    # Construir conjunto de referencias autorizadas a partir de fragmentos y citas aceptadas
+    allowed_set = set()
+    for ac in record.get('allowed_citations', []):
+        if isinstance(ac, dict) and 'archivo' in ac and 'pagina' in ac:
+            allowed_set.add((str(ac['archivo']), str(ac['pagina'])))
+    for c in record.get('accepted_chunks', []):
+        if isinstance(c, dict) and c.get('archivo_pdf') is not None and c.get('pagina_pdf') is not None:
+            allowed_set.add((str(c.get('archivo_pdf')), str(c.get('pagina_pdf'))))
+
+    # Filtrar estrictamente citas para conservar únicamente las referencias válidas que coincidan con fuentes aceptadas.
+    # No publicar nombres de archivo, páginas ni textos de citas inválidas propuestas por el modelo.
     sanitized_citations_raw = [
         {k: c[k] for k in ALLOWED_CITATION_FIELDS if k in c}
         for c in record.get('citations_raw', [])
-        if isinstance(c, dict)
+        if isinstance(c, dict) and (str(c.get('archivo')), str(c.get('pagina'))) in allowed_set
     ]
     sanitized_citations_final = [
         {k: c[k] for k in ALLOWED_CITATION_FIELDS if k in c}
         for c in record.get('citations_final', [])
-        if isinstance(c, dict)
+        if isinstance(c, dict) and (str(c.get('archivo')), str(c.get('pagina'))) in allowed_set
     ]
     sanitized_allowed_citations = [
         {k: c[k] for k in ALLOWED_CITATION_FIELDS if k in c}
         for c in record.get('allowed_citations', [])
         if isinstance(c, dict)
     ]
+
+    # Conservar el conteo de citas inválidas propuestas por el modelo
+    raw_cits = record.get('citations_raw', [])
+    final_cits = record.get('citations_final', [])
+    cits_to_check = raw_cits if raw_cits else final_cits
+    computed_invalid = sum(
+        1 for c in cits_to_check
+        if isinstance(c, dict) and (str(c.get('archivo')), str(c.get('pagina'))) not in allowed_set
+    )
+    invalid_count = int(
+        record.get('citations_invalid_count')
+        if record.get('citations_invalid_count') is not None
+        else (record.get('invalid_citations_count')
+              if record.get('invalid_citations_count') is not None
+              else computed_invalid)
+    )
 
     final_resp = record.get('response', '')
     abstained = bool(record.get('abstained', False))
@@ -591,6 +632,16 @@ def sanitize_trace_record(
             final_resp = '[CONTENIDO_CORPUS_PRIVADO_PROTEGIDO]'
         elif case_kind in ('synthetic_attack', 'attack') and redact_attack_response:
             final_resp = '[RESPUESTA_SINTETICA_PROTEGIDA]'
+
+    # Garantizar que ninguna cita inválida no autorizada propuesta por el modelo se filtre en response
+    if isinstance(final_resp, str) and CITATION_REGEX.search(final_resp):
+        def _replace_invalid_citation(match):
+            archivo = match.group(1)
+            pagina = match.group(2)
+            if (archivo, str(pagina)) in allowed_set:
+                return match.group(0)
+            return '[CITA_INVALIDA_EXCLUIDA]'
+        final_resp = CITATION_REGEX.sub(_replace_invalid_citation, final_resp)
 
     sanitized: Dict[str, Any] = {
         'run_id': record.get('run_id'),
@@ -610,6 +661,8 @@ def sanitize_trace_record(
         'citations_raw': sanitized_citations_raw,
         'citations_final': sanitized_citations_final,
         'citations_valid': bool(record.get('citations_valid', False)),
+        'citations_invalid_count': invalid_count,
+        'invalid_citations_count': invalid_count,
         'allowed_citations': sanitized_allowed_citations,
         'retrieved_chunks': retrieved,
         'accepted_chunks': accepted,
@@ -830,6 +883,7 @@ def write_traces_csv(path: Union[str, Path], records: List[Dict[str, Any]]) -> N
         'run_id', 'case_id', 'case_kind', 'mode', 'prompt_version',
         'provider', 'model', 'model_digest', 'seed', 'temperature', 'top_k', 'documental',
         'generation_performed', 'abstained', 'abstention_reason', 'citations_valid', 'citations_count',
+        'citations_invalid_count',
         'retrieved_count', 'accepted_count', 'discarded_count', 'discard_reasons',
         'detector_applied', 'detector_suspicious_count', 'any_detector_suspicious',
         'latency_generation_seconds', 'latency_pipeline_seconds', 'latency_seconds', 'pipeline_seconds',
@@ -863,6 +917,7 @@ def write_traces_csv(path: Union[str, Path], records: List[Dict[str, Any]]) -> N
             'abstention_reason': r.get('abstention_reason', ''),
             'citations_valid': r.get('citations_valid', False),
             'citations_count': len(r.get('citations_final', [])),
+            'citations_invalid_count': r.get('citations_invalid_count', r.get('invalid_citations_count', 0)),
             'retrieved_count': len(r.get('retrieved_chunks', [])),
             'accepted_count': len(r.get('accepted_chunks', [])),
             'discarded_count': len(r.get('discarded_chunks', [])),

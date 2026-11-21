@@ -867,3 +867,145 @@ def test_generation_absence_vs_empty_model_response():
     assert rec_empty['raw_response'] == ''
     assert rec_empty['abstention_reason'] == ABSTENTION_REASON_EMPTY_OUTPUT
 
+
+def test_citation_sanitization_excludes_unauthorized_synthetic_filenames():
+    """Regresión: verifica que las citas con nombres de archivo sintéticos o no autorizados
+
+    propuestos por el modelo se excluyan de los artefactos públicos (JSON/CSV),
+    conservando únicamente las referencias válidas del contexto y el conteo de citas inválidas,
+    mientras que las trazas privadas conservan íntegramente las citas originales.
+    """
+    accepted_chunk = {
+        'chunk_id': 'c_ok:1',
+        'documento_id': 'RCU-0161-2021',
+        'archivo_pdf': 'RCU-0161-2021.pdf',
+        'pagina_pdf': 3,
+        'score': 0.88,
+        'ocr_revision_manual_pendiente': False,
+        'normativa_actual_verificada': True,
+    }
+    pipe_res = {
+        'question': '¿Consulta de prueba?',
+        'raw_response': (
+            'Según la norma oficial [RCU-0161-2021.pdf p. 3], pero también cito el '
+            'archivo no autorizado [inyeccion_no_autorizada.pdf p. 42] y el canario '
+            '[ataque_sintetico_canario.pdf p. 99].'
+        ),
+        'response': 'Me abstengo: la salida del modelo carece de citas válidas del contexto.',
+        'abstained': True,
+        'provider': 'local',
+        'mode': 'C_defensa_propuesta',
+        'retrieved': [accepted_chunk],
+        'accepted_ids': ['c_ok:1'],
+        'detector_log': [],
+        'seconds': 0.8,
+    }
+
+    # 1. Construcción de la traza privada (completa)
+    record = build_trace_record(
+        run_id='run_cit_test',
+        case_id='c_test_cits',
+        mode='C_defensa_propuesta',
+        pipeline_result=pipe_res,
+        case_kind='synthetic_attack',
+    )
+
+    # En la traza privada se conservan las tres citas crudas originales para auditoría
+    assert len(record['citations_raw']) == 3
+    assert {'archivo': 'RCU-0161-2021.pdf', 'pagina': 3} in record['citations_raw']
+    assert {'archivo': 'inyeccion_no_autorizada.pdf', 'pagina': 42} in record['citations_raw']
+    assert {'archivo': 'ataque_sintetico_canario.pdf', 'pagina': 99} in record['citations_raw']
+    assert record['citations_valid'] is False
+    assert record['citations_invalid_count'] == 2
+    assert record['invalid_citations_count'] == 2
+
+    # 2. Saneamiento para publicación en Git
+    sanitized = sanitize_trace_record(record, redact_attack_response=True)
+
+    # citations_raw saneado solo debe contener la referencia válida autorizada
+    assert sanitized['citations_raw'] == [{'archivo': 'RCU-0161-2021.pdf', 'pagina': 3}]
+    assert sanitized['citations_final'] == []
+    assert sanitized['citations_valid'] is False
+    assert sanitized['citations_invalid_count'] == 2
+    assert sanitized['invalid_citations_count'] == 2
+
+    # Ninguna mención a archivos no autorizados en la traza saneada
+    dumped_json = json.dumps(sanitized)
+    assert 'inyeccion_no_autorizada.pdf' not in dumped_json
+    assert 'ataque_sintetico_canario.pdf' not in dumped_json
+    assert 'p. 42' not in dumped_json
+    assert 'p. 99' not in dumped_json
+
+
+def test_citation_sanitization_end_to_end_json_csv_segregation(tmp_path):
+    """Regresión: verifica que save_experimental_run excluya nombres de archivos sintéticos
+
+    en traces.json y traces.csv, pero los mantenga íntegros en private_traces.json y private_traces.csv.
+    """
+    out_dir = tmp_path / 'public_run'
+    priv_dir = tmp_path / 'run_local'
+
+    accepted_chunk = {
+        'chunk_id': 'c_ok:1',
+        'documento_id': 'RCU-0504-2020',
+        'archivo_pdf': 'RCU-0504-2020.pdf',
+        'pagina_pdf': 4,
+        'score': 0.92,
+        'ocr_revision_manual_pendiente': False,
+        'normativa_actual_verificada': True,
+    }
+    pipe_res = {
+        'question': '¿Consulta de verificación?',
+        'raw_response': 'Respuesta con cita falsa [fake_payload_exploit.pdf p. 77].',
+        'response': 'Respuesta con cita falsa [fake_payload_exploit.pdf p. 77].',
+        'abstained': False,
+        'provider': 'local',
+        'mode': 'C_defensa_propuesta',
+        'retrieved': [accepted_chunk],
+        'accepted_ids': ['c_ok:1'],
+        'detector_log': [],
+        'seconds': 0.5,
+    }
+
+    raw_trace = build_trace_record(
+        run_id='run_segregation',
+        case_id='c_seg_01',
+        mode='C_defensa_propuesta',
+        pipeline_result=pipe_res,
+        case_kind='synthetic_attack',
+    )
+    assert raw_trace['citations_invalid_count'] == 1
+
+    manifest = {'run_id': 'run_segregation', 'tarea': 'test_segregation'}
+
+    out_path, p_path = save_experimental_run(
+        output_dir=out_dir,
+        manifest=manifest,
+        raw_traces=[raw_trace],
+        private_dir=priv_dir,
+        redact_attack_response=False,  # Probar saneamiento activo de citations en response
+    )
+
+    # 1. Verificar artefactos públicos (Git)
+    pub_json_text = (out_path / 'traces.json').read_text(encoding='utf-8')
+    assert 'fake_payload_exploit.pdf' not in pub_json_text
+    assert 'p. 77' not in pub_json_text
+
+    pub_csv_text = (out_path / 'traces.csv').read_text(encoding='utf-8')
+    assert 'fake_payload_exploit.pdf' not in pub_csv_text
+    assert 'p. 77' not in pub_csv_text
+    with (out_path / 'traces.csv').open('r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        assert 'citations_invalid_count' in reader.fieldnames
+        row = next(reader)
+        assert row['citations_invalid_count'] == '1'
+        assert row['citations_count'] == '0'
+
+    # 2. Verificar artefactos privados (Local)
+    priv_json_text = (p_path / 'private_traces.json').read_text(encoding='utf-8')
+    assert 'fake_payload_exploit.pdf' in priv_json_text
+    assert 'p. 77' in priv_json_text
+
+    priv_csv_text = (p_path / 'private_traces.csv').read_text(encoding='utf-8')
+    assert 'fake_payload_exploit.pdf' in priv_csv_text
+
