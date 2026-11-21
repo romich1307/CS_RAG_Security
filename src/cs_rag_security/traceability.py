@@ -548,6 +548,17 @@ def sanitize_detector_log_dict(d: Dict[str, Any]) -> Dict[str, Any]:
     return {k: v for k, v in d.items() if k in ALLOWED_DETECTOR_LOG_FIELDS}
 
 
+def is_provider_refusal(abstained: bool, reason: str, response: Any) -> bool:
+    if not abstained:
+        return False
+    if reason:
+        return reason == ABSTENTION_REASON_MODEL_REFUSAL
+    return isinstance(response, str) and (
+        response == STANDARD_MODEL_REFUSAL_RESPONSE
+        or response.startswith(f'{STANDARD_MODEL_REFUSAL_RESPONSE[:-1]} (')
+    )
+
+
 def sanitize_trace_record(
     record: Dict[str, Any],
     redact_gold_response: bool = True,
@@ -636,18 +647,10 @@ def sanitize_trace_record(
     # haber retornado un detalle o texto libre propio (ej. "(No puedo procesar la solicitud...)").
     # Ese detalle confidencial se preserva exclusivamente en las trazas privadas para auditoría,
     # mientras que en los artefactos saneados para Git se sustituye estrictamente por el mensaje estándar.
-    is_model_refusal = (
-        abstention_reason == ABSTENTION_REASON_MODEL_REFUSAL
-        or (isinstance(final_resp, str) and 'rechazó la consulta' in final_resp)
-    )
-
-    if is_model_refusal:
+    if is_provider_refusal(abstained, abstention_reason, final_resp):
         final_resp = STANDARD_MODEL_REFUSAL_RESPONSE
         abstention_reason = ABSTENTION_REASON_MODEL_REFUSAL
-        abstained = True
-    elif abstained:
-        pass
-    else:
+    elif not abstained:
         if case_kind == 'gold' and redact_gold_response:
             final_resp = '[CONTENIDO_CORPUS_PRIVADO_PROTEGIDO]'
         elif case_kind in ('synthetic_attack', 'attack') and redact_attack_response:

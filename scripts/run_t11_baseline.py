@@ -32,6 +32,7 @@ from cs_rag_security.traceability import (
     ensure_unique_output_dir,
     extract_citations,
     get_git_commit,
+    is_provider_refusal,
 )
 
 
@@ -149,10 +150,7 @@ def sanitize_record_for_git(record: dict) -> dict:
     ]
     final_resp = record.get('response', '')
     abst_reason = record.get('abstention_reason', '')
-    if (
-        abst_reason == ABSTENTION_REASON_MODEL_REFUSAL
-        or (isinstance(final_resp, str) and 'rechazó la consulta' in final_resp)
-    ):
+    if is_provider_refusal(record['abstained'], abst_reason, final_resp):
         final_resp = STANDARD_MODEL_REFUSAL_RESPONSE
         abst_reason = ABSTENTION_REASON_MODEL_REFUSAL
 
