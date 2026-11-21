@@ -49,3 +49,23 @@ La corrida se considera completa cuando se puede comprobar la configuración
 común y cada consulta tiene sus tres salidas o incidencias documentadas.
 Quedan pendientes la integración del contrato de trazabilidad T16, la corrida
 con el índice y el proveedor local y la revisión de sus anotaciones.
+
+## Ejecutar el piloto
+
+Desde la raíz del repositorio, en PowerShell:
+
+```powershell
+$env:PYTHONPATH = 'src'
+python -m scripts.run_t17_utility --indice RUTA_INDICE --gold RUTA_GOLD --run-id t17_prueba
+```
+
+Se comprueba el SHA-256 de los insumos. Se admite el índice textual oficial
+conservado de T08 o la instantánea histórica de T11. Para Ollama, configurar
+`RAG_LOCAL_MODEL=qwen2.5:3b` y añadir `--proveedor local`. El ejecutor verifica
+la versión del servidor y el digest del modelo instalado antes de generar.
+
+El resultado se guarda por corrida en `results/llm_abc_local/`, ignorado por
+Git. El manifiesto y `traces.json` documentan el pareamiento, las decisiones
+y la telemetría. `raw_traces.json` conserva el texto íntegro para el cotejo
+privado. Una corrida con errores conserva sus incidencias y termina con
+código distinto de cero. El proveedor predeterminado `mock` comprueba el flujo.
