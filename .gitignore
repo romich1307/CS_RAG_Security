@@ -31,12 +31,16 @@ dist/
 /results/llm_baseline_local/
 /results/llm_baseline_*/
 /results/*_local*/
+/results/*_private*/
 /results/*_backup*/
 /data/t12_evaluacion/
 /data/respaldo_*/
 raw_traces.json
 *raw_traces*.json
 *raw_traces*.csv
+private_traces.json
+*private_traces*.json
+*private_traces*.csv
 
 # Instrucciones locales de desarrollo
 /INSTRUCCIONES_CODEX_CS_RAG_Security.md

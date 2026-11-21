@@ -3,6 +3,11 @@ import time
 from cs_rag_security.defenses import prepare
 from cs_rag_security.generation import generate
 from cs_rag_security.ingestion.normativa import historical_hit
+from cs_rag_security.traceability import (
+    DEFAULT_DETECTOR_VERSION,
+    PROMPT_VERSIONS,
+    evaluate_retrieved_chunks,
+)
 
 WARNINGS = ['Prototipo académico no oficial.', 'La procedencia institucional no certifica vigencia.',
             'OCR pendiente de revisión: cotejar cifras y artículos con el PDF.',
@@ -10,7 +15,17 @@ WARNINGS = ['Prototipo académico no oficial.', 'La procedencia institucional no
             'RCU-0127-2020 es modificatoria; RCU-0009-2026 afecta una disposición específica.']
 
 
-def answer(index, question, mode='C_defensa_propuesta', provider='mock', k=5, documental=False, seed=42, hits=None):
+def answer(
+    index,
+    question,
+    mode='C_defensa_propuesta',
+    provider='mock',
+    k=5,
+    documental=False,
+    seed=42,
+    hits=None,
+    detector_version=None,
+):
     start = time.perf_counter()
     retrieved = index.search(question, k) if hits is None else hits
     kept, messages, log = prepare(question, retrieved, mode)
@@ -19,6 +34,24 @@ def answer(index, question, mode='C_defensa_propuesta', provider='mock', k=5, do
                 (not h.get('ocr_revision_manual_pendiente', True)) and
                 (documental or h.get('normativa_actual_verificada', False))]
     abstain = not reliable
+
+    resolved_detector_version = (
+        detector_version
+        or (log[0].get('detector') if log and isinstance(log[0], dict) and log[0].get('detector') else None)
+        or DEFAULT_DETECTOR_VERSION
+    )
+
+    # Registrar decisiones reales de fragmentos aceptados y descartados asegurando identidad con reliable
+    evaluated_chunks, reliable_eval, discarded_chunks = evaluate_retrieved_chunks(
+        retrieved=retrieved,
+        detector_log=log,
+        mode=mode,
+        documental=documental,
+        evidence_threshold=0.12,
+        kept=kept,
+        reliable=reliable,
+        detector_version=resolved_detector_version,
+    )
     response = 'Me abstengo: no hay evidencia fiable suficiente o vigencia verificada. Puede consultar fragmentos como material documental provisional.'
     generation_metadata = None
     raw_response = None
@@ -57,4 +90,9 @@ def answer(index, question, mode='C_defensa_propuesta', provider='mock', k=5, do
             'retrieved': retrieved, 'accepted_ids': [h['chunk_id'] for h in reliable], 'detector_log': log,
             'seconds': time.perf_counter() - start, 'seed': seed, 'top_k': k,
             'retriever': index.method, 'citation_validation': 'solo pertenencia; no certifica entailment',
-            'generation_metadata': generation_metadata}
+            'generation_metadata': generation_metadata,
+            'evaluated_chunks': evaluated_chunks,
+            'discarded_chunks': discarded_chunks,
+            'prompt_version': PROMPT_VERSIONS.get(mode, 'v1'),
+            'detector_version': resolved_detector_version,
+            'detector_applied': mode == 'C_defensa_propuesta'}
