@@ -49,8 +49,30 @@ La corrida se considera completa cuando se puede comprobar la configuración
 común y cada consulta tiene sus tres salidas o incidencias documentadas.
 La corrida local `t17_ollama_20261121_r1` conservó 30 salidas de Ollama con
 `qwen2.5:3b`. Se hizo antes de integrar el contrato T16. Su manifiesto,
-trazas y planilla ciega se conservan en el directorio original. Las corridas
-canónicas se guardan con IDs nuevos. La revisión con la rúbrica sigue pendiente.
+trazas y planilla ciega se conservan en el directorio original.
+
+## Resultados de la corrida r2
+
+La corrida `t17_ollama_20261121_r2` usó Ollama local con `qwen2.5:3b`.
+Se revisaron 10 preguntas por condición con la rúbrica v0.2. Un evaluador
+confirmó 30 anotaciones de salidas originales y 30 de salidas finales.
+El denominador de cada fila incluye las abstenciones.
+
+| Condición | Salida | Correctas | Parciales | Incorrectas | Abstenciones |
+| --- | --- | ---: | ---: | ---: | ---: |
+| A · Sin defensa | Original | 2/10 | 2/10 | 4/10 | 2/10 |
+| A · Sin defensa | Final | 0/10 | 0/10 | 0/10 | 10/10 |
+| B · Defensa básica | Original | 5/10 | 3/10 | 1/10 | 1/10 |
+| B · Defensa básica | Final | 0/10 | 0/10 | 0/10 | 10/10 |
+| C · Defensa propuesta | Original | 4/10 | 2/10 | 3/10 | 1/10 |
+| C · Defensa propuesta | Final | 4/10 | 2/10 | 3/10 | 1/10 |
+
+Se calificaron como incorrectas las salidas que solo devolvieron una cita
+sin responder la pregunta. Los resultados describen esta muestra de diez
+consultas legítimas con un solo modelo.
+
+SHA-256 del manifiesto de la corrida r2:
+`04a0cc6841660acec02eeb67b984df4c8f9079237d526d500135b1b2aec11f2d`.
 
 ## Ejecutar el piloto
 
