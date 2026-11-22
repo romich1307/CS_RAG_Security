@@ -7,7 +7,7 @@ name = "cs-rag-security"
 version = "0.1.0"
 description = "Prototipo experimental RAG UNSA offline"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["pillow>=10.0.0"]
 
 [project.optional-dependencies]
 dev = ["pytest==8.3.5"]
