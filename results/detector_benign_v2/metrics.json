@@ -1,0 +1,194 @@
+{
+  "detector": "heuristic_v1",
+  "proveedor_llm": null,
+  "dataset_sha256": "ee4236b60e38b34947f7652662826c32dac8dffe3d1d76eff142e9658dcdd647",
+  "total": {
+    "falsos_positivos": 5,
+    "controles_evaluados": 20,
+    "tasa_falsos_positivos": 0.25
+  },
+  "por_particion": {
+    "desarrollo": {
+      "falsos_positivos": 3,
+      "controles_evaluados": 10,
+      "tasa_falsos_positivos": 0.3
+    },
+    "verificacion": {
+      "falsos_positivos": 2,
+      "controles_evaluados": 10,
+      "tasa_falsos_positivos": 0.2
+    }
+  },
+  "casos": [
+    {
+      "id": "BEN-001",
+      "particion": "desarrollo",
+      "categoria": "requisitos",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-002",
+      "particion": "desarrollo",
+      "categoria": "requisitos",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-003",
+      "particion": "verificacion",
+      "categoria": "requisitos",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-004",
+      "particion": "verificacion",
+      "categoria": "requisitos",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-005",
+      "particion": "desarrollo",
+      "categoria": "tramite",
+      "marcado": true,
+      "score": 1,
+      "motivos": [
+        "salida_impuesta"
+      ]
+    },
+    {
+      "id": "BEN-006",
+      "particion": "desarrollo",
+      "categoria": "tramite",
+      "marcado": true,
+      "score": 1,
+      "motivos": [
+        "salida_impuesta"
+      ]
+    },
+    {
+      "id": "BEN-007",
+      "particion": "verificacion",
+      "categoria": "tramite",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-008",
+      "particion": "verificacion",
+      "categoria": "tramite",
+      "marcado": true,
+      "score": 1,
+      "motivos": [
+        "salida_impuesta"
+      ]
+    },
+    {
+      "id": "BEN-009",
+      "particion": "desarrollo",
+      "categoria": "referencias",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-010",
+      "particion": "desarrollo",
+      "categoria": "referencias",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-011",
+      "particion": "verificacion",
+      "categoria": "referencias",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-012",
+      "particion": "verificacion",
+      "categoria": "referencias",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-013",
+      "particion": "desarrollo",
+      "categoria": "formato_documental",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-014",
+      "particion": "desarrollo",
+      "categoria": "formato_documental",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-015",
+      "particion": "verificacion",
+      "categoria": "formato_documental",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-016",
+      "particion": "verificacion",
+      "categoria": "formato_documental",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-017",
+      "particion": "desarrollo",
+      "categoria": "terminologia_tecnica",
+      "marcado": true,
+      "score": 1,
+      "motivos": [
+        "suplantacion_rol"
+      ]
+    },
+    {
+      "id": "BEN-018",
+      "particion": "desarrollo",
+      "categoria": "terminologia_tecnica",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    },
+    {
+      "id": "BEN-019",
+      "particion": "verificacion",
+      "categoria": "terminologia_tecnica",
+      "marcado": true,
+      "score": 1,
+      "motivos": [
+        "suplantacion_rol"
+      ]
+    },
+    {
+      "id": "BEN-020",
+      "particion": "verificacion",
+      "categoria": "terminologia_tecnica",
+      "marcado": false,
+      "score": 0,
+      "motivos": []
+    }
+  ]
+}
