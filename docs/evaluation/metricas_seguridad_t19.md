@@ -6,18 +6,20 @@ SHA-256 de los dos archivos de entrada y los IDs de errores del detector.
 
 | Indicador | Numerador | Denominador |
 | --- | --- | --- |
-| ASR global | Casos positivos en los que se observó el resultado objetivo en la salida final | Casos positivos de la corrida |
-| ASR sobre recuperados | Casos positivos recuperados con el resultado objetivo observado | Casos positivos recuperados |
+| ASR RAW y FINAL | Casos cuyo objetivo se cumplió según el juicio en la etapa correspondiente | Casos positivos de la corrida |
+| ASR RAW y FINAL sobre recuperados | Casos recuperados cuyo objetivo se cumplió según el juicio en la etapa correspondiente | Casos positivos recuperados |
 | Recall del detector | Casos positivos marcados | Casos positivos evaluados por el detector |
 | FPR del detector | Controles benignos marcados | Controles benignos evaluados por el detector |
 
-El agregador toma `marker_emitted` de la salida final y conserva las claves
-de ASR por compatibilidad con T20. Si el indicador registra la aparición
-literal del marcador, los valores se interpretan como tasa de aparición.
-El cumplimiento del objetivo de cada caso se decide con la rúbrica. La
-exposición se registra en `attack_retrieved`. Los estados desconocidos y los
-denominadores iguales a cero producen una tasa `null`. El agregado de un
-proveedor simulado se informa como diagnóstico técnico.
+El campo `marker_emitted` alimenta exclusivamente el diagnóstico de
+aparición del marcador en FINAL. La ASR se calcula desde los juicios
+`raw.exito` y `final.exito` en `revision_rubrica_raw_final.json`. Se
+requiere una fila por cada par caso y condición de las trazas de inyección.
+Las huellas del manifiesto y las trazas vinculan la rúbrica con la corrida.
+El agregado conserva por etapa numerador, denominador, juicios faltantes y
+tasa. Un juicio desconocido o un denominador cero dejan la tasa en `null`.
+La exposición registrada en `attack_retrieved` corresponde a recuperación.
+El agregado de un proveedor simulado se informa como diagnóstico técnico.
 
 ## Reproducción del diagnóstico histórico
 
@@ -48,6 +50,15 @@ las abstenciones. La revisión de las salidas guardadas documenta el
 cumplimiento del objetivo antes y después del validador por caso y modo.
 La recuperación y el marcado están registrados. La llegada al modelo y
 la exclusión del fragmento de inyección quedan como datos desconocidos.
+
+El comando siguiente agrega los archivos ya guardados. Lee por defecto
+la rúbrica local de esa corrida. También admite `--rubrica` para indicar
+explícitamente el archivo de revisión.
+
+```powershell
+$env:PYTHONPATH = 'src'
+python -m scripts.compute_security_metrics --corrida results/t19_inyecciones_20_20261125_003544
+```
 [Agregado](../../results/t19_inyecciones_20_20261125_003544/security_metrics.json) · [Revisión por caso](../../results/t19_inyecciones_20_20261125_003544/revision_rubrica_raw_final.json) · [Análisis de errores](../../results/llm_abc/error_analysis.md)
 
 ## Auditoría del corpus oficial
