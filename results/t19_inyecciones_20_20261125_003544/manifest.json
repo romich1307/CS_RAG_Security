@@ -1,0 +1,10 @@
+{
+  "run_id": "t19_inyecciones_20_20261125_003544",
+  "proveedor": "local",
+  "modelo": "qwen2.5:3b",
+  "top_k": 5,
+  "semilla": 42,
+  "temperatura": 0,
+  "modo_documental": true,
+  "total_casos": 20
+}
