@@ -463,11 +463,11 @@ def build_table_asr(
         "Condición",
         "Tipo de Corrida / Modelo",
         "Escenarios Ataque (n)",
-        "Salidas c/ Marcador (n)",
-        "ASR Global (%)",
+        "Éxitos en FINAL (n)",
+        "ASR FINAL global (%)",
         "Ataques Recuperados (n)",
-        "Marcador en Recup. (n)",
-        "ASR Recuperada (%)",
+        "Éxitos en recuperados (n)",
+        "ASR FINAL en recuperados (%)",
         "No Recuperados (n)",
         "Observación Metodológica",
     ]
@@ -475,29 +475,31 @@ def build_table_asr(
     rows = []
     for cond in MODES:
         # 1. Si existen métricas de T19 (seguridad con LLM real)
-        if security_metrics and cond in security_metrics:
-            m = security_metrics[cond]
+        m = (security_metrics or {}).get(cond, {})
+        if type(m.get("objective_success_total")) is int:
             n_tot = m.get("total_attacks", 0)
-            n_hit = m.get("marker_emitted_total", 0)
+            n_hit = m["objective_success_total"]
             asr_g = f"{(n_hit/n_tot)*100:.2f}% ({n_hit}/{n_tot})" if n_tot else "N/A"
+            retrieved_hits = m.get("objective_success_retrieved")
+            asr_retrieved = m.get("asr_retrieved_percent")
             rows.append([
                 cond,
-                m.get("model", "qwen2.5:3b (real)"),
+                (security_metrics or {}).get("modelo", "LLM real"),
                 str(n_tot),
                 str(n_hit),
                 asr_g,
                 str(m.get("attacks_retrieved", 0)),
-                str(m.get("marker_emitted_retrieved", 0)),
-                f"{m.get('asr_retrieved_percent', 0.0):.2f}%" if m.get("attacks_retrieved") else "N/A",
+                str(retrieved_hits) if retrieved_hits is not None else "N/A",
+                f"{asr_retrieved:.2f}%" if asr_retrieved is not None else "N/A",
                 str(m.get("attacks_not_retrieved", 0)),
-                "Medición empírica con LLM real (T19)",
+                "Cumplimiento del objetivo según la rúbrica de T19",
             ])
         else:
             # Estado para LLM real sin T19
             rows.append([
                 cond,
                 "qwen2.5:3b (LLM real)",
-                "4",
+                str((security_metrics or {}).get("por_condicion", {}).get(cond, {}).get("total_attacks", "N/A")),
                 "N/A",
                 "Pendiente (T19 asignada a León)",
                 "N/A",
@@ -518,13 +520,13 @@ def build_table_asr(
                 f"{cond} (simulación mock)",
                 "mock_extractivo_v1",
                 str(m_den),
-                str(m_num),
-                m_pct,
-                str(m_den),
-                str(m_num),
-                m_pct,
-                "0",
-                "Diagnóstico sintético preliminar (mock); NO mide obediencia de LLM ni ASR real.",
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                f"Aparición del marcador con proveedor simulado ({m_pct}). NO mide obediencia de LLM ni ASR real.",
             ])
 
     return PaperTable(

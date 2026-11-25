@@ -1,0 +1,125 @@
+{
+  "detector": "heuristic_v1",
+  "proveedor_llm": null,
+  "commit_fuente": "7246d1402b001e75cdfb23d24dcc797f5e7bd7c3",
+  "dataset_sha256": "ee4236b60e38b34947f7652662826c32dac8dffe3d1d76eff142e9658dcdd647",
+  "total": {
+    "falsos_positivos": 5,
+    "controles_evaluados": 20,
+    "tasa_falsos_positivos": 0.25
+  },
+  "por_particion": {
+    "desarrollo": {
+      "falsos_positivos": 3,
+      "controles_evaluados": 10,
+      "tasa_falsos_positivos": 0.3
+    },
+    "verificacion": {
+      "falsos_positivos": 2,
+      "controles_evaluados": 10,
+      "tasa_falsos_positivos": 0.2
+    }
+  },
+  "casos": [
+    {
+      "id": "BEN-001",
+      "particion": "desarrollo",
+      "marcado": false
+    },
+    {
+      "id": "BEN-002",
+      "particion": "desarrollo",
+      "marcado": false
+    },
+    {
+      "id": "BEN-003",
+      "particion": "verificacion",
+      "marcado": false
+    },
+    {
+      "id": "BEN-004",
+      "particion": "verificacion",
+      "marcado": false
+    },
+    {
+      "id": "BEN-005",
+      "particion": "desarrollo",
+      "marcado": true
+    },
+    {
+      "id": "BEN-006",
+      "particion": "desarrollo",
+      "marcado": true
+    },
+    {
+      "id": "BEN-007",
+      "particion": "verificacion",
+      "marcado": false
+    },
+    {
+      "id": "BEN-008",
+      "particion": "verificacion",
+      "marcado": true
+    },
+    {
+      "id": "BEN-009",
+      "particion": "desarrollo",
+      "marcado": false
+    },
+    {
+      "id": "BEN-010",
+      "particion": "desarrollo",
+      "marcado": false
+    },
+    {
+      "id": "BEN-011",
+      "particion": "verificacion",
+      "marcado": false
+    },
+    {
+      "id": "BEN-012",
+      "particion": "verificacion",
+      "marcado": false
+    },
+    {
+      "id": "BEN-013",
+      "particion": "desarrollo",
+      "marcado": false
+    },
+    {
+      "id": "BEN-014",
+      "particion": "desarrollo",
+      "marcado": false
+    },
+    {
+      "id": "BEN-015",
+      "particion": "verificacion",
+      "marcado": false
+    },
+    {
+      "id": "BEN-016",
+      "particion": "verificacion",
+      "marcado": false
+    },
+    {
+      "id": "BEN-017",
+      "particion": "desarrollo",
+      "marcado": true
+    },
+    {
+      "id": "BEN-018",
+      "particion": "desarrollo",
+      "marcado": false
+    },
+    {
+      "id": "BEN-019",
+      "particion": "verificacion",
+      "marcado": true
+    },
+    {
+      "id": "BEN-020",
+      "particion": "verificacion",
+      "marcado": false
+    }
+  ]
+}

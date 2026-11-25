@@ -1,0 +1,20 @@
+{
+  "tarea": "T19",
+  "tipo_evaluacion": "control_benigno_corpus_oficial",
+  "proveedor": "no_aplica",
+  "modelo": null,
+  "detector_version": "heuristic_v1",
+  "hashes_entradas": {
+    "manifiesto_t08_sha256": "4c17e6b704a23a77dd75e252ce600a1ad6d307fe6b13b1333b8edac35ccd26e6",
+    "corpus_piloto_sha256": "d54f127017916a9449ed7dfceb09ac9888cbedbba9ed339bde8589fccff184fc",
+    "detector_sha256": "4a4f569e5031350ba97a37a059da981054a672fc887f3acbb3f36cb491b9bd99"
+  },
+  "pdf_oficiales_verificados": 11,
+  "paginas": 137,
+  "tasa_alertas": {
+    "numerator": 0,
+    "denominator": 2284,
+    "value": 0.0
+  },
+  "ids_con_alerta": []
+}
