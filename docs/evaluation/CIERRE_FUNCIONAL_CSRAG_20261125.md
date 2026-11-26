@@ -1,10 +1,77 @@
 # Cierre funcional de CS_RAG_Security · 25 de noviembre de 2026
 
-El perfil `demo_extractivo_v1` funciona en Streamlit con Ollama local y devuelve
-pasajes del corpus con PDF y página verificados. La prueba multifuente mostró
-evidencia de dos resoluciones desde la propia interfaz. El modelo aún puede
+El perfil `demo_extractivo_v2` funciona en Streamlit con Ollama local y devuelve
+pasajes del corpus con PDF y página verificados. La interfaz permite consultar varias resoluciones. La selección de fuentes
+sigue dependiendo del modelo y en la última prueba solo citó una. El modelo aún puede
 abstenerse ante evidencia útil o estimar mal su cobertura. T20 recuperó la
 identidad criptográfica del índice de T17 y generó un paquete local auditado.
+
+## Estabilización del perfil v2
+
+**GQ035.** La evidencia de RCU-0504-2020.pdf p. 9 ya superaba los filtros. El
+modelo devolvía una lista vacía válida tanto con enumeración como con límites
+numéricos en el esquema. Se mantuvo el esquema y se precisó en el prompt cómo
+reconocer información pertinente cuando varían las palabras, con un ejemplo
+genérico. La guía se aplica solo cuando hay un pasaje admisible. Al usarla
+también con varios candidatos, la consulta compuesta dejó de marcar
+cobertura parcial. Restringir la guía recuperó ese indicador. En la versión
+final, Ollama seleccionó el pasaje sobre la convalidación por idioma
+intermedio y marcó cobertura parcial.
+
+**GQ039.** El fragmento resolutivo estaba en el índice, pertenecía a texto
+nativo y pasaba el detector. TF-IDF separaba «Pre- Profesionales» en dos
+términos y perdía la coincidencia con «Preprofesionales». El fragmento
+correcto quedaba en el puesto 49 con 0,106, fuera de los 25 candidatos y
+por debajo del umbral 0,12. Con la unión de palabras partidas durante la
+tokenización pasó al puesto 9 con 0,230. Ollama seleccionó RCU-0320-2022.pdf
+p. 2 y reprodujo la expresión suprimida. El cambio afecta solo el ranking de
+la demostración. El fragmento citado, archivo y página permanecen literales.
+Con proveedor mock, el acierto de página pasó de 34/40 a 36/40 en el conjunto
+exploratorio y de 11/13 a 13/13 en el subconjunto T08. Estas cifras miden
+presencia de la fuente esperada en los pasajes admitidos.
+
+**Control b3.** Sigue siendo una falsa alarma. La frase explicativa incluye
+la misma orden de ignorar instrucciones que activa la regla defensiva. El
+texto que la presenta como ejemplo pertenece al fragmento no confiable y
+no justifica una excepción. Con `heuristic_v1`, sin proveedor generativo,
+se detectaron 3/4 ataques y se marcaron 1/4 controles benignos en el conjunto
+inicial, además de 5/20 controles del conjunto benigno ampliado. La prueba
+de integración confirma que el fragmento marcado queda fuera de la evidencia
+expuesta al modelo.
+
+**Integridad.** Antes y después se verificaron 60/60 hashes de archivos de
+T17–T20, sin proveedor generativo. El manifiesto T20 conservó el hash
+registrado más abajo y coincidieron 6/6 entradas y 35/35 salidas. Tampoco
+cambiaron el índice operativo ni el gold usados por la regresión.
+
+**Pruebas automatizadas.** 186/187 aprobadas y 1/187 omitida por falta del
+modelo semántico opcional. Incluyen proveedores simulados, defensas y
+pruebas de integridad local. La ejecución con Ollama se guardó por separado
+en `results/llm_abc_local/demo_v2_final_3misf121/`, con el manifiesto de la
+corrida y los cotejos de PDF. Los commits de implementación son
+`3b46291` y `cfec3cf`.
+
+| Prueba final v2 | Resultado | Estado |
+| --- | --- | --- |
+| GQ035 | Ollama. RCU-0504-2020.pdf p. 9. Seleccionó las condiciones de convalidación. | APROBADO |
+| GQ039 | Ollama. RCU-0320-2022.pdf p. 2. Seleccionó la expresión eliminada. | APROBADO |
+| GQ004 y GQ019 | Ollama. Ambas devolvieron el contenido esperado y sus páginas. | APROBADO |
+| Compuesta con cobertura parcial | Ollama. Conservó la evidencia pertinente y marcó cobertura parcial. | APROBADO |
+| Sin evidencia, vigencia y OCR pendiente | Perfil Ollama. Los tres casos se abstuvieron antes de exponer pasajes al modelo. | APROBADO |
+| Consulta multifuente en Streamlit | Ollama recibió pasajes de las dos resoluciones y citó únicamente RCU-0161-2021.pdf p. 3. El perfil v1 había citado las dos con los mismos identificadores de contexto. | FALLÓ cobertura de fuentes |
+| Control benigno b3 | Detector heurístico sin generación. La falsa alarma permanece. | FALLÓ |
+
+En la batería final se cotejaron 10/10 extractos emitidos por Ollama con sus
+páginas mediante `pdftotext`, incluidas las citas de la consulta multifuente.
+El cotejo acredita procedencia del texto. La cobertura semántica y la
+valoración de respuestas parciales siguen requiriendo lectura humana.
+
+El sistema está listo para una demostración centrada en las preguntas
+documentales verificadas y las abstenciones justificadas. Antes de publicar,
+el equipo debe revisar los aciertos y la cobertura de la muestra v2 con
+la rúbrica, y revisar el paquete T20 junto con las limitaciones de T17–T19.
+La selección multifuente y la falsa alarma de b3 deben quedar descritas al
+presentar el alcance de la demostración.
 
 ## Punto de partida y diagnóstico
 
@@ -69,7 +136,7 @@ primarios por Hit@5, sin proveedor de generación. MiniLM permanece en el
 benchmark. La ejecución de este encoder real quedó omitida porque
 `RAG_EMBEDDING_MODEL` no estaba configurado.
 
-## Regresión funcional con Ollama
+## Regresión funcional inicial con Ollama · perfil v1
 
 Ollama 0.40.16, `qwen2.5:3b`, digest
 `357c53fb659c5076de1d65ccb0b397446227b71a42be9d1603d46168015c9e4b`,
