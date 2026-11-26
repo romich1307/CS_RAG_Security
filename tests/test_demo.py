@@ -259,6 +259,11 @@ def test_conversational_explicit_subquestions_preserve_supported_answer(monkeypa
     assert result['coverage'] == 'parcial'
     assert result['response'].endswith('La matrícula comienza el lunes. [calendario.pdf p. 3]')
     assert result['ollama_calls'] == generate.call_count == 2
+    draft, review = (call.kwargs for call in generate.call_args_list)
+    assert draft['output_limit'] == 640 and review['output_limit'] == 160
+    assert review['output_schema']['properties']['falta']['enum'] == [
+        '', 'Cuándo comienza la matrícula', 'Qué cuesta',
+    ]
     assert all(json.loads(call.args[0][1]['content'])['pregunta'] == question
                for call in generate.call_args_list)
 
