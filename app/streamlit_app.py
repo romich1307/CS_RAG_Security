@@ -219,12 +219,10 @@ with st.container(key='pie'):
     st.html("""
         <footer class="avisos">
             <div>
-                <p>La aplicación utiliza datos mock por defecto.</p>
-                <p>La procedencia institucional no certifica vigencia.</p>
+                <p>El modo Mock está activo por defecto y muestra extractos de los documentos.</p>
             </div>
             <div>
-                <p>En modo mock, presenta extractos documentales sin usar un LLM.</p>
-                <p>OCR pendiente de revisión.</p>
+                <p>La vigencia de cada reglamento se confirma en su fuente oficial.</p>
             </div>
         </footer>
     """)
