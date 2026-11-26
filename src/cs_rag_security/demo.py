@@ -3,6 +3,7 @@ import json
 import re
 from itertools import islice, zip_longest
 
+from cs_rag_security import conversational
 from cs_rag_security.defenses import MODES, detect
 from cs_rag_security.generation import generate
 from cs_rag_security.retrieval import Index, tokens
@@ -79,10 +80,10 @@ def validate_passages(raw, hits):
     return '\n\n'.join(lines), sources
 
 
-def answer_demo(index, question, provider='local', k=5, documental=True, model=None):
+def answer_demo(index, question, provider='local', k=5, documental=True, model=None, *, converse=False):
     if not 1 <= k <= 100 or provider not in ('local', 'mock'):
         raise ValueError('Configuración de demostración inválida')
-    result = {'provider': provider, 'mode': MODES[2], 'profile': PROFILE,
+    result = {'provider': provider, 'mode': MODES[2], 'profile': conversational.PROFILE if converse and provider == 'local' else PROFILE,
               'abstained': True, 'sources': [], 'evaluated_chunks': [],
               'exposed_ids': [], 'retriever': f'{index.method}+dehyphenation_v1', 'top_k': k}
     if not documental or CURRENT.search(question):
@@ -143,12 +144,25 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
         {'numero': number, 'documento': hit['archivo_pdf'], 'texto': hit['texto']}
         for number, hit in enumerate(hits, 1)
     ]
+    result['exposed_ids'] = [h['chunk_id'] for h in hits]
+    if converse:
+        model_name, reason, response, sources, coverage = conversational.compose(
+            generate, question, hits, context, model,
+        )
+        if reason:
+            response = (
+                'Me abstengo: Ollama no encontró evidencia para responder.'
+                if reason == 'modelo_sin_evidencia'
+                else 'Me abstengo: no pude verificar la respuesta de Ollama con los pasajes admitidos.'
+            )
+        return {**result, 'model': model_name, 'reason': reason, 'response': response,
+                'sources': sources, 'coverage': coverage, 'abstained': reason is not None}
+
     messages = [
         {'role': 'system', 'content': SYSTEM + (SINGLE_PASSAGE_GUIDANCE if len(hits) == 1 else '')},
         {'role': 'user', 'content': json.dumps(
             {'pregunta': question, 'documentos_no_confiables': context}, ensure_ascii=False)},
     ]
-    result['exposed_ids'] = [h['chunk_id'] for h in hits]
     generated = generate(messages, hits, provider, return_metadata=True,
                          output_schema=output_schema(len(hits)), local_model=model)
     result['model'] = generated['metadata']['model']
