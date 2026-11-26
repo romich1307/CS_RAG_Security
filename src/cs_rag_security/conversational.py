@@ -82,17 +82,20 @@ def validate_claims(raw, hits, limit):
         raise ValueError('Lista de afirmaciones inválida')
     claims = []
     for item in items:
-        if not isinstance(item, dict) or set(item) != {'texto', 'pasaje', 'respaldo'}:
-            raise ValueError('Afirmación inválida')
+        if (not isinstance(item, dict) or set(item) != {'texto', 'pasaje', 'respaldo'}
+                or not isinstance(item['texto'], str) or not isinstance(item['respaldo'], str)):
+            continue
         number = item['pasaje']
         if type(number) is not int or not 1 <= number <= len(hits):
-            raise ValueError('Pasaje fuera de contexto')
+            continue
         text, quote = flat(item['texto']), flat(item['respaldo'])
         hit = hits[number - 1]
         if (not text or len(text) > 600 or FORBIDDEN.search(text) or detect(text)['suspicious']
                 or len(quote.split()) < 3 or quote not in flat(hit['texto'])):
-            raise ValueError('Afirmación o respaldo inválido')
+            continue
         claims.append({'texto': text, 'pasaje': number, 'respaldo': quote})
+    if items and not claims:
+        raise ValueError('Ninguna afirmación tiene respaldo verificable')
     return claims
 
 

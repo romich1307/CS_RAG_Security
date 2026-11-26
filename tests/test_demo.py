@@ -416,3 +416,17 @@ def test_conversational_marks_partial_when_only_one_request_matches_admitted_pas
     assert result['ollama_calls'] == generator.call_count == 2
     assert all(json.loads(call.args[0][1]['content'])['pregunta'] == '¿Cuándo comienza la matrícula?'
                for call in generator.call_args_list)
+
+
+def test_conversational_drops_invalid_claim_before_review_without_losing_valid_evidence(monkeypatch):
+    generator = conversational_generation(monkeypatch, [
+        {'texto': 'Se exige un pago.', 'pasaje': 1, 'respaldo': 'Se exige un pago'},
+        {'texto': 'La matrícula comienza el lunes.', 'pasaje': 1,
+         'respaldo': 'La matrícula comienza el lunes'},
+    ], state='parcial', missing='cuánto cuesta', accepted=[1])
+    index = Index([chunk('doc', 'La matrícula comienza el lunes.')])
+    result = demo.answer_demo(index, '¿Cuándo comienza la matrícula y cuánto cuesta?', converse=True)
+    assert result['coverage'] == 'parcial'
+    review = json.loads(generator.call_args_list[1].args[0][1]['content'])
+    assert [claim['texto'] for claim in review['afirmaciones']] == ['La matrícula comienza el lunes.']
+    assert 'pago' not in result['response']
