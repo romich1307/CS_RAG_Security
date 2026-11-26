@@ -232,7 +232,8 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
         def timed_generation(messages, *args, **kwargs):
             begin = perf_counter()
             generated = generate(messages, *args, **kwargs)
-            key = 'review_ollama' if messages[0]['content'] == conversational.REVIEW_BATCH else 'draft_ollama'
+            key = ('review_ollama' if messages[0]['content'].startswith(conversational.REVIEW_CRITERIA)
+                   else 'draft_ollama')
             timings[key] = (perf_counter() - begin) * 1000
             result['ollama_calls'] += 1
             return generated

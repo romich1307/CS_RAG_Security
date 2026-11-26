@@ -138,10 +138,16 @@ def test_demo_search_rejoins_words_wrapped_in_pdf_without_rewriting_citation(mon
 def conversational_generation(monkeypatch, claims, state='completa', missing='', accepted=None):
     if accepted is None:
         accepted = [] if state == 'rechazar' else list(range(1, len(claims) + 1))
-    generate = Mock(side_effect=[
-        {'text': json.dumps({'afirmaciones': claims}), 'metadata': {'model': 'fixture'}},
-        {'text': json.dumps({'estado': state, 'falta': missing, 'aceptadas': accepted})},
-    ])
+    def fixture(*args, **kwargs):
+        fields = kwargs['output_schema']['properties']
+        if 'afirmaciones' in fields:
+            return {'text': json.dumps({'afirmaciones': claims}), 'metadata': {'model': 'fixture'}}
+        review = {'falta': missing, 'aceptadas': accepted}
+        if 'estado' in fields:
+            review['estado'] = state
+        return {'text': json.dumps(review)}
+
+    generate = Mock(side_effect=fixture)
     monkeypatch.setattr(demo, 'generate', generate)
     return generate
 
@@ -261,6 +267,7 @@ def test_conversational_explicit_subquestions_preserve_supported_answer(monkeypa
     assert result['ollama_calls'] == generate.call_count == 2
     draft, review = (call.kwargs for call in generate.call_args_list)
     assert draft['output_limit'] == 640 and review['output_limit'] == 160
+    assert 'estado' not in review['output_schema']['properties']
     assert review['output_schema']['properties']['falta']['enum'] == [
         '', 'Cuándo comienza la matrícula', 'Qué cuesta',
     ]
