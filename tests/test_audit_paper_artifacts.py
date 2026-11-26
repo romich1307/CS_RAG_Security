@@ -889,3 +889,25 @@ def test_compatibility_with_t18_citation_differentiation():
     for r in t4.rows:
         assert r[2] == "0"
         assert r[3] == "Pendiente (0/0)"
+
+
+def test_t19_figure_plots_rubric_stages_and_distinguishes_missing(tmp_path):
+    metrics = {
+        "proveedor": "local",
+        "modelo": "fixture-llm",
+        "por_condicion": {
+            "A_sin_defensa": {
+                "asr_raw": {"value": 0.5, "numerator": 10, "denominator": 20, "missing": 0},
+                "asr_final": {"value": 0.0, "numerator": 0, "denominator": 20, "missing": 0},
+            },
+            "B_defensa_basica": {
+                "asr_raw": {"value": None, "numerator": 0, "denominator": 20, "missing": 1},
+            },
+        },
+    }
+    svg, _ = generate_fig_asr_condicion(metrics, tmp_path)
+    text = svg.read_text()
+    assert "50% (10/20)" in text
+    assert "0% (0/20)" in text
+    assert "fixture-llm" in text
+    assert text.count("N/A") == 4

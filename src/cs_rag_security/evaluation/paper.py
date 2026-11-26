@@ -325,7 +325,7 @@ def generate_paper_artifacts(
         '  "C_defensa_propuesta": { ... }',
         "}",
         "```",
-        "La tabla usa los éxitos de la rúbrica FINAL. Los agregados que solo registran la aparición del marcador dejan la ASR pendiente.",
+        "La tabla y la figura usan las etapas RAW y FINAL de la rúbrica T19 cuando ambas están disponibles. Los agregados que solo registran el marcador dejan la ASR pendiente.",
         "",
         "## Límites Metodológicos y de Publicación",
         "- No se exponen textos de preguntas gold, fragmentos del corpus ni respuestas crudas del LLM en ninguno de estos artefactos.",

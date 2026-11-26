@@ -16,7 +16,7 @@ class NoRedirect(HTTPRedirectHandler):
         raise ValueError('Redirección de proveedor rechazada')
 
 
-def generate(messages, hits, provider='mock', seed=42, return_metadata=False):
+def generate(messages, hits, provider='mock', seed=42, return_metadata=False, *, output_schema=None, local_model=None):
     if provider == 'mock':
         text = 'MOCK — vista extractiva de prueba; no es una respuesta de LLM.\n' + '\n'.join(
             f"[{h['archivo_pdf']} p. {h['pagina_pdf']}] {h['texto'][:450]}" for h in hits)
@@ -30,11 +30,14 @@ def generate(messages, hits, provider='mock', seed=42, return_metadata=False):
         # Solo IP loopback literal: evita DNS, destinos remotos y APIs con coste.
         if parsed.scheme != 'http' or not parsed.hostname or not ipaddress.ip_address(parsed.hostname).is_loopback or parsed.username or parsed.password:
             raise ValueError('Se requiere servidor HTTP en IP loopback literal')
-        model = os.environ.get('RAG_LOCAL_MODEL')
+        model = local_model or os.environ.get('RAG_LOCAL_MODEL')
         if not model:
             raise ValueError('Configura RAG_LOCAL_MODEL; no se descarga ningún modelo automáticamente')
-        data = json.dumps({'model': model, 'messages': messages, 'stream': False,
-                           'options': {'temperature': 0, 'seed': seed}}).encode('utf-8')
+        payload = {'model': model, 'messages': messages, 'stream': False,
+                   'options': {'temperature': 0, 'seed': seed}}
+        if output_schema is not None:
+            payload['format'] = output_schema
+        data = json.dumps(payload).encode('utf-8')
         opener = build_opener(ProxyHandler({}), NoRedirect())
         start_t = time.perf_counter()
         with opener.open(Request(url, data=data, headers={'Content-Type': 'application/json'}), timeout=90) as response:
