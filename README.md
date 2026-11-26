@@ -33,7 +33,7 @@ omite. El índice privado se reconstruye en `data/vector_db/index.json`.
 ## Uso
 
 La aplicación abre en consulta documental. Seleccione **Ollama local** y un
-modelo instalado para usar `demo_conversacional_v1`. El modelo redacta frases
+modelo instalado para usar `demo_conversacional_v2`. El modelo redacta frases
 con respaldo literal y las somete a una segunda revisión. El programa genera
 las citas de PDF y página desde el índice. La opción mock permite probar la
 interfaz mediante extractos. Los fragmentos con OCR pendiente se excluyen.
@@ -44,8 +44,9 @@ Las condiciones de investigación siguen disponibles como
 `A_sin_defensa` (solo evaluación controlada), `B_defensa_basica` (roles y
 contexto no confiable) y `C_defensa_propuesta` (JSON y filtro heurístico).
 El perfil de demostración comparte el filtro de C y usa un contrato
-propio de redacción y revisión. Consulte el [cierre funcional](docs/evaluation/CIERRE_FUNCIONAL_CSRAG_20261125.md)
-para las pruebas reales, el cotejo de citas y la reproducción de T20.
+propio de redacción y revisión. La [evaluación de la optimización](docs/evaluation/OPTIMIZACION_FINAL_RAG.md)
+registra las pruebas y latencias de v2. El [cierre funcional](docs/evaluation/CIERRE_FUNCIONAL_CSRAG_20261125.md)
+documenta las corridas anteriores y la reproducción de T20.
 
 ## Experimentos reproducibles
 
