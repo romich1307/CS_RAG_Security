@@ -17,9 +17,10 @@ def tokens(text):
 class Index:
     method = 'fallback_textual_tfidf_coseno_v1'
 
-    def __init__(self, chunks):
+    def __init__(self, chunks, *, tokenizer=tokens):
         self.chunks = chunks
-        counts = [Counter(tokens(c['texto'])) for c in chunks]
+        self.tokenizer = tokenizer
+        counts = [Counter(tokenizer(c['texto'])) for c in chunks]
         df = Counter(t for c in counts for t in c)
         self.idf = {t: math.log((1 + len(chunks)) / (1 + n)) + 1 for t, n in df.items()}
         self.vectors = [self.vector(c) for c in counts]
@@ -32,7 +33,7 @@ class Index:
     def search(self, question, k=5, *, document_ids=None):
         if not 1 <= k <= 100:
             raise ValueError('top-k entre 1 y 100')
-        q = self.vector(Counter(tokens(question)))
+        q = self.vector(Counter(self.tokenizer(question)))
         scores = [
             (sum(q.get(t, 0) * v for t, v in vec.items()), i)
             for i, vec in enumerate(self.vectors)

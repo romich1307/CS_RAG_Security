@@ -120,3 +120,14 @@ def test_demo_balances_context_across_explicit_documents(monkeypatch):
     result = demo.answer_demo(index, 'matrícula RCU-0127-2020 y RCU-0320-2022', k=2)
     assert result['exposed_ids'] == ['first', 'third']
     assert [source['archivo'] for source in result['sources']] == ['first.pdf', 'third.pdf']
+
+
+def test_demo_search_rejoins_words_wrapped_in_pdf_without_rewriting_citation(monkeypatch):
+    fragment = 'Se modificó el reglamento de prácticas Pre- Profesionales'
+    original_index = Index([chunk('pdf', fragment)])
+    assert original_index.search('preprofesionales') == []
+    generation(monkeypatch, [1])
+    result = demo.answer_demo(original_index, 'preprofesionales')
+    assert result['exposed_ids'] == ['pdf']
+    assert fragment in result['response']
+    assert result['sources'] == [{'archivo': 'pdf.pdf', 'pagina': 3}]

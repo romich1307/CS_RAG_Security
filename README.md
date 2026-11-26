@@ -32,7 +32,7 @@ omite. El índice privado se reconstruye en `data/vector_db/index.json`.
 
 ## Uso
 
-La aplicación abre en consulta documental con el perfil `demo_extractivo_v1`.
+La aplicación abre en consulta documental con el perfil `demo_extractivo_v2`.
 Seleccione **Ollama local** y un modelo instalado para que el modelo elija
 pasajes pertinentes. El programa pone las citas de PDF y página usando el
 índice y muestra los extractos seleccionados. El mock permite probar la
