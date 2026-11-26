@@ -452,6 +452,27 @@ def build_table_abstention_rates(
     )
 
 
+def t19_rate(metrics, condition, stage):
+    """Return a complete rubric count, including valid zeros."""
+    metrics = metrics or {}
+    if metrics.get("proveedor") == "mock":
+        return None
+    grouped = metrics.get("por_condicion", {}).get(condition, {})
+    if stage in grouped:
+        rate = grouped[stage]
+        if rate.get("value") is None or rate.get("missing", 0):
+            return None
+        count, total = rate.get("numerator"), rate.get("denominator")
+    elif stage == "asr_final":
+        legacy = metrics.get(condition, {})
+        count, total = legacy.get("objective_success_total"), legacy.get("total_attacks")
+    else:
+        return None
+    if type(count) is int and type(total) is int and total > 0 and 0 <= count <= total:
+        return count, total
+    return None
+
+
 def build_table_asr(
     security_metrics: Optional[Dict[str, Any]] = None,
     mock_metrics: Optional[Dict[str, Any]] = None,
@@ -470,15 +491,18 @@ def build_table_asr(
         "ASR FINAL en recuperados (%)",
         "No Recuperados (n)",
         "Observación Metodológica",
+        "ASR RAW global (%)",
     ]
 
     rows = []
     for cond in MODES:
+        raw_rate = t19_rate(security_metrics, cond, "asr_raw")
+        raw_display = f"{raw_rate[0] / raw_rate[1]:.2%} ({raw_rate[0]}/{raw_rate[1]})" if raw_rate else "N/A"
         # 1. Si existen métricas de T19 (seguridad con LLM real)
         m = (security_metrics or {}).get(cond, {})
-        if type(m.get("objective_success_total")) is int:
-            n_tot = m.get("total_attacks", 0)
-            n_hit = m["objective_success_total"]
+        final_rate = t19_rate(security_metrics, cond, "asr_final")
+        if final_rate:
+            n_hit, n_tot = final_rate
             asr_g = f"{(n_hit/n_tot)*100:.2f}% ({n_hit}/{n_tot})" if n_tot else "N/A"
             retrieved_hits = m.get("objective_success_retrieved")
             asr_retrieved = m.get("asr_retrieved_percent")
@@ -493,6 +517,7 @@ def build_table_asr(
                 f"{asr_retrieved:.2f}%" if asr_retrieved is not None else "N/A",
                 str(m.get("attacks_not_retrieved", 0)),
                 "Cumplimiento del objetivo según la rúbrica de T19",
+                raw_display,
             ])
         else:
             # Estado para LLM real sin T19
@@ -506,7 +531,8 @@ def build_table_asr(
                 "N/A",
                 "Pendiente (T19 asignada a León)",
                 "N/A",
-                "Métricas de seguridad asignadas a León en T19",
+                "Rúbrica FINAL pendiente o sin observaciones completas",
+                raw_display,
             ])
 
         # Diagnóstico sintético preliminar con mock (extraído dinámicamente de artefactos existentes)
@@ -527,6 +553,7 @@ def build_table_asr(
                 "N/A",
                 "N/A",
                 f"Aparición del marcador con proveedor simulado ({m_pct}). NO mide obediencia de LLM ni ASR real.",
+                "N/A",
             ])
 
     return PaperTable(

@@ -469,47 +469,53 @@ def generate_fig_asr_condicion(
     security_data: Optional[Dict[str, Any]] = None,
     output_dir: Union[str, Path] = "results",
 ) -> Tuple[Path, Path]:
-    """Figura 4: Tasa de éxito de ataques (ASR).
+    """Figura 4. Cumplimiento del objetivo según la rúbrica T19."""
+    from cs_rag_security.evaluation.tables import t19_rate
 
-    Alerta explícita: mock no mide ASR de LLM. Si T19 no está disponible, se expone banner.
-    """
+    model = (security_data or {}).get("modelo") or "LLM local"
     canvas = ScientificCanvas(
         width=920,
         height=540,
-        title="Figura 4. Tasa de Éxito de Ataques (Attack Success Rate - ASR)",
-        subtitle="Eficacia defensiva frente a inyecciones indirectas controladas (attacks.jsonl).",
+        title="Figura 4. Tasa de éxito de ataques por condición",
+        subtitle=f"Rúbrica T19 · {model} · Inyecciones indirectas controladas",
     )
-
-    ax_x = 90
-    ax_y = 110
-    ax_w = 780
-    ax_h = 300
-
-    # Verificar si disponemos de métricas reales de T19
-    has_real_t19 = (security_data is not None and any("real" in str(k) or "asr" in str(v) for k, v in security_data.items()))
-
-    if not has_real_t19:
-        # Dibujar área de pendiente metodológica sin inventar barras en 0
-        canvas.add_rect(ax_x, ax_y, ax_w, ax_h, fill="#fffaf0", outline="#d69e2e", rx=6)
-        cx = ax_x + ax_w / 2.0
-        cy = ax_y + ax_h / 2.0
-
-        canvas.add_text(cx, cy - 60, "MÉTRICAS DE SEGURIDAD CON LLM REAL PENDIENTES (T19)", font_size=16, is_bold=True, color="#975a16", anchor="middle")
-        canvas.add_text(cx, cy - 25, "La tarea T19 está formalmente asignada a León para su ejecución sobre el LLM real local.", font_size=12, color="#744210", anchor="middle")
-
-        canvas.add_rect(cx - 320, cy + 5, 640, 75, fill="#ffffff", outline="#ecc94b", rx=4)
-        canvas.add_text(cx, cy + 25, "Límite metodológico fundamental (AGENTS.md / docs/METODOLOGIA.md):", font_size=11, is_bold=True, color="#744210", anchor="middle")
-        canvas.add_text(cx, cy + 45, "Los resultados mock (A: 4/4, B: 4/4, C: 1/4) corresponden a extractos sintéticos de texto", font_size=11, color="#744210", anchor="middle")
-        canvas.add_text(cx, cy + 63, "y NO constituyen medida de obediencia ni ASR de un modelo de lenguaje.", font_size=11, is_bold=True, color="#975a16", anchor="middle")
-
-        canvas.add_text(cx, cy + 115, "Estado actual: N/A (Denominador real = 0). Jamás se grafica como 0% de ataque.", font_size=11, color=COLOR_TEXT_MUTED, anchor="middle")
+    ax_x, ax_y, ax_w, ax_h = 90, 110, 780, 300
+    stages = [("RAW", "asr_raw", COLOR_LLM_RAW), ("FINAL", "asr_final", COLOR_PIPELINE)]
+    rates = {
+        (mode, key): t19_rate(security_data, mode, key)
+        for mode in MODES for _, key, _ in stages
+    }
+    if not any(rates.values()):
+        cx, cy = ax_x + ax_w / 2, ax_y + ax_h / 2
+        canvas.add_rect(ax_x, ax_y, ax_w, ax_h, fill=COLOR_PENDING_BG, outline=COLOR_PENDING_BORDER, rx=6)
+        canvas.add_text(cx, cy - 22, "MÉTRICAS DE SEGURIDAD CON LLM REAL PENDIENTES",
+                        font_size=16, is_bold=True, anchor="middle")
+        canvas.add_text(cx, cy + 8, "Sin observaciones completas de la rúbrica T19.",
+                        font_size=12, anchor="middle")
+        canvas.add_text(cx, cy + 32, "Mock mide aparición del marcador. Jamás se grafica como 0% de ataque.",
+                        font_size=11, anchor="middle")
     else:
-        # Si T19 estuviese disponible, graficar barras
+        baseline = ax_y + ax_h
         for pct in range(0, 101, 20):
-            y_pos = ax_y + ax_h - (pct / 100.0) * ax_h
-            canvas.add_line(ax_x, y_pos, ax_x + ax_w, y_pos, color=COLOR_GRID, dashed=(pct > 0))
-            canvas.add_text(ax_x - 10, y_pos + 4, f"{pct}%", font_size=11, color=COLOR_TEXT_MUTED, anchor="end")
-        canvas.add_line(ax_x, ax_y + ax_h, ax_x + ax_w, ax_y + ax_h, color=COLOR_BORDER, width=2)
+            y = baseline - ax_h * pct / 100
+            canvas.add_line(ax_x, y, ax_x + ax_w, y, color=COLOR_GRID, dashed=(pct > 0))
+            canvas.add_text(ax_x - 10, y + 4, f"{pct}%", font_size=11, anchor="end")
+        for i, mode in enumerate(MODES):
+            center = ax_x + ax_w * (i + 0.5) / len(MODES)
+            canvas.add_text(center, baseline + 30, mode.split("_", 1)[0],
+                            font_size=14, is_bold=True, anchor="middle")
+            for j, (label, key, color) in enumerate(stages):
+                x = center + (-56 if j == 0 else 56)
+                rate = rates[mode, key]
+                if rate is None:
+                    canvas.add_text(x, baseline - 18, "N/A", font_size=11, anchor="middle")
+                else:
+                    count, total = rate
+                    height = ax_h * count / total
+                    canvas.add_rect(x - 26, baseline - max(height, 3), 52, max(height, 3), fill=color)
+                    canvas.add_text(x, baseline - height - 12, f"{count / total:.0%} ({count}/{total})",
+                                    font_size=11, anchor="middle")
+                canvas.add_text(x, baseline + 15, label, color=color, font_size=10, anchor="middle")
 
     out = Path(output_dir)
     return canvas.save(out / "fig4_asr_condicion.svg", out / "fig4_asr_condicion.png")
