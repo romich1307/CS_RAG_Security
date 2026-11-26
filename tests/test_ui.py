@@ -10,7 +10,7 @@ def test_streamlit_form_and_query():
     app.text_input[0].set_value('¿Qué regula la evaluación por competencias?')
     app.button[0].click().run()
     assert not app.exception
-    assert any('Prototipo académico no oficial' in x.value for x in app.warning)
+    assert any('Prototipo académico no oficial' in item.proto.body for item in app.get('html'))
 
 
 def test_streamlit_handles_api_runtime_error_401():
@@ -18,8 +18,8 @@ def test_streamlit_handles_api_runtime_error_401():
     with patch('cs_rag_security.retrieval.Index.load', return_value=fake_index), \
          patch('cs_rag_security.pipeline.answer', side_effect=RuntimeError('Error HTTP del proveedor API (401)')):
         app = AppTest.from_file('app/streamlit_app.py').run()
-        app.selectbox[0].select('C_defensa_propuesta').run()
-        app.selectbox[1].select('api')
+        app.radio(key='perfil-c').set_value('Configuración experimental').run()
+        app.radio(key='proveedor').set_value('api')
         app.text_input[0].set_value('¿Pregunta?')
         app.button[0].click().run()
         assert not app.exception
@@ -35,8 +35,8 @@ def test_streamlit_handles_api_runtime_error_429():
     with patch('cs_rag_security.retrieval.Index.load', return_value=fake_index), \
          patch('cs_rag_security.pipeline.answer', side_effect=RuntimeError('Error HTTP del proveedor API (429)')):
         app = AppTest.from_file('app/streamlit_app.py').run()
-        app.selectbox[0].select('C_defensa_propuesta').run()
-        app.selectbox[1].select('api')
+        app.radio(key='perfil-c').set_value('Configuración experimental').run()
+        app.radio(key='proveedor').set_value('api')
         app.text_input[0].set_value('¿Pregunta?')
         app.button[0].click().run()
         assert not app.exception
@@ -52,8 +52,8 @@ def test_streamlit_handles_api_connection_error():
     with patch('cs_rag_security.retrieval.Index.load', return_value=fake_index), \
          patch('cs_rag_security.pipeline.answer', side_effect=RuntimeError('Error de conexión con el proveedor API')):
         app = AppTest.from_file('app/streamlit_app.py').run()
-        app.selectbox[0].select('C_defensa_propuesta').run()
-        app.selectbox[1].select('api')
+        app.radio(key='perfil-c').set_value('Configuración experimental').run()
+        app.radio(key='proveedor').set_value('api')
         app.text_input[0].set_value('¿Pregunta?')
         app.button[0].click().run()
         assert not app.exception
@@ -102,15 +102,15 @@ def test_streamlit_does_not_expose_raw_response_in_ui():
     with patch('cs_rag_security.retrieval.Index.load', return_value=fake_index), \
          patch('cs_rag_security.pipeline.answer', return_value=fake_result):
         app = AppTest.from_file('app/streamlit_app.py').run()
-        app.selectbox[0].select('C_defensa_propuesta')
+        app.radio(key='perfil-c').set_value('Configuración experimental')
         app.text_input[0].set_value('¿Consulta de prueba?')
         app.button[0].click().run()
         assert not app.exception
         # La respuesta validada (abstención segura) sí debe mostrarse
-        assert any('Me abstengo: la salida del modelo carece de citas válidas del contexto.' in el.value for el in app.markdown)
+        assert any('Me abstengo: la salida del modelo carece de citas válidas del contexto.' in el.value for el in app.text)
         # raw_response y campos no seguros NO deben aparecer en ninguna sección de la interfaz (ni en json ni en textos)
-        assert len(app.json) == 1
-        rendered_json = app.json[0].value
+        assert len(app.code) == 1
+        rendered_json = app.code[0].value
         assert 'raw_response' not in rendered_json
         assert rejected_raw not in rendered_json
         assert 'CORPUS_PRIVADO' not in rendered_json
@@ -145,9 +145,43 @@ def test_demo_streamlit_handles_local_connection_and_model_errors():
         with patch('cs_rag_security.retrieval.Index.load', return_value=Index([])), \
              patch('cs_rag_security.demo.answer_demo', side_effect=error):
             app = AppTest.from_file('app/streamlit_app.py').run()
-            app.selectbox[1].select('local').run()
-            app.text_input[-1].set_value('¿Consulta de prueba?')
+            app.radio(key='proveedor').set_value('local').run()
+            app.text_input[0].set_value('¿Consulta de prueba?')
             app.button[0].click().run()
             assert not app.exception
             assert expected in app.error[0].value
             assert 'PROVEEDOR_PRIVADO' not in app.error[0].value
+
+
+def test_redesigned_mock_renders_only_the_validated_excerpt():
+    response = {
+        'response': 'MOCK\n[documento.pdf p. 2] Texto documental <literal>.',
+        'provider': 'mock',
+        'mode': 'C_defensa_propuesta',
+        'abstained': False,
+        'sources': [{'archivo': 'documento.pdf', 'pagina': 2}],
+        'evaluated_chunks': [
+            {'chunk_id': 'admitido', 'status': 'accepted', 'archivo_pdf': 'documento.pdf',
+             'pagina_pdf': 2, 'score': 0.5, 'texto': 'CONTENIDO_PRIVADO'},
+            {'chunk_id': 'rechazado', 'status': 'discarded', 'archivo_pdf': 'rechazado.pdf',
+             'pagina_pdf': 9, 'texto': 'CONTENIDO_DESCARTADO'},
+        ],
+    }
+
+    with patch('cs_rag_security.retrieval.Index.load', return_value=Index([])), \
+         patch('cs_rag_security.demo.answer_demo', return_value=response) as answer_demo:
+        app = AppTest.from_file('app/streamlit_app.py').run()
+        app.selectbox(key='top-k').select(3)
+        app.text_input[0].set_value('¿Qué indica el documento?')
+        app.button[0].click().run()
+
+        assert not app.exception
+        assert answer_demo.call_args.args[1:] == ('¿Qué indica el documento?', 'mock', 3, True, None)
+        rendered_html = '\n'.join(item.proto.body for item in app.get('html'))
+        assert 'Texto documental &lt;literal&gt;.' in rendered_html
+        assert 'documento.pdf, página 2' in [item.value for item in app.text]
+        assert 'CONTENIDO_PRIVADO' not in rendered_html
+        assert 'CONTENIDO_DESCARTADO' not in app.code[0].value
+        assert 'rechazado' in app.code[0].value
+        app.selectbox(key='top-k').select(4).run()
+        assert not app.code
