@@ -253,7 +253,7 @@ def test_conversational_explicit_subquestions_preserve_supported_answer(monkeypa
         'texto': 'La matrícula comienza el lunes.', 'pasaje': 1,
         'respaldo': 'La matrícula comienza el lunes',
     }], state='parcial', missing='Qué cuesta')
-    index = Index([chunk('calendario', 'La matrícula comienza el lunes.')])
+    index = Index([chunk('calendario', 'La matrícula comienza el lunes. Consultar cuánto cuesta.')])
     question = '¿Cuándo comienza la matrícula? ¿Qué cuesta?'
     result = demo.answer_demo(index, question, converse=True)
     assert result['coverage'] == 'parcial'
@@ -401,3 +401,18 @@ def test_conversational_abstains_when_only_corpus_scope_matches(monkeypatch):
     assert result['reason'] == 'evidencia_insuficiente'
     assert result['ollama_calls'] == 0
     gen.assert_not_called()
+
+
+
+def test_conversational_marks_partial_when_only_one_request_matches_admitted_passages(monkeypatch):
+    generator = conversational_generation(monkeypatch, [{
+        'texto': 'La matrícula comienza el lunes.', 'pasaje': 1,
+        'respaldo': 'La matrícula comienza el lunes',
+    }])
+    result = demo.answer_demo(Index([chunk('doc', 'La matrícula comienza el lunes.')]),
+                              '¿Cuándo comienza la matrícula? ¿Qué cuesta?', converse=True)
+    assert result['coverage'] == 'parcial'
+    assert result['response'].endswith('La matrícula comienza el lunes. [doc.pdf p. 3]')
+    assert result['ollama_calls'] == generator.call_count == 2
+    assert all(json.loads(call.args[0][1]['content'])['pregunta'] == '¿Cuándo comienza la matrícula?'
+               for call in generator.call_args_list)

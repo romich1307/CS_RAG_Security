@@ -68,6 +68,26 @@ def topical_query(question):
     return topical if documentary_tokens(topical) else question
 
 
+def explicit_requests(question):
+    return re.split(r'(?<=\?)\s+(?=\S)', question)
+
+
+def supported_requests(question, hits):
+    parts = explicit_requests(question)
+    if len(parts) == 1:
+        return question, False
+
+    available = {word for hit in hits for word in documentary_tokens(hit['texto'])}
+    covered = []
+    for part in parts:
+        terms = documentary_tokens(topical_query(DOCUMENT_ID.sub(' ', part)))
+        if available.intersection(terms):
+            covered.append(part)
+    if covered and len(covered) < len(parts):
+        return ' '.join(covered), True
+    return question, False
+
+
 def output_schema(count):
     return {
         'type': 'object',
@@ -135,7 +155,7 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
     candidate_limit = min(5 * k, 100)
     if requested:
         # An explicit subquestion can provide a more focused query for its document.
-        parts = re.split(r'(?<=\?)\s+(?=\S)', question) if converse else []
+        parts = explicit_requests(question) if converse else []
         scoped_questions = {}
         for part in parts:
             for name in DOCUMENT_ID.findall(part):
@@ -204,6 +224,7 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
         for number, hit in enumerate(hits, 1)
     ]
     result['exposed_ids'] = [h['chunk_id'] for h in hits]
+    draft_question, uncovered = supported_requests(question, hits) if converse else (question, False)
     timings['context'] = (perf_counter() - stage) * 1000
     if converse:
         stage = perf_counter()
@@ -217,12 +238,15 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
             return generated
 
         model_name, reason, response, sources, coverage = conversational.compose(
-            timed_generation, question, hits, context, model,
+            timed_generation, draft_question, hits, context, model,
         )
         timings['validation_and_format'] = (perf_counter() - stage) * 1000 - sum(
             timings.get(key, 0) for key in ('draft_ollama', 'review_ollama')
         )
         timings['total'] = (perf_counter() - started) * 1000
+        if uncovered and coverage == 'completa':
+            coverage = 'parcial'
+            response = conversational.PARTIAL_NOTICE + '\n\n' + response
         if reason:
             response = (
                 'Me abstengo: Ollama no encontró evidencia para responder.'
