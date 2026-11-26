@@ -44,6 +44,7 @@ def test_demo_backfills_after_exclusions_and_validates_partial_result(monkeypatc
     ]
     messages = generate.call_args.args[0]
     assert messages[0]['role'] == 'system'
+    assert demo.SINGLE_PASSAGE_GUIDANCE in messages[0]['content']
     assert json.loads(messages[1]['content'])['documentos_no_confiables'] == [
         {'numero': 1, 'documento': 'admitted.pdf', 'texto': quote},
     ]
@@ -111,7 +112,7 @@ def test_demo_explicit_document_excludes_other_relevant_documents(monkeypatch):
 
 
 def test_demo_balances_context_across_explicit_documents(monkeypatch):
-    generation(monkeypatch, [1, 2])
+    generate = generation(monkeypatch, [1, 2])
     index = Index([
         chunk('first', 'Los requisitos para matrícula constan en el acta', documento_id='RCU-0127-2020'),
         chunk('second', 'Los requisitos adicionales constan en el anexo', documento_id='RCU-0127-2020'),
@@ -119,6 +120,7 @@ def test_demo_balances_context_across_explicit_documents(monkeypatch):
     ])
     result = demo.answer_demo(index, 'matrícula RCU-0127-2020 y RCU-0320-2022', k=2)
     assert result['exposed_ids'] == ['first', 'third']
+    assert generate.call_args.args[0][0]['content'] == demo.SYSTEM
     assert [source['archivo'] for source in result['sources']] == ['first.pdf', 'third.pdf']
 
 
