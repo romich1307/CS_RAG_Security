@@ -5,7 +5,7 @@ from urllib.error import HTTPError, URLError
 import streamlit as st
 
 from cs_rag_security.defenses import MODES
-from cs_rag_security.demo import PROFILE, answer_demo
+from cs_rag_security.demo import answer_demo
 from cs_rag_security.pipeline import answer
 from cs_rag_security.retrieval import Index
 from cs_rag_security.traceability import (
@@ -16,7 +16,7 @@ from cs_rag_security.traceability import (
 INDEX_PATH = Path(__file__).resolve().parents[1] / 'data/vector_db/index.json'
 SAFE_TRACE_FIELDS = (
     'provider', 'mode', 'profile', 'abstained', 'reason', 'retriever',
-    'top_k', 'model', 'evaluated_chunks', 'exposed_ids',
+    'top_k', 'model', 'coverage', 'evaluated_chunks', 'exposed_ids',
 )
 
 
@@ -86,9 +86,9 @@ provider = st.selectbox(
 mode = MODES[2] if selection == demo_label else selection
 if provider == 'mock':
     st.caption('Simulación mock. Muestra extractos sin usar un LLM.')
-if demo:
-    st.caption(f'Perfil {PROFILE}. Los extractos se citan con el PDF y la página del índice.')
-else:
+if demo and provider == 'local':
+    st.caption('Respuesta documental con citas de PDF y página.')
+elif not demo:
     st.caption('Configuración experimental. A carece de aislamiento de instrucciones.')
 model = None
 if provider == 'local':
@@ -114,7 +114,10 @@ if st.button('Consultar'):
             try:
                 with st.spinner('Buscando evidencia documental…'):
                     if demo:
-                        result = answer_demo(index, question, provider, k, documental, model.strip() if model else None)
+                        result = answer_demo(
+                            index, question, provider, k, documental,
+                            model.strip() if model else None, converse=True,
+                        )
                     else:
                         result = answer(index, question, mode, provider, k, documental)
                 show_result(result)

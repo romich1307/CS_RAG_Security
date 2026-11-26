@@ -15,7 +15,7 @@ def main():
     p.add_argument('--mode', default='C_defensa_propuesta')
     p.add_argument('--provider', choices=['mock', 'local', 'api'], default='mock')
     p.add_argument('--audit-raw', action='store_true', help='Salida privada de chat experimental para auditoría local')
-    p.add_argument('--demo', action='store_true', help='Perfil extractivo C para chat local o mock')
+    p.add_argument('--demo', action='store_true', help='Perfil documental C para chat local o mock')
     p.add_argument('--documental', action='store_true')
     p.add_argument('--output', default='results/offline')
     p.add_argument('--annotations', default=None, help='Ruta a archivo CSV o JSON de anotaciones')
@@ -43,7 +43,9 @@ def main():
             from cs_rag_security.demo import answer_demo
             if args.mode != 'C_defensa_propuesta' or args.provider == 'api':
                 p.error('--demo requiere defensa C y proveedor local o mock')
-            result = answer_demo(index, args.question, args.provider, args.top_k, args.documental)
+            result = answer_demo(
+                index, args.question, args.provider, args.top_k, args.documental, converse=True,
+            )
         else:
             result = answer(index, args.question, args.mode, args.provider, args.top_k, args.documental)
             if not args.audit_raw:

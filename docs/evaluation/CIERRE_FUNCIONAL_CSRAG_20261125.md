@@ -6,6 +6,61 @@ sigue dependiendo del modelo y en la última prueba solo citó una. El modelo a�
 abstenerse ante evidencia útil o estimar mal su cobertura. T20 recuperó la
 identidad criptográfica del índice de T17 y generó un paquete local auditado.
 
+## Perfil conversacional fundamentado
+
+Streamlit y `chat --demo --provider local --documental` usan
+`demo_conversacional_v1` con Ollama. El perfil conserva el recuperador v2,
+los filtros de evidencia admisible y el aislamiento del contexto. El mock
+sigue presentando extractos.
+
+Ollama redacta afirmaciones en español e indica un pasaje y un respaldo
+literal para cada una. El programa valida los identificadores, comprueba las
+subcadenas de respaldo, bloquea referencias escritas por el modelo y pasa las
+afirmaciones a una segunda revisión. Esa revisión evalúa pertinencia,
+respaldo y cobertura. La aplicación construye las citas de las afirmaciones
+aceptadas con el archivo y página del índice. Una consulta con varias
+preguntas explícitas se evalúa por partes para conservar lo que sí queda
+respaldado. Una enumeración completa puede citar una sola página.
+
+La revisión usa el mismo modelo en otra llamada. La coincidencia literal
+verifica la procedencia del respaldo. La revisión semántica y la
+clasificación de cobertura pueden fallar, sobre todo en preguntas compuestas
+implícitas. Una salida inválida o rechazada genera abstención. La segunda
+llamada aumenta la latencia. El detector heurístico conserva sus errores
+conocidos, incluida la falsa alarma b3. El perfil documental conserva la
+abstención ante preguntas de vigencia e insuficiencia de evidencia.
+
+### Verificación conversacional con Ollama
+
+Con Ollama 0.40.16 y `qwen2.5:3b`, Streamlit respondió a la consulta del
+artículo 5 en una frase con autoevaluación, coevaluación y heteroevaluación.
+La interfaz mostró la cita `[RCU-0161-2021.pdf p. 3]` y cobertura completa.
+Se cotejaron los tres tipos con el PDF mediante `pdftotext`.
+En un ensayo anterior, el revisor había devuelto «completa» con texto
+redundante en el campo de cobertura faltante. El validador final requiere
+ese campo como respaldo de una decisión parcial.
+
+En la consulta compuesta, que agregaba una pregunta ajena al corpus, el
+reprocesamiento de la salida real de Ollama con el validador final conservó
+la frase citada y marcó cobertura parcial. Esto fue una reproducción de
+salida capturada con los mismos prompts, sin una segunda inferencia.
+Las pruebas sin evidencia y de vigencia se abstuvieron antes de generar.
+
+La consulta multifuente respondió las dos partes y citó RCU-0161-2021.pdf
+p. 3 y RCU-0504-2020.pdf p. 4. En el ensayo inicial el identificador de la
+resolución había desplazado el pasaje sobre la oficina. El ranking del perfil
+conversacional usa el identificador para delimitar las resoluciones y
+puntúa el resto de los términos. Se confirmó en el PDF que la p. 4 identifica
+la OPACDR. El modelo repitió esa segunda afirmación con otra redacción.
+La batería automatizada también cubrió que un fragmento marcado por el
+detector queda fuera tanto de la redacción como de la revisión.
+
+La suite final aprobó 202/203 pruebas, con proveedores simulados e
+integridad local. Se omitió 1/203 por falta del modelo semántico opcional.
+Los 60/60 hashes archivados de T17–T20 coincidieron. Los expedientes
+privados de esta verificación están bajo `results/llm_abc_local/`. La
+prueba de interfaz con el validador final está en `demo_conversacional_ui_twasqt02`.
+
 ## Estabilización del perfil v2
 
 **GQ035.** La evidencia de RCU-0504-2020.pdf p. 9 ya superaba los filtros. El
