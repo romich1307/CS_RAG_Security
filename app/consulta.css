@@ -1,0 +1,304 @@
+:root {
+    --paper: #f8f6f2;
+    --surface: #fff;
+    --code-bg: #f3f0ea;
+    --line: #e2ddd5;
+    --ink: #1f1c1b;
+    --muted: #706762;
+    --faint: #827972;
+    --wine: #6e2433;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: "Source Sans Pro", "Segoe UI", sans-serif;
+}
+
+[data-testid="stAppViewContainer"] { background: var(--paper); }
+[data-testid="stHeader"] { display: none; }
+[data-testid="stMain"] { overflow-x: hidden; }
+[data-testid="stAppViewBlockContainer"],
+[data-testid="stMainBlockContainer"] {
+    max-width: min(1400px, calc(100% - 48px));
+    padding: 0;
+}
+[data-testid="stMainBlockContainer"] > [data-testid="stVerticalBlock"] { gap: 0; }
+
+.st-key-cabecera {
+    position: relative;
+    isolation: isolate;
+    gap: 0;
+    min-height: 287px;
+    padding: 15px 0 34px;
+}
+.st-key-cabecera::before,
+.st-key-pie::before {
+    position: absolute;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    content: "";
+    border: solid var(--line);
+    border-width: 0;
+    pointer-events: none;
+}
+.st-key-cabecera::before { inset-block: 0; border-bottom-width: 1px; }
+.st-key-cabecera::after {
+    content: "";
+    position: absolute;
+    inset-block: 0 1px;
+    right: calc(50% - 50vw);
+    width: min(54vw, 1060px);
+    z-index: -1;
+    background: url("app/static/campus-unsa.png") right 65% / cover no-repeat;
+    filter: grayscale(100%);
+    opacity: .43;
+    mask-image: linear-gradient(to right, transparent, #000 70%);
+    pointer-events: none;
+}
+.unsa-logo {
+    display: block;
+    width: 216px;
+    max-width: 65vw;
+    height: auto;
+    mix-blend-mode: multiply;
+}
+.st-key-cabecera h1 {
+    padding: 0;
+    margin-top: 35px;
+    color: var(--ink);
+    font: 400 clamp(34px, 4.2vw, 56px)/1.12 var(--serif);
+    letter-spacing: -.035em;
+}
+.aviso-prototipo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 18px 0 0;
+    color: var(--muted);
+    font: italic 20px/1.3 var(--serif);
+}
+.aviso-prototipo::before {
+    content: "";
+    width: 40px;
+    border-top: 1px solid var(--wine);
+}
+
+.st-key-consulta {
+    width: min(1150px, 100%);
+    margin: 37px auto 0;
+    gap: 0;
+}
+.st-key-consulta:has(h3) { margin-top: 70px; }
+.st-key-consulta h3 {
+    padding: 0;
+    margin: 0 0 43px;
+    text-align: center;
+    color: var(--ink);
+    font: 400 clamp(31px, 4vw, 54px)/1.15 var(--serif);
+    letter-spacing: -.035em;
+}
+.st-key-formulario {
+    gap: 46px;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 15px;
+}
+.st-key-formulario:has([data-testid="stTextInput"] input:focus-visible) {
+    box-shadow: 0 0 0 2px #6e243328;
+    border-color: #ae7a85;
+}
+.st-key-consulta .stElementContainer { max-width: 100%; min-width: 0; }
+.st-key-consulta :is([data-testid="stHeading"], [data-testid="stMarkdownContainer"]),
+.st-key-formulario [data-testid="stTextInput"],
+.st-key-formulario [data-testid="stTextInput"] [data-baseweb="input"] {
+    width: 100%;
+    max-width: 100%;
+}
+.st-key-formulario > [data-testid="stHorizontalBlock"] {
+    display: grid;
+    grid-template-columns: minmax(0, 4.87fr) minmax(0, 2.1fr) 85px minmax(0, 1.25fr) 150px;
+    align-items: end;
+    gap: 24px;
+}
+.st-key-formulario > [data-testid="stHorizontalBlock"] > div {
+    min-width: 0;
+    width: auto;
+}
+.st-key-formulario [data-testid="stWidgetLabel"] p {
+    font: 400 15px/1.25 var(--sans);
+    color: var(--muted);
+}
+.st-key-formulario [data-testid="stTextInput"] [data-baseweb="input"] {
+    background: var(--surface);
+    border-color: transparent;
+    box-shadow: none;
+}
+.st-key-formulario [data-testid="stTextInput"] [data-baseweb="base-input"] {
+    min-height: 62px;
+    background: var(--surface);
+}
+.st-key-formulario [data-testid="stTextInput"] input {
+    height: 62px;
+    padding-inline: 4px;
+    font: 400 20px/1.3 var(--sans);
+    color: var(--ink);
+}
+.st-key-formulario [data-testid="stTextInput"] input::placeholder { color: var(--faint); }
+.st-key-formulario [data-testid="stPopoverBody"] [data-testid="stTextInput"] input {
+    height: auto;
+    padding-inline: 12px;
+    font-size: 16px;
+}
+
+.st-key-defensa [role="radiogroup"] {
+    gap: 1px;
+    display: inline-flex;
+    flex-wrap: wrap;
+    width: fit-content;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 2px;
+    background: var(--paper);
+}
+.st-key-defensa [role="radiogroup"] label {
+    display: flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 16px;
+    margin: 0;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--muted);
+}
+.st-key-defensa [role="radiogroup"] label > div:first-child { display: none; }
+.st-key-defensa [role="radiogroup"] label p { white-space: nowrap; font-size: 15px; }
+.st-key-defensa [role="radiogroup"] label:has(input:checked) {
+    background: var(--wine);
+    color: white;
+}
+.st-key-defensa [role="radiogroup"] label:has(input:checked) p { color: white; }
+.st-key-defensa [role="radiogroup"] label:has(input:focus-visible) {
+    outline: 2px solid var(--wine);
+    outline-offset: 2px;
+}
+
+.st-key-proveedor { max-width: 176px; }
+
+:is(.st-key-proveedor, .st-key-top-k) [data-baseweb="select"] > div {
+    min-height: 44px;
+    background: var(--paper);
+    border-color: var(--line);
+    border-radius: 5px;
+}
+.st-key-formulario [data-testid="stPopoverButton"] {
+    max-width: 100%;
+    padding-inline: 4px;
+    gap: 4px;
+    white-space: nowrap;
+    color: var(--muted);
+    border-color: transparent;
+    background: transparent;
+}
+.st-key-formulario [data-testid="stPopoverButton"] p { white-space: nowrap; font-size: 14px; }
+.st-key-formulario [data-testid="stBaseButton-primary"] {
+    min-height: 50px;
+    border-radius: 5px;
+    background: var(--wine);
+    border-color: var(--wine);
+}
+.st-key-formulario [data-testid="stBaseButton-primary"] p { font-size: 18px; font-weight: 600; }
+
+.st-key-resultados { margin-top: 57px; }
+.st-key-resultados > [data-testid="stHorizontalBlock"] { gap: clamp(24px, 3.2vw, 60px); }
+.st-key-resultados h3 {
+    padding: 0;
+    color: var(--ink);
+    font: 400 clamp(26px, 2.3vw, 34px)/1.2 var(--serif);
+    letter-spacing: -.025em;
+}
+.st-key-resultados [data-testid="stColumn"] > [data-testid="stVerticalBlock"] { gap: 0; }
+.st-key-resultados [data-testid="stHeading"] { margin-bottom: 24px; }
+.st-key-resultados [data-testid="stText"],
+.st-key-resultados [data-testid="stText"] pre {
+    color: var(--ink);
+    font: 400 20px/1.55 var(--serif);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.fragment {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 16px;
+    padding: 29px 29px 29px 18px;
+    border-top: 1px solid var(--line);
+    border-left: 2px solid transparent;
+    overflow-wrap: anywhere;
+}
+.fragment-first { background: var(--surface); border-left-color: var(--wine); }
+.fragment-number { color: var(--faint); font: 26px/1.2 var(--serif); }
+.fragment-first .fragment-number { color: var(--wine); }
+.fragment-title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 7px 14px; }
+.fragment-title strong { font: 600 19px/1.4 var(--sans); }
+.fragment-score { color: var(--faint); font: 14px/1.5 Consolas, monospace; }
+.fragment-page { margin-top: 6px; color: var(--muted); font: 16px/1.5 var(--sans); }
+.fragment p {
+    margin: 20px 0 0;
+    color: var(--ink);
+    font: 400 22px/1.55 var(--serif);
+    white-space: pre-wrap;
+}
+.st-key-fuente-json [data-testid="stCode"] {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+}
+.st-key-fuente-json .token.property { color: var(--wine) !important; }
+.st-key-fuente-json .token.string { color: #3d5a4a !important; }
+.st-key-fuente-json .token.number { color: #865f2a !important; }
+.st-key-fuente-json .token.boolean,
+.st-key-fuente-json .token.null { color: #655480 !important; }
+.st-key-fuente-json .react-syntax-highlighter-line-number { color: #837972 !important; }
+.st-key-fuente-json pre {
+    max-height: 680px;
+    overflow: auto;
+    padding: 14px 19px;
+}
+.st-key-pie { position: relative; margin-top: 98px; padding: 30px 0 21px; }
+[data-testid="stMainBlockContainer"]:not(:has(.st-key-resultados)) .st-key-pie { margin-top: 152px; }
+.st-key-pie::before { top: 0; border-top-width: 1px; }
+.avisos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    color: var(--muted);
+    font: 400 16px/1.55 var(--sans);
+}
+.avisos p { margin: 0 0 6px; }
+
+@media (max-width: 1050px) {
+    .st-key-formulario > [data-testid="stHorizontalBlock"] {
+        grid-template-columns: minmax(0, 1.8fr) 85px minmax(0, 1fr) minmax(100px, 1.2fr);
+        gap: 12px;
+    }
+    .st-key-formulario > [data-testid="stHorizontalBlock"] > div:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 650px) {
+    [data-testid="stAppViewBlockContainer"],
+    [data-testid="stMainBlockContainer"] { max-width: calc(100% - 28px); }
+    .st-key-cabecera { min-height: 0; padding-block: 12px 26px; }
+    .st-key-cabecera::after { width: 68vw; opacity: .23; }
+    .st-key-cabecera h1 { margin-top: 15px; }
+    .unsa-logo { width: 156px; }
+    .aviso-prototipo { font-size: 16px; margin-top: 12px; }
+    .st-key-consulta, .st-key-consulta:has(h3) { margin-top: 34px; }
+    .st-key-consulta h3 { margin-bottom: 26px; }
+    .st-key-formulario { padding: 14px; gap: 10px; }
+    .st-key-formulario > [data-testid="stHorizontalBlock"],
+    .st-key-resultados > [data-testid="stHorizontalBlock"] { display: flex; flex-direction: column; }
+    .st-key-formulario > [data-testid="stHorizontalBlock"] > div,
+    .st-key-resultados > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { width: 100%; }
+    .st-key-resultados { margin-top: 32px; }
+    [data-testid="stMainBlockContainer"] .st-key-pie { margin-top: 48px; }
+    .avisos { grid-template-columns: 1fr; gap: 9px; }
+    .fragment { grid-template-columns: 34px minmax(0, 1fr); gap: 7px; padding: 18px 10px; }
+    .fragment p { font-size: 19px; }
+}

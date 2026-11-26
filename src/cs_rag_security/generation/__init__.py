@@ -16,7 +16,7 @@ class NoRedirect(HTTPRedirectHandler):
         raise ValueError('Redirección de proveedor rechazada')
 
 
-def generate(messages, hits, provider='mock', seed=42, return_metadata=False, *, output_schema=None, local_model=None):
+def generate(messages, hits, provider='mock', seed=42, return_metadata=False, *, output_schema=None, local_model=None, output_limit=None):
     if provider == 'mock':
         text = 'MOCK — vista extractiva de prueba; no es una respuesta de LLM.\n' + '\n'.join(
             f"[{h['archivo_pdf']} p. {h['pagina_pdf']}] {h['texto'][:450]}" for h in hits)
@@ -35,6 +35,8 @@ def generate(messages, hits, provider='mock', seed=42, return_metadata=False, *,
             raise ValueError('Configura RAG_LOCAL_MODEL; no se descarga ningún modelo automáticamente')
         payload = {'model': model, 'messages': messages, 'stream': False,
                    'options': {'temperature': 0, 'seed': seed}}
+        if output_limit is not None:
+            payload['options']['num_predict'] = output_limit
         if output_schema is not None:
             payload['format'] = output_schema
         data = json.dumps(payload).encode('utf-8')

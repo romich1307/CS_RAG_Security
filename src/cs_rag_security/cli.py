@@ -38,16 +38,17 @@ def main():
         print(json.dumps(Index.load(args.index).search(args.question, args.top_k), ensure_ascii=False, indent=2))
     elif args.command == 'chat':
         from cs_rag_security.pipeline import answer
-        index = Index.load(args.index)
         if args.demo:
-            from cs_rag_security.demo import answer_demo
+            from cs_rag_security.demo import answer_demo, load_demo_index
             if args.mode != 'C_defensa_propuesta' or args.provider == 'api':
                 p.error('--demo requiere defensa C y proveedor local o mock')
             result = answer_demo(
-                index, args.question, args.provider, args.top_k, args.documental, converse=True,
+                load_demo_index(args.index), args.question, args.provider, args.top_k,
+                args.documental, converse=True,
             )
         else:
-            result = answer(index, args.question, args.mode, args.provider, args.top_k, args.documental)
+            result = answer(Index.load(args.index), args.question, args.mode,
+                            args.provider, args.top_k, args.documental)
             if not args.audit_raw:
                 from cs_rag_security.traceability import sanitize_chunk_dict
                 metadata = result.pop('generation_metadata') or {}
