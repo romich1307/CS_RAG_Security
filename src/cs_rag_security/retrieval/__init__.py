@@ -29,11 +29,15 @@ class Index:
         norm = math.sqrt(sum(x*x for x in v.values())) or 1
         return {t: x / norm for t, x in v.items()}
 
-    def search(self, question, k=5):
+    def search(self, question, k=5, *, document_ids=None):
         if not 1 <= k <= 100:
             raise ValueError('top-k entre 1 y 100')
         q = self.vector(Counter(tokens(question)))
-        scores = [(sum(q.get(t, 0)*v for t, v in vec.items()), i) for i, vec in enumerate(self.vectors)]
+        scores = [
+            (sum(q.get(t, 0) * v for t, v in vec.items()), i)
+            for i, vec in enumerate(self.vectors)
+            if not document_ids or self.chunks[i].get('documento_id') in document_ids
+        ]
         return [{**self.chunks[i], 'score': s} for s, i in sorted(scores, key=lambda x: (-x[0], x[1]))[:k] if s > 0]
 
     def save(self, path, manifest):

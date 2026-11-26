@@ -14,11 +14,14 @@ def main():
     p.add_argument('--top-k', type=int, default=5)
     p.add_argument('--mode', default='C_defensa_propuesta')
     p.add_argument('--provider', choices=['mock', 'local', 'api'], default='mock')
+    p.add_argument('--audit-raw', action='store_true', help='Salida privada de chat experimental para auditoría local')
+    p.add_argument('--demo', action='store_true', help='Perfil extractivo C para chat local o mock')
     p.add_argument('--documental', action='store_true')
     p.add_argument('--output', default='results/offline')
     p.add_argument('--annotations', default=None, help='Ruta a archivo CSV o JSON de anotaciones')
     p.add_argument('--mapping', default=None, help='Ruta a archivo JSON de mapeo ciego de casos')
     p.add_argument('--traces', default=None, help='Ruta a archivo de trazas experimentales T16 (JSON o CSV)')
+    p.add_argument('--audit-base', help='Raíz aislada de insumos para la auditoría histórica')
     p.add_argument('--runs', nargs='+', default=None, help='Rutas a corridas para auditoría o artefactos de artículo')
     p.add_argument('--security-metrics', default=None, help='Ruta a archivo de métricas de seguridad T19')
     p.add_argument('--force', action='store_true', help='Sobrescribir directorio de salida')
@@ -35,7 +38,23 @@ def main():
         print(json.dumps(Index.load(args.index).search(args.question, args.top_k), ensure_ascii=False, indent=2))
     elif args.command == 'chat':
         from cs_rag_security.pipeline import answer
-        print(json.dumps(answer(Index.load(args.index), args.question, args.mode, args.provider, args.top_k, args.documental), ensure_ascii=False, indent=2))
+        index = Index.load(args.index)
+        if args.demo:
+            from cs_rag_security.demo import answer_demo
+            if args.mode != 'C_defensa_propuesta' or args.provider == 'api':
+                p.error('--demo requiere defensa C y proveedor local o mock')
+            result = answer_demo(index, args.question, args.provider, args.top_k, args.documental)
+        else:
+            result = answer(index, args.question, args.mode, args.provider, args.top_k, args.documental)
+            if not args.audit_raw:
+                from cs_rag_security.traceability import sanitize_chunk_dict
+                metadata = result.pop('generation_metadata') or {}
+                result.pop('raw_response')
+                if metadata.get('refusal') or metadata.get('finish_reason') in ('refusal', 'content_filter'):
+                    result['response'] = 'Me abstengo: el modelo rechazó la consulta.'
+                for key in ('retrieved', 'evaluated_chunks', 'discarded_chunks'):
+                    result[key] = [sanitize_chunk_dict(chunk) for chunk in result[key]]
+        print(json.dumps(result, ensure_ascii=False, indent=2))
     elif args.command == 'quality':
         from cs_rag_security.evaluation import evaluate_quality
         ann_path = args.annotations or 'docs/evaluation/plantilla_anotacion_qa.csv'
@@ -49,7 +68,10 @@ def main():
     elif args.command == 'audit-experiment':
         from cs_rag_security.evaluation.audit_experiment import audit_experiments
         run_targets = args.runs or ['results/llm_baseline', 'results/offline_20261117_final', 'results/piloto_ollama_pr7.json']
-        audit_rep = audit_experiments(run_targets, annotations_path=args.annotations, mapping_path=args.mapping)
+        audit_rep = audit_experiments(
+            run_targets, annotations_path=args.annotations, mapping_path=args.mapping,
+            base_dir=args.audit_base,
+        )
         out_dir = Path(args.output)
         out_dir.mkdir(parents=True, exist_ok=True)
         audit_rep.save_json(out_dir / 'audit_report.json')
@@ -65,6 +87,7 @@ def main():
             traces_path=args.traces,
             security_metrics_path=args.security_metrics,
             force=args.force,
+            base_dir=args.audit_base,
         )
         print(json.dumps(result['manifest'], ensure_ascii=False, indent=2))
     else:
