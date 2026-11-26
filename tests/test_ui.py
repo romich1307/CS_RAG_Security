@@ -19,7 +19,7 @@ def test_streamlit_handles_api_runtime_error_401():
          patch('cs_rag_security.pipeline.answer', side_effect=RuntimeError('Error HTTP del proveedor API (401)')):
         app = AppTest.from_file('app/streamlit_app.py').run()
         app.radio(key='perfil-c').set_value('Configuración experimental').run()
-        app.radio(key='proveedor').set_value('api')
+        app.selectbox(key='proveedor').select('api')
         app.text_input[0].set_value('¿Pregunta?')
         app.button[0].click().run()
         assert not app.exception
@@ -36,7 +36,7 @@ def test_streamlit_handles_api_runtime_error_429():
          patch('cs_rag_security.pipeline.answer', side_effect=RuntimeError('Error HTTP del proveedor API (429)')):
         app = AppTest.from_file('app/streamlit_app.py').run()
         app.radio(key='perfil-c').set_value('Configuración experimental').run()
-        app.radio(key='proveedor').set_value('api')
+        app.selectbox(key='proveedor').select('api')
         app.text_input[0].set_value('¿Pregunta?')
         app.button[0].click().run()
         assert not app.exception
@@ -53,7 +53,7 @@ def test_streamlit_handles_api_connection_error():
          patch('cs_rag_security.pipeline.answer', side_effect=RuntimeError('Error de conexión con el proveedor API')):
         app = AppTest.from_file('app/streamlit_app.py').run()
         app.radio(key='perfil-c').set_value('Configuración experimental').run()
-        app.radio(key='proveedor').set_value('api')
+        app.selectbox(key='proveedor').select('api')
         app.text_input[0].set_value('¿Pregunta?')
         app.button[0].click().run()
         assert not app.exception
@@ -145,7 +145,7 @@ def test_demo_streamlit_handles_local_connection_and_model_errors():
         with patch('cs_rag_security.retrieval.Index.load', return_value=Index([])), \
              patch('cs_rag_security.demo.answer_demo', side_effect=error):
             app = AppTest.from_file('app/streamlit_app.py').run()
-            app.radio(key='proveedor').set_value('local').run()
+            app.selectbox(key='proveedor').select('local').run()
             app.text_input[0].set_value('¿Consulta de prueba?')
             app.button[0].click().run()
             assert not app.exception

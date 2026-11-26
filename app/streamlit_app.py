@@ -154,8 +154,9 @@ with st.container(key='consulta'):
         if st.session_state.get('proveedor') == 'api' and demo:
             st.session_state['proveedor'] = 'mock'
         with provider_col:
-            provider = st.radio('Proveedor', provider_values, format_func=PROVIDER_LABELS.get,
-                                horizontal=True, key='proveedor')
+            provider = st.selectbox(
+                'Proveedor', provider_values, format_func=PROVIDER_LABELS.get, key='proveedor',
+            )
         with top_k_col:
             k = st.selectbox('Top K', tuple(range(1, 11)), index=4, key='top-k')
         with submit_col:
