@@ -6,6 +6,7 @@ from cs_rag_security.defenses import detect
 
 PROFILE = 'demo_conversacional_v2'
 DOCUMENT_ID = re.compile(r'\bRCU-\d{4}-\d{4}\b', re.IGNORECASE)
+MULTIPLE_REQUESTS = re.compile(r'\b(?:y|además|también|compara|diferencias)\b', re.IGNORECASE)
 PARTIAL_NOTICE = 'Evidencia parcial. Esta respuesta cubre solo parte de la consulta.'
 FORBIDDEN = re.compile(
     r'\[|\]|<|>|https?://|\b\S+\.pdf\b|\b(?:vigente[s]?|vigencia|actualmente|en vigor)\b',
@@ -19,8 +20,8 @@ DRAFT = (
     'Primero identifica lo que se pide en cada parte de la pregunta. Elige la regla '
     'específica que corresponde al supuesto preguntado. Incluye juntos el supuesto, los '
     'requisitos, los plazos, las cantidades y las excepciones que condicionan esa regla. '
-    'Copia en respaldo suficiente texto para incluir esas condiciones. Conserva todos '
-    'los elementos si se pide una lista. Usa una afirmación por parte respaldada y '
+    'Copia en respaldo solo el texto necesario. Si un pasaje enumera todos los '
+    'elementos solicitados, inclúyelos juntos en una frase. Usa una afirmación por parte respaldada y '
     'omite las partes sin respaldo. No escribas nombres de archivo ni citas en texto. '
     'Devuelve afirmaciones vacío cuando ningún pasaje aporte una respuesta directa.'
 )
@@ -66,12 +67,12 @@ def flat(text):
     return ' '.join(text.split())
 
 
-def validate_claims(raw, hits):
+def validate_claims(raw, hits, limit):
     draft = json.loads(raw)
     if not isinstance(draft, dict) or set(draft) != {'afirmaciones'}:
         raise ValueError('Borrador inválido')
     items = draft['afirmaciones']
-    if not isinstance(items, list) or len(items) > 3:
+    if not isinstance(items, list) or len(items) > limit:
         raise ValueError('Lista de afirmaciones inválida')
     claims = []
     for item in items:
@@ -110,17 +111,19 @@ def validate_review(raw, question, count):
 
 
 def compose(generate, question, hits, context, model):
+    limit = 1 if question.count('?') == 1 and not MULTIPLE_REQUESTS.search(question) else 3
     draft_schema = object_schema({'afirmaciones': {
-        'type': 'array', 'maxItems': 3, 'items': object_schema({
+        'type': 'array', 'maxItems': limit, 'items': object_schema({
             'texto': STRING, 'pasaje': {'type': 'integer', 'minimum': 1, 'maximum': len(hits)},
             'respaldo': STRING,
         }),
     }})
-    draft = request(generate, DRAFT, {'pregunta': question, 'pasajes_no_confiables': context},
+    draft_system = DRAFT if limit > 1 else DRAFT + ' Devuelve como máximo una afirmación completa.'
+    draft = request(generate, draft_system, {'pregunta': question, 'pasajes_no_confiables': context},
                     hits, draft_schema, model)
     model_name = draft['metadata']['model']
     try:
-        claims = validate_claims(draft['text'], hits)
+        claims = validate_claims(draft['text'], hits, limit)
         if not claims:
             return model_name, 'modelo_sin_evidencia', None, [], None
         selected = dict.fromkeys(claim['pasaje'] for claim in claims)

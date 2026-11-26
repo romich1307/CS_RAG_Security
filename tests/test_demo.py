@@ -263,18 +263,18 @@ def test_conversational_explicit_subquestions_preserve_supported_answer(monkeypa
                for call in generate.call_args_list)
 
 
-def test_conversational_focused_question_reviews_only_the_direct_answer(monkeypatch):
+def test_conversational_focused_question_requests_one_cohesive_claim(monkeypatch):
     gen = conversational_generation(monkeypatch, [
         {'texto': 'Los tipos son autoevaluación, coevaluación y heteroevaluación.',
          'pasaje': 1, 'respaldo': 'Autoevaluación, coevaluación y heteroevaluación'},
-        {'texto': 'Los momentos son inicial y final.',
-         'pasaje': 1, 'respaldo': 'Los momentos son inicial y final'},
-    ], accepted=[1])
+    ])
     index = Index([chunk('reglamento', 'Evaluación por participantes. Autoevaluación, coevaluación '
                           'y heteroevaluación. Los momentos son inicial y final.')])
     result = demo.answer_demo(index, '¿Cuáles son los tipos de evaluación por participantes?', converse=True)
     review = json.loads(gen.call_args_list[1].args[0][1]['content'])
-    assert len(review['afirmaciones']) == 2 and 'momentos' not in result['response']
+    schema = gen.call_args_list[0].kwargs['output_schema']['properties']['afirmaciones']
+    assert schema['maxItems'] == 1
+    assert len(review['afirmaciones']) == 1 and 'momentos' not in result['response']
     assert len(review['pasajes_no_confiables']) == 1
     assert result['coverage'] == 'completa'
 
@@ -332,7 +332,7 @@ def test_conversational_merges_repeated_claims_without_losing_sources(monkeypatc
         {'texto': quote, 'pasaje': 2, 'respaldo': quote},
     ])
     result = demo.answer_demo(Index([chunk('a', quote), chunk('b', quote)]),
-                              '¿Qué requiere la matrícula?', converse=True)
+                              '¿Qué requiere la matrícula y qué indican ambos documentos?', converse=True)
     assert result['response'] == quote + '. [a.pdf p. 3] [b.pdf p. 3]'
     assert len(result['sources']) == 2
 
