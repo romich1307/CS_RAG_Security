@@ -1,0 +1,13 @@
+[server]
+enableStaticServing = true
+
+[client]
+toolbarMode = "minimal"
+
+[theme]
+base = "light"
+primaryColor = "#6e2433"
+backgroundColor = "#f8f6f2"
+secondaryBackgroundColor = "#f3f0ea"
+textColor = "#1f1c1b"
+font = "sans serif"
