@@ -32,16 +32,20 @@ omite. El índice privado se reconstruye en `data/vector_db/index.json`.
 
 ## Uso
 
-La aplicación muestra fuente PDF, página, fragmentos, puntuación y decisiones del
-detector. Seleccione consulta documental para obtener extractos de texto nativo.
-Sin esa selección se requiere vigencia verificada y se abstiene con el corpus
-actual. El OCR pendiente puede verse como evidencia recuperada provisional, pero
-no se usa para fundamentar respuestas. No se infieren números de artículos.
+La aplicación abre en consulta documental con el perfil `demo_extractivo_v1`.
+Seleccione **Ollama local** y un modelo instalado para que el modelo elija
+pasajes pertinentes. El programa pone las citas de PDF y página usando el
+índice y muestra los extractos seleccionados. El mock permite probar la
+interfaz mediante extractos. El OCR pendiente se excluye de la respuesta.
+La consulta documental es provisional. Para consultar sobre vigencia use
+el control de modo documental.
 
-Tres modos: `A_sin_defensa` (solo experimento controlado), `B_defensa_basica`
-(roles y contexto no confiable) y `C_defensa_propuesta` (JSON y filtro heurístico).
-El detector tiene falsos positivos y falsos negativos documentados; no garantiza
-seguridad. Las tres variantes comparten controles de evidencia y citas.
+Las condiciones de investigación siguen disponibles como
+`A_sin_defensa` (solo evaluación controlada), `B_defensa_basica` (roles y
+contexto no confiable) y `C_defensa_propuesta` (JSON y filtro heurístico).
+El perfil de demostración comparte el filtro de C y usa un contrato
+extractivo propio. Consulte el [cierre funcional](docs/evaluation/CIERRE_FUNCIONAL_CSRAG_20261125.md)
+para las pruebas reales, el cotejo de citas y la reproducción de T20.
 
 ## Experimentos reproducibles
 
@@ -63,14 +67,15 @@ explícitamente; no se admiten direcciones remotas ni APIs pagadas:
 
 ```bash
 export RAG_LOCAL_URL=http://127.0.0.1:11434/api/chat
-export RAG_LOCAL_MODEL=nombre_del_modelo_ya_instalado
-.venv/bin/python -m cs_rag_security.cli chat --provider local --documental --question '¿Qué indica el texto sobre evaluación?'
+export RAG_LOCAL_MODEL=qwen2.5:3b
+.venv/bin/python -m cs_rag_security.cli chat --demo --provider local --documental --question '¿Qué indica el texto sobre evaluación?'
 .venv/bin/python -m cs_rag_security.cli evaluate --provider local --output results/corrida_local_real
 ```
 
-`.env.example` documenta las variables: el programa no carga archivos .env por sí
-solo. El servidor real no fue probado en esta sesión. Antes de publicar resultados
-reales, registre también digest del modelo, versión del servidor y hardware.
+`.env.example` documenta las variables. El programa lee el entorno del proceso.
+El servidor real y `qwen2.5:3b` fueron verificados en el cierre funcional. Para
+una auditoría local de chat experimental, la opción `--audit-raw` incluye la
+salida cruda y los fragmentos privados en la salida de la CLI.
 
 ## Documentación
 
