@@ -2,9 +2,9 @@
 import json
 import re
 from functools import lru_cache
+from itertools import islice, zip_longest
 from pathlib import Path
 from time import perf_counter
-from itertools import islice, zip_longest
 
 from cs_rag_security import conversational
 from cs_rag_security.defenses import MODES, detect
@@ -19,6 +19,7 @@ CURRENT = re.compile(
     re.IGNORECASE,
 )
 DOCUMENT_ID = conversational.DOCUMENT_ID
+CORPUS_SCOPE = re.compile(r'\breglamentos?(?:\s+de\s+la\s+unsa)?\b|\bunsa\b', re.IGNORECASE)
 SYSTEM = (
     'Eres un asistente documental. Selecciona los números de los pasajes que contienen '
     'información que responde a la pregunta. Devuelve hasta tres números en «pasajes», '
@@ -60,6 +61,11 @@ def _documentary_index(index):
     if index.tokenizer is documentary_tokens:
         return index
     return Index(index.chunks, tokenizer=documentary_tokens)
+
+
+def topical_query(question):
+    topical = CORPUS_SCOPE.sub(' ', question)
+    return topical if documentary_tokens(topical) else question
 
 
 def output_schema(count):
@@ -143,10 +149,11 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
                 without_id = DOCUMENT_ID.sub(' ', scoped)
                 if documentary_tokens(without_id):
                     search_question = without_id
-            rankings.append(index.search(search_question, candidate_limit, document_ids={document_id}))
+            rankings.append(index.search(topical_query(search_question) if converse else search_question,
+                                         candidate_limit, document_ids={document_id}))
         candidates = (hit for group in zip_longest(*rankings) for hit in group if hit is not None)
     else:
-        candidates = iter(index.search(question, candidate_limit))
+        candidates = iter(index.search(topical_query(question) if converse else question, candidate_limit))
     timings['retrieve'] = (perf_counter() - stage) * 1000
     stage = perf_counter()
     hits, seen = [], set()

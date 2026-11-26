@@ -385,3 +385,14 @@ def test_conversational_preserves_verified_conditions_and_reports_stages(monkeyp
         'review_ollama', 'validation_and_format', 'total',
     }
     assert all(elapsed >= 0 for elapsed in result['timings_ms'].values())
+
+
+def test_conversational_abstains_when_only_corpus_scope_matches(monkeypatch):
+    gen = conversational_generation(monkeypatch, [])
+    index = Index([chunk('doc', 'Reglamentos de la UNSA sobre la asistencia.')])
+    result = demo.answer_demo(index,
+                              '¿Cuál es la temperatura de Neptuno según los reglamentos de la UNSA?',
+                              converse=True)
+    assert result['reason'] == 'evidencia_insuficiente'
+    assert result['ollama_calls'] == 0
+    gen.assert_not_called()
