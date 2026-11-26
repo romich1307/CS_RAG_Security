@@ -47,8 +47,8 @@ class Index:
         path.write_text(json.dumps({'method': self.method, 'manifest': manifest, 'chunks': self.chunks}, ensure_ascii=False), encoding='utf-8')
 
     @classmethod
-    def load(cls, path):
+    def load(cls, path, *, tokenizer=tokens):
         data = json.loads(Path(path).read_text(encoding='utf-8'))
         if data['method'] != cls.method:
             raise ValueError('Versión de índice incompatible')
-        return cls(data['chunks'])
+        return cls(data['chunks'], tokenizer=tokenizer)

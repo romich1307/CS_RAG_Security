@@ -249,21 +249,18 @@ def test_conversational_renders_only_claims_accepted_by_reviewer(monkeypatch):
 
 
 def test_conversational_explicit_subquestions_preserve_supported_answer(monkeypatch):
-    generate = Mock(side_effect=[
-        {'text': json.dumps({'afirmaciones': [{
-            'texto': 'La matrícula comienza el lunes.', 'pasaje': 1,
-            'respaldo': 'La matrícula comienza el lunes',
-        }]}), 'metadata': {'model': 'fixture'}},
-        {'text': '{"estado":"completa","falta":"","aceptadas":[1]}'},
-        {'text': '{"afirmaciones":[]}', 'metadata': {'model': 'fixture'}},
-    ])
-    monkeypatch.setattr(demo, 'generate', generate)
+    generate = conversational_generation(monkeypatch, [{
+        'texto': 'La matrícula comienza el lunes.', 'pasaje': 1,
+        'respaldo': 'La matrícula comienza el lunes',
+    }], state='parcial', missing='Qué cuesta')
     index = Index([chunk('calendario', 'La matrícula comienza el lunes.')])
-    result = demo.answer_demo(index, '¿Cuándo comienza la matrícula? ¿Qué cuesta?', converse=True)
+    question = '¿Cuándo comienza la matrícula? ¿Qué cuesta?'
+    result = demo.answer_demo(index, question, converse=True)
     assert result['coverage'] == 'parcial'
     assert result['response'].endswith('La matrícula comienza el lunes. [calendario.pdf p. 3]')
-    assert generate.call_count == 3
-    assert json.loads(generate.call_args_list[-1].args[0][1]['content'])['pregunta'] == '¿Qué cuesta?'
+    assert result['ollama_calls'] == generate.call_count == 2
+    assert all(json.loads(call.args[0][1]['content'])['pregunta'] == question
+               for call in generate.call_args_list)
 
 
 def test_conversational_focused_question_reviews_only_the_direct_answer(monkeypatch):
@@ -277,7 +274,8 @@ def test_conversational_focused_question_reviews_only_the_direct_answer(monkeypa
                           'y heteroevaluación. Los momentos son inicial y final.')])
     result = demo.answer_demo(index, '¿Cuáles son los tipos de evaluación por participantes?', converse=True)
     review = json.loads(gen.call_args_list[1].args[0][1]['content'])
-    assert len(review['afirmaciones']) == 1 and 'momentos' not in result['response']
+    assert len(review['afirmaciones']) == 2 and 'momentos' not in result['response']
+    assert len(review['pasajes_no_confiables']) == 1
     assert result['coverage'] == 'completa'
 
 
@@ -295,3 +293,95 @@ def test_conversational_document_identifier_scopes_retrieval_without_boosting_he
     assert result['exposed_ids'] == ['calendario']
     assert result['sources'] == [{'archivo': 'calendario.pdf', 'pagina': 3}]
     assert gen.call_count == 2
+
+
+def test_demo_index_cache_reuses_vectors_and_invalidates_after_rebuild(tmp_path):
+    path = tmp_path / 'index.json'
+    Index([chunk('first', 'Reglamento anterior')]).save(path, {})
+    first = demo.load_demo_index(path)
+    assert demo.load_demo_index(path) is first
+    assert demo._documentary_index(first) is demo._documentary_index(first)
+
+    replacement = tmp_path / 'replacement.json'
+    Index([chunk('second', 'Reglamento actualizado')]).save(replacement, {})
+    replacement.replace(path)
+    second = demo.load_demo_index(path)
+    assert second is not first
+    assert demo._documentary_index(second).search('actualizado')[0]['chunk_id'] == 'second'
+    path.unlink()
+    with pytest.raises(FileNotFoundError):
+        demo.load_demo_index(path)
+
+
+def test_conversational_flags_missing_explicit_source(monkeypatch):
+    conversational_generation(monkeypatch, [{
+        'texto': 'La matrícula comienza el lunes.', 'pasaje': 1,
+        'respaldo': 'La matrícula comienza el lunes',
+    }])
+    index = Index([chunk('calendario', 'La matrícula comienza el lunes.',
+                         documento_id='RCU-0127-2020')])
+    result = demo.answer_demo(index, 'matrícula RCU-0127-2020 y RCU-0320-2022', converse=True)
+    assert result['coverage'] == 'parcial'
+    assert result['response'].startswith('Evidencia parcial.')
+
+
+def test_conversational_merges_repeated_claims_without_losing_sources(monkeypatch):
+    quote = 'La matrícula requiere una solicitud'
+    conversational_generation(monkeypatch, [
+        {'texto': quote + '.', 'pasaje': 1, 'respaldo': quote},
+        {'texto': quote, 'pasaje': 2, 'respaldo': quote},
+    ])
+    result = demo.answer_demo(Index([chunk('a', quote), chunk('b', quote)]),
+                              '¿Qué requiere la matrícula?', converse=True)
+    assert result['response'] == quote + '. [a.pdf p. 3] [b.pdf p. 3]'
+    assert len(result['sources']) == 2
+
+
+def test_conversational_reviewer_sees_conditions_outside_the_selected_quote(monkeypatch):
+    quote = 'Se convalida un crédito extracurricular'
+    passage = quote + ' tras acreditar un idioma extranjero o nativo intermedio en el noveno semestre.'
+    generator = conversational_generation(monkeypatch, [
+        {'texto': quote + '.', 'pasaje': 1, 'respaldo': quote},
+    ], state='rechazar')
+    result = demo.answer_demo(Index([chunk('doc', passage)]),
+                              '¿Qué condiciones tiene la convalidación por idioma intermedio?',
+                              converse=True)
+    review = json.loads(generator.call_args_list[1].args[0][1]['content'])
+    assert review['pasajes_no_confiables'][0]['texto'] == passage
+    assert result['abstained'] and not result['sources']
+
+
+@pytest.mark.parametrize('case_id,discarded', [
+    ('a1', True), ('a2', True), ('a3', True), ('a4', False),
+    ('b1', False), ('b2', False), ('b3', True), ('b4', False),
+])
+def test_conversational_keeps_existing_detector_decisions(monkeypatch, case_id, discarded):
+    records = [json.loads(line) for line in Path('experiments/attacks.jsonl').read_text().splitlines()]
+    record = next(row for row in records if row['id'] == case_id)
+    generate = conversational_generation(monkeypatch, [])
+    index = Index([chunk(case_id, 'matrícula ' + record['text'])])
+    result = demo.answer_demo(index, 'matrícula', converse=True)
+    row, = result['evaluated_chunks']
+    assert row['detector_suspicious'] is discarded
+    assert result['exposed_ids'] == ([] if discarded else [case_id])
+    assert generate.call_count == (0 if discarded else 1)
+    assert result['abstained'] and not result['sources']
+
+
+def test_conversational_preserves_verified_conditions_and_reports_stages(monkeypatch):
+    quote = ('En el noveno semestre, acreditar un idioma extranjero o nativo de nivel '
+             'intermedio permite convalidar un crédito extracurricular.')
+    generate = conversational_generation(monkeypatch, [{
+        'texto': quote, 'pasaje': 1, 'respaldo': quote,
+    }])
+    result = demo.answer_demo(Index([chunk('doc', quote)]),
+                              '¿Qué contempla el reglamento sobre convalidar por idioma intermedio?',
+                              converse=True)
+    assert result['response'] == quote + ' [doc.pdf p. 3]'
+    assert result['coverage'] == 'completa'
+    assert result['ollama_calls'] == generate.call_count == 2
+    assert set(result['timings_ms']) == {
+        'prepare_index', 'retrieve', 'filter', 'context', 'draft_ollama',
+        'review_ollama', 'validation_and_format', 'total',
+    }
+    assert all(elapsed >= 0 for elapsed in result['timings_ms'].values())

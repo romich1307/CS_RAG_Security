@@ -1,6 +1,9 @@
 """Perfil documental extractivo versionado, separado de los experimentos A/B/C."""
 import json
 import re
+from functools import lru_cache
+from pathlib import Path
+from time import perf_counter
 from itertools import islice, zip_longest
 
 from cs_rag_security import conversational
@@ -15,7 +18,7 @@ CURRENT = re.compile(
     r'\b(vigente[s]?|vigencia|actualmente|hoy en d[ií]a|sigue[n]? en vigor)\b',
     re.IGNORECASE,
 )
-DOCUMENT_ID = re.compile(r'\bRCU-\d{4}-\d{4}\b', re.IGNORECASE)
+DOCUMENT_ID = conversational.DOCUMENT_ID
 SYSTEM = (
     'Eres un asistente documental. Selecciona los números de los pasajes que contienen '
     'información que responde a la pregunta. Devuelve hasta tres números en «pasajes», '
@@ -36,6 +39,27 @@ SINGLE_PASSAGE_GUIDANCE = (
 def documentary_tokens(text):
     # PDF extraction flattens a line break after a hyphen into whitespace.
     return tokens(WRAPPED_WORD.sub('', text))
+
+
+@lru_cache(maxsize=2)
+def _load_index(path, signature):
+    return Index.load(path, tokenizer=documentary_tokens)
+
+
+def load_demo_index(path):
+    path = Path(path).resolve()
+    try:
+        stat = path.stat()
+    except FileNotFoundError:
+        return Index.load(path, tokenizer=documentary_tokens)
+    return _load_index(path, (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns))
+
+
+@lru_cache(maxsize=2)
+def _documentary_index(index):
+    if index.tokenizer is documentary_tokens:
+        return index
+    return Index(index.chunks, tokenizer=documentary_tokens)
 
 
 def output_schema(count):
@@ -83,29 +107,48 @@ def validate_passages(raw, hits):
 def answer_demo(index, question, provider='local', k=5, documental=True, model=None, *, converse=False):
     if not 1 <= k <= 100 or provider not in ('local', 'mock'):
         raise ValueError('Configuración de demostración inválida')
+    started = perf_counter()
     converse = converse and provider == 'local'
+    timings = {}
     result = {'provider': provider, 'mode': MODES[2],
               'profile': conversational.PROFILE if converse else PROFILE,
               'abstained': True, 'sources': [], 'evaluated_chunks': [],
               'exposed_ids': [], 'retriever': f'{index.method}+dehyphenation_v1', 'top_k': k}
+    if converse:
+        result.update(timings_ms=timings, ollama_calls=0)
     if not documental or CURRENT.search(question):
+        timings['total'] = (perf_counter() - started) * 1000
         return {**result, 'response': 'Me abstengo: el corpus no certifica vigencia normativa.',
                 'reason': 'vigencia_no_certificada'}
 
-    index = Index(index.chunks, tokenizer=documentary_tokens)
+    stage = perf_counter()
+    index = _documentary_index(index)
+    timings['prepare_index'] = (perf_counter() - stage) * 1000
+    stage = perf_counter()
     requested = list(dict.fromkeys(name.upper() for name in DOCUMENT_ID.findall(question)))
     candidate_limit = min(5 * k, 100)
     if requested:
-        # In the conversational profile, identifiers already restrict the candidate pool.
-        search_question = DOCUMENT_ID.sub(' ', question) if converse else question
-        search_question = search_question if documentary_tokens(search_question) else question
-        rankings = [
-            index.search(search_question, candidate_limit, document_ids={document_id})
-            for document_id in requested[:candidate_limit]
-        ]
+        # An explicit subquestion can provide a more focused query for its document.
+        parts = re.split(r'(?<=\?)\s+(?=\S)', question) if converse else []
+        scoped_questions = {}
+        for part in parts:
+            for name in DOCUMENT_ID.findall(part):
+                scoped_questions.setdefault(name.upper(), []).append(part)
+
+        rankings = []
+        for document_id in requested[:candidate_limit]:
+            search_question = question
+            if converse:
+                scoped = ' '.join(scoped_questions.get(document_id, ())) or question
+                without_id = DOCUMENT_ID.sub(' ', scoped)
+                if documentary_tokens(without_id):
+                    search_question = without_id
+            rankings.append(index.search(search_question, candidate_limit, document_ids={document_id}))
         candidates = (hit for group in zip_longest(*rankings) for hit in group if hit is not None)
     else:
         candidates = iter(index.search(question, candidate_limit))
+    timings['retrieve'] = (perf_counter() - stage) * 1000
+    stage = perf_counter()
     hits, seen = [], set()
     for rank, chunk in enumerate(islice(candidates, candidate_limit), start=1):
         decision = detect(chunk['texto'])
@@ -127,7 +170,9 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
             'status': 'discarded' if reasons else 'accepted', 'discard_reasons': reasons,
         })
 
+    timings['filter'] = (perf_counter() - stage) * 1000
     if not hits:
+        timings['total'] = (perf_counter() - started) * 1000
         pending = any(
             row['discard_reasons'] == ['ocr_revision_pendiente']
             for row in result['evaluated_chunks']
@@ -142,18 +187,35 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
         response = generate([], hits, 'mock')
         sources = list({(h['archivo_pdf'], h['pagina_pdf']): {
             'archivo': h['archivo_pdf'], 'pagina': h['pagina_pdf']} for h in hits}.values())
+        timings['total'] = (perf_counter() - started) * 1000
         return {**result, 'response': response, 'sources': sources, 'abstained': False,
                 'reason': None}
 
+    stage = perf_counter()
     context = [
         {'numero': number, 'documento': hit['archivo_pdf'], 'texto': hit['texto']}
         for number, hit in enumerate(hits, 1)
     ]
     result['exposed_ids'] = [h['chunk_id'] for h in hits]
+    timings['context'] = (perf_counter() - stage) * 1000
     if converse:
+        stage = perf_counter()
+
+        def timed_generation(messages, *args, **kwargs):
+            begin = perf_counter()
+            generated = generate(messages, *args, **kwargs)
+            key = 'review_ollama' if messages[0]['content'] == conversational.REVIEW_BATCH else 'draft_ollama'
+            timings[key] = (perf_counter() - begin) * 1000
+            result['ollama_calls'] += 1
+            return generated
+
         model_name, reason, response, sources, coverage = conversational.compose(
-            generate, question, hits, context, model,
+            timed_generation, question, hits, context, model,
         )
+        timings['validation_and_format'] = (perf_counter() - stage) * 1000 - sum(
+            timings.get(key, 0) for key in ('draft_ollama', 'review_ollama')
+        )
+        timings['total'] = (perf_counter() - started) * 1000
         if reason:
             response = (
                 'Me abstengo: Ollama no encontró evidencia para responder.'

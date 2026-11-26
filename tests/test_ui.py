@@ -1,6 +1,15 @@
+import pytest
 from streamlit.testing.v1 import AppTest
+from cs_rag_security.demo import _load_index
 from unittest.mock import patch
 from cs_rag_security.retrieval import Index
+
+
+@pytest.fixture(autouse=True)
+def clear_index_cache():
+    _load_index.cache_clear()
+    yield
+    _load_index.cache_clear()
 
 
 def test_streamlit_form_and_query():

@@ -3,12 +3,14 @@ import json
 import os
 from pathlib import Path
 import re
+from time import perf_counter
 from urllib.error import HTTPError, URLError
 
 import streamlit as st
 
 from cs_rag_security.defenses import MODES
-from cs_rag_security.demo import PROFILE, answer_demo
+from cs_rag_security.conversational import PROFILE as CONVERSATIONAL_PROFILE
+from cs_rag_security.demo import PROFILE, answer_demo, load_demo_index
 from cs_rag_security.pipeline import answer
 from cs_rag_security.retrieval import Index
 from cs_rag_security.traceability import extract_citations, sanitize_chunk_dict
@@ -18,7 +20,7 @@ APP_DIR = Path(__file__).resolve().parent
 INDEX_PATH = APP_DIR.parent / 'data/vector_db/index.json'
 SAFE_TRACE_FIELDS = (
     'provider', 'mode', 'profile', 'abstained', 'reason', 'retriever',
-    'top_k', 'model', 'coverage', 'evaluated_chunks', 'exposed_ids',
+    'top_k', 'model', 'coverage', 'evaluated_chunks', 'exposed_ids', 'timings_ms', 'ollama_calls',
 )
 DEFENSE_LABELS = dict(zip(MODES, ('A  Sin defensa', 'B  Defensa básica', 'C  Defensa propuesta')))
 DEMO_LABEL = 'Demostración documental'
@@ -172,7 +174,8 @@ with st.container(key='consulta'):
                     help='Desmarque esta opción para solicitar una comprobación de vigencia.',
                 )
                 if demo:
-                    st.caption(f'Perfil {PROFILE}. Los extractos se citan con el PDF y la página del índice.')
+                    profile = CONVERSATIONAL_PROFILE if provider == 'local' else PROFILE
+                    st.caption(f'Perfil {profile}. Las fuentes indican el PDF y la página del índice.')
                 else:
                     st.caption('Configuración experimental. A carece de aislamiento de instrucciones.')
                 model = None
@@ -191,19 +194,25 @@ if submitted:
     if not question.strip():
         st.info('Escriba una pregunta documental.')
     else:
+        started = perf_counter()
         try:
-            index = Index.load(INDEX_PATH)
+            index = load_demo_index(INDEX_PATH) if demo else Index.load(INDEX_PATH)
         except FileNotFoundError:
             st.error('Falta el índice local. Prepare el corpus y ejecute unsa-rag index.')
         except (OSError, ValueError, TypeError, KeyError):
             st.error('No se pudo leer el índice local. Compruebe que el archivo sea compatible.')
         else:
+            index_load_ms = (perf_counter() - started) * 1000
             try:
                 with st.spinner('Buscando evidencia documental…'):
                     if demo:
                         result = answer_demo(index, question, provider, k, documental, model.strip() if model else None, converse=True)
                     else:
                         result = answer(index, question, mode, provider, k, documental)
+                if demo and 'timings_ms' in result:
+                    result['timings_ms'].update(
+                        index_load=index_load_ms, end_to_end=(perf_counter() - started) * 1000,
+                    )
                 st.session_state['consulta_resultado'] = (query_settings, presentation(result))
             except (OSError, RuntimeError, ValueError, KeyError, TypeError, AttributeError) as exc:
                 st.error(provider_error(exc, provider))
