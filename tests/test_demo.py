@@ -279,3 +279,19 @@ def test_conversational_focused_question_reviews_only_the_direct_answer(monkeypa
     review = json.loads(gen.call_args_list[1].args[0][1]['content'])
     assert len(review['afirmaciones']) == 1 and 'momentos' not in result['response']
     assert result['coverage'] == 'completa'
+
+
+def test_conversational_document_identifier_scopes_retrieval_without_boosting_headers(monkeypatch):
+    gen = conversational_generation(monkeypatch, [{
+        'texto': 'La matrícula comienza el lunes.', 'pasaje': 1,
+        'respaldo': 'La matrícula comienza el lunes',
+    }])
+    index = Index([
+        chunk('cabecera', 'RCU-0127-2020 matrícula', documento_id='RCU-0127-2020'),
+        chunk('calendario', 'La matrícula comienza el lunes.', documento_id='RCU-0127-2020'),
+        chunk('otra', 'La matrícula comienza el lunes.', documento_id='RCU-0320-2022'),
+    ])
+    result = demo.answer_demo(index, '¿Cuándo comienza la matrícula en RCU-0127-2020?', k=1, converse=True)
+    assert result['exposed_ids'] == ['calendario']
+    assert result['sources'] == [{'archivo': 'calendario.pdf', 'pagina': 3}]
+    assert gen.call_count == 2

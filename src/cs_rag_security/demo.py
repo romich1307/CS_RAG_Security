@@ -83,7 +83,9 @@ def validate_passages(raw, hits):
 def answer_demo(index, question, provider='local', k=5, documental=True, model=None, *, converse=False):
     if not 1 <= k <= 100 or provider not in ('local', 'mock'):
         raise ValueError('Configuración de demostración inválida')
-    result = {'provider': provider, 'mode': MODES[2], 'profile': conversational.PROFILE if converse and provider == 'local' else PROFILE,
+    converse = converse and provider == 'local'
+    result = {'provider': provider, 'mode': MODES[2],
+              'profile': conversational.PROFILE if converse else PROFILE,
               'abstained': True, 'sources': [], 'evaluated_chunks': [],
               'exposed_ids': [], 'retriever': f'{index.method}+dehyphenation_v1', 'top_k': k}
     if not documental or CURRENT.search(question):
@@ -94,8 +96,11 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
     requested = list(dict.fromkeys(name.upper() for name in DOCUMENT_ID.findall(question)))
     candidate_limit = min(5 * k, 100)
     if requested:
+        # In the conversational profile, identifiers already restrict the candidate pool.
+        search_question = DOCUMENT_ID.sub(' ', question) if converse else question
+        search_question = search_question if documentary_tokens(search_question) else question
         rankings = [
-            index.search(question, candidate_limit, document_ids={document_id})
+            index.search(search_question, candidate_limit, document_ids={document_id})
             for document_id in requested[:candidate_limit]
         ]
         candidates = (hit for group in zip_longest(*rankings) for hit in group if hit is not None)
