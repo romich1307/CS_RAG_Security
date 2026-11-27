@@ -72,6 +72,20 @@ def explicit_requests(question):
     return re.split(r'(?<=\?)\s+(?=\S)', question)
 
 
+def diversify_requests(index, question, candidate_limit):
+    parts = [part for part in re.split(r'(?<=\?)\s*|;\s*', question, maxsplit=candidate_limit)
+             if part.strip()][:candidate_limit]
+    rankings = [
+        index.search(topical_query(part), candidate_limit) for part in parts
+    ]
+    seen = set()
+    for group in zip_longest(*rankings):
+        for hit in group:
+            if hit is not None and hit['chunk_id'] not in seen:
+                seen.add(hit['chunk_id'])
+                yield hit
+
+
 def supported_requests(question, hits):
     parts = explicit_requests(question)
     if len(parts) == 1:
@@ -130,14 +144,18 @@ def validate_passages(raw, hits):
     return '\n\n'.join(lines), sources
 
 
-def answer_demo(index, question, provider='local', k=5, documental=True, model=None, *, converse=False):
+def answer_demo(index, question, provider='local', k=5, documental=True, model=None, *,
+                converse=False, version=2):
     if not 1 <= k <= 100 or provider not in ('local', 'mock'):
         raise ValueError('Configuración de demostración inválida')
+    if version not in (2, 3):
+        raise ValueError('Versión conversacional inválida')
     started = perf_counter()
     converse = converse and provider == 'local'
+    v3 = converse and version == 3
     timings = {}
     result = {'provider': provider, 'mode': MODES[2],
-              'profile': conversational.PROFILE if converse else PROFILE,
+              'profile': (conversational.PROFILE_V3 if v3 else conversational.PROFILE) if converse else PROFILE,
               'abstained': True, 'sources': [], 'evaluated_chunks': [],
               'exposed_ids': [], 'retriever': f'{index.method}+dehyphenation_v1', 'top_k': k}
     if converse:
@@ -172,6 +190,8 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
             rankings.append(index.search(topical_query(search_question) if converse else search_question,
                                          candidate_limit, document_ids={document_id}))
         candidates = (hit for group in zip_longest(*rankings) for hit in group if hit is not None)
+    elif v3:
+        candidates = iter(list(islice(diversify_requests(index, question, candidate_limit), candidate_limit)))
     else:
         candidates = iter(index.search(topical_query(question) if converse else question, candidate_limit))
     timings['retrieve'] = (perf_counter() - stage) * 1000
@@ -224,7 +244,7 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
         for number, hit in enumerate(hits, 1)
     ]
     result['exposed_ids'] = [h['chunk_id'] for h in hits]
-    draft_question, uncovered = supported_requests(question, hits) if converse else (question, False)
+    draft_question, uncovered = supported_requests(question, hits) if converse and not v3 else (question, False)
     timings['context'] = (perf_counter() - stage) * 1000
     if converse:
         stage = perf_counter()
@@ -239,7 +259,7 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
             return generated
 
         model_name, reason, response, sources, coverage = conversational.compose(
-            timed_generation, draft_question, hits, context, model,
+            timed_generation, draft_question, hits, context, model, v3=v3,
         )
         timings['validation_and_format'] = (perf_counter() - stage) * 1000 - sum(
             timings.get(key, 0) for key in ('draft_ollama', 'review_ollama')
@@ -249,11 +269,12 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
             coverage = 'parcial'
             response = conversational.PARTIAL_NOTICE + '\n\n' + response
         if reason:
-            response = (
-                'Me abstengo: Ollama no encontró evidencia para responder.'
-                if reason == 'modelo_sin_evidencia'
-                else 'Me abstengo: no pude verificar la respuesta de Ollama con los pasajes admitidos.'
-            )
+            response = {
+                'modelo_sin_evidencia': 'Me abstengo: Ollama no encontró evidencia para responder.',
+                'salida_formato_o_anclaje_invalido': 'Me abstengo: el borrador no incluyó un respaldo literal verificable.',
+                'revision_sin_afirmaciones': 'Me abstengo: la revisión no encontró afirmaciones pertinentes y respaldadas.',
+                'revision_no_verificable': 'Me abstengo: la revisión no produjo una decisión verificable.',
+            }.get(reason, 'Me abstengo: no pude verificar la respuesta de Ollama con los pasajes admitidos.')
         return {**result, 'model': model_name, 'reason': reason, 'response': response,
                 'sources': sources, 'coverage': coverage, 'abstained': reason is not None}
 

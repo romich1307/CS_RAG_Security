@@ -437,3 +437,67 @@ def test_conversational_drops_invalid_claim_before_review_without_losing_valid_e
     review = json.loads(generator.call_args_list[1].args[0][1]['content'])
     assert [claim['texto'] for claim in review['afirmaciones']] == ['La matrícula comienza el lunes.']
     assert 'pago' not in result['response']
+
+
+def test_v3_keeps_subquestions_and_only_publishes_supported_claims(monkeypatch):
+    quote = 'Las inscripciones comienzan el lunes'
+    index = Index([
+        chunk('calendario', quote),
+        chunk('costos', 'El trámite de inscripción no tiene costo'),
+    ])
+    generator = Mock(side_effect=[
+        {'metadata': {'model': 'fixture'}, 'text': json.dumps({'afirmaciones': [
+            {'texto': 'Las inscripciones empiezan el lunes.', 'pasaje': 1, 'respaldo': quote},
+            {'texto': 'La inscripción cuesta cien soles.', 'pasaje': 2,
+             'respaldo': 'cuesta cien soles'},
+        ]})},
+        {'text': '{"aceptadas":[1],"incompleta":false}'},
+    ])
+    monkeypatch.setattr(demo, 'generate', generator)
+    question = '¿Cuándo comienzan las inscripciones? ¿Qué costo tiene el trámite?'
+    result = demo.answer_demo(index, question, converse=True, version=3)
+    assert result['profile'] == 'demo_conversacional_v3'
+    assert result['exposed_ids'] == ['calendario', 'costos']
+    assert result['coverage'] == 'parcial'
+    assert result['response'].endswith('Las inscripciones empiezan el lunes. [calendario.pdf p. 3]')
+    assert 'cien soles' not in result['response']
+    for call in generator.call_args_list:
+        payload = json.loads(call.args[0][1]['content'])
+        assert payload['pregunta'] == question
+
+
+@pytest.mark.parametrize(('review', 'reason'), [
+    ('{"aceptadas":[],"incompleta":true}', 'revision_sin_afirmaciones'),
+    ('{"aceptadas":[true],"incompleta":false}', 'revision_no_verificable'),
+])
+def test_v3_fails_closed_on_rejected_or_invalid_review(monkeypatch, review, reason):
+    quote = 'Las inscripciones comienzan el lunes'
+    index = Index([chunk('calendario', quote)])
+    generator = Mock(side_effect=[
+        {'metadata': {'model': 'fixture'}, 'text': json.dumps({'afirmaciones': [
+            {'texto': quote, 'pasaje': 1, 'respaldo': quote},
+        ]})},
+        {'text': review},
+    ])
+    monkeypatch.setattr(demo, 'generate', generator)
+    result = demo.answer_demo(index, '¿Cuándo comienzan las inscripciones?', converse=True, version=3)
+    assert result['abstained']
+    assert result['reason'] == reason
+    assert result['sources'] == []
+
+
+def test_v3_reviewer_can_reject_irrelevant_claim_without_flagging_coverage(monkeypatch):
+    relevant = 'Las inscripciones comienzan el lunes'
+    irrelevant = 'La inscripción se tramita en secretaría'
+    index = Index([chunk('norma', f'{relevant}. {irrelevant}.')])
+    generator = Mock(side_effect=[
+        {'metadata': {'model': 'fixture'}, 'text': json.dumps({'afirmaciones': [
+            {'texto': relevant, 'pasaje': 1, 'respaldo': relevant},
+            {'texto': irrelevant, 'pasaje': 1, 'respaldo': irrelevant},
+        ]})},
+        {'text': '{"aceptadas":[1],"incompleta":false}'},
+    ])
+    monkeypatch.setattr(demo, 'generate', generator)
+    result = demo.answer_demo(index, '¿Cuándo comienzan las inscripciones?', converse=True, version=3)
+    assert result['coverage'] == 'completa'
+    assert result['response'] == f'{relevant} [norma.pdf p. 3]'
