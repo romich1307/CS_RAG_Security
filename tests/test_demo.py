@@ -501,3 +501,133 @@ def test_v3_reviewer_can_reject_irrelevant_claim_without_flagging_coverage(monke
     result = demo.answer_demo(index, '¿Cuándo comienzan las inscripciones?', converse=True, version=3)
     assert result['coverage'] == 'completa'
     assert result['response'] == f'{relevant} [norma.pdf p. 3]'
+
+
+def v4_generation(monkeypatch, claims, accepted, complete):
+    generator = Mock(side_effect=[
+        {'metadata': {'model': 'fixture'}, 'text': json.dumps({'afirmaciones': claims})},
+        {'text': json.dumps({'aceptadas': accepted, 'completas': complete})},
+    ])
+    monkeypatch.setattr(demo, 'generate', generator)
+    return generator
+
+
+def test_v4_cannot_mark_missing_subquestion_complete(monkeypatch):
+    first = 'El horario comienza el lunes'
+    second = 'El trámite cuesta cinco soles'
+    index = Index([chunk('horario', first), chunk('costos', second)])
+    gen = v4_generation(monkeypatch, [
+        {'texto': first, 'respaldo': first, 'peticion': 1, 'pasaje': 1},
+        {'texto': second, 'respaldo': second, 'peticion': 2, 'pasaje': 2},
+    ], [1], [1, 2])
+    result = demo.answer_demo(index, '¿Cuándo comienza el horario y cuánto cuesta el trámite?',
+                              converse=True, version=4)
+    assert result['profile'] == 'demo_conversacional_v4'
+    assert result['coverage'] == 'parcial'
+    assert result['sources'] == [{'archivo': 'horario.pdf', 'pagina': 3}]
+    assert gen.call_count == 2
+    assert len(json.loads(gen.call_args.args[0][1]['content'])['peticiones']) == 2
+
+
+@pytest.mark.parametrize(('answer_both', 'coverage'), [(False, 'parcial'), (True, 'completa')])
+def test_v4_covers_each_named_resolution_per_request(monkeypatch, answer_both, coverage):
+    first = 'La matrícula comienza el lunes'
+    second = 'La matrícula comienza el martes'
+    index = Index([
+        chunk('a', first, documento_id='RCU-0127-2020'),
+        chunk('b', second, documento_id='RCU-0320-2022'),
+    ])
+    v4_generation(monkeypatch, [
+        {'texto': first, 'respaldo': first, 'peticion': 1, 'pasaje': 1},
+        {'texto': second, 'respaldo': second, 'peticion': 1, 'pasaje': 2},
+    ], [1, 2] if answer_both else [1], [1])
+    result = demo.answer_demo(index, '¿Qué fechas de matrícula indican RCU-0127-2020 y RCU-0320-2022?',
+                              converse=True, version=4)
+    assert result['coverage'] == coverage
+    assert len(result['sources']) == (2 if answer_both else 1)
+
+
+def test_v4_keeps_part_without_document_id_in_mixed_search(monkeypatch):
+    first = 'La matrícula comienza el lunes'
+    second = 'El trámite cuesta cinco soles'
+    index = Index([chunk('a', first, documento_id='RCU-0127-2020'), chunk('b', second)])
+    gen = v4_generation(monkeypatch, [
+        {'texto': first, 'respaldo': first, 'peticion': 1, 'pasaje': 1},
+        {'texto': second, 'respaldo': second, 'peticion': 2, 'pasaje': 2},
+    ], [1, 2], [1, 2])
+    result = demo.answer_demo(index, '¿Cuándo comienza la matrícula según RCU-0127-2020? ¿Cuánto cuesta el trámite?',
+                              converse=True, version=4)
+    assert result['exposed_ids'] == ['a', 'b']
+    assert result['coverage'] == 'completa'
+    assert all(call.args[0][0]['role'] == 'system' and call.args[0][1]['role'] == 'user'
+               for call in gen.call_args_list)
+
+
+def test_v4_typographic_anchor_keeps_metadata_citation(monkeypatch):
+    quote = 'La fase “preliminar” requiere registro'
+    index = Index([chunk('tramite', quote)])
+    v4_generation(monkeypatch, [
+        {'texto': 'Se requiere registrar la fase preliminar.', 'respaldo': quote.replace('“', '"').replace('”', '"'),
+         'peticion': 1, 'pasaje': 1},
+    ], [1], [1])
+    result = demo.answer_demo(index, '¿Qué requiere la fase preliminar?', converse=True, version=4)
+    assert result['response'] == 'Se requiere registrar la fase preliminar. [tramite.pdf p. 3]'
+
+
+@pytest.mark.parametrize('change', [
+    {'respaldo': 'ase inicial requiere registro'},
+    {'respaldo': 'La fase inicial requiere pago'},
+    {'pasaje': 2},
+    {'peticion': True},
+    {'texto': 'La fase inicial requiere registro. [otra.pdf p. 9]'},
+])
+def test_v4_rejects_unsafe_or_unanchored_claim(monkeypatch, change):
+    quote = 'La fase inicial requiere registro'
+    gen = v4_generation(monkeypatch, [
+        {'texto': quote, 'respaldo': quote, 'peticion': 1, 'pasaje': 1, **change},
+    ], [1], [1])
+    result = demo.answer_demo(Index([chunk('registro', quote)]), '¿Qué requiere la fase inicial?',
+                              converse=True, version=4)
+    assert result['reason'] == 'salida_formato_o_anclaje_invalido'
+    assert not result['sources']
+    assert gen.call_count == 1
+
+
+def test_v4_never_uses_wrong_named_resolution_for_a_subquestion(monkeypatch):
+    quote = 'La matrícula comienza el lunes'
+    index = Index([chunk('a', quote, documento_id='RCU-0127-2020'),
+                   chunk('b', quote, documento_id='RCU-0320-2022')])
+    v4_generation(monkeypatch, [
+        {'texto': quote, 'respaldo': quote, 'peticion': 1, 'pasaje': 2},
+        {'texto': quote, 'respaldo': quote, 'peticion': 2, 'pasaje': 2},
+    ], [1], [1, 2])
+    result = demo.answer_demo(
+        index, '¿Cuándo comienza la matrícula según RCU-0127-2020? '
+        '¿Cuándo comienza la matrícula según RCU-0320-2022?', converse=True, version=4,
+    )
+    assert result['coverage'] == 'parcial'
+    assert result['sources'] == [{'archivo': 'b.pdf', 'pagina': 3}]
+
+
+def test_v4_fails_closed_on_malformed_review(monkeypatch):
+    quote = 'La matrícula comienza el lunes'
+    v4_generation(monkeypatch, [
+        {'texto': quote, 'respaldo': quote, 'peticion': 1, 'pasaje': 1},
+    ], [True], [1])
+    result = demo.answer_demo(Index([chunk('a', quote)]), '¿Cuándo comienza la matrícula?',
+                              converse=True, version=4)
+    assert result['reason'] == 'revision_no_verificable'
+    assert not result['sources']
+
+
+@pytest.mark.parametrize('version', [3, 4])
+def test_conversational_filters_existing_flagged_fixture_before_generation(monkeypatch, version):
+    record = next(r for r in map(json.loads, Path('experiments/attacks.jsonl').read_text().splitlines())
+                  if r['id'] == 'a3')
+    generator = Mock()
+    monkeypatch.setattr(demo, 'generate', generator)
+    result = demo.answer_demo(Index([chunk('fixture', 'Reglamento académico. ' + record['text'])]),
+                              '¿Qué indica el reglamento académico?', converse=True, version=version)
+    assert result['abstained'] and not result['exposed_ids']
+    assert result['evaluated_chunks'][0]['detector_suspicious']
+    generator.assert_not_called()

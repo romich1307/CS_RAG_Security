@@ -16,7 +16,7 @@ def main():
     p.add_argument('--provider', choices=['mock', 'local', 'api'], default='mock')
     p.add_argument('--audit-raw', action='store_true', help='Salida privada de chat experimental para auditoría local')
     p.add_argument('--demo', action='store_true', help='Perfil documental C para chat local o mock')
-    p.add_argument('--demo-version', type=int, choices=(2, 3), default=2,
+    p.add_argument('--demo-version', type=int, choices=(2, 3, 4), default=2,
                    help='Versión del perfil conversacional de --demo con proveedor local')
     p.add_argument('--documental', action='store_true')
     p.add_argument('--output', default='results/offline')

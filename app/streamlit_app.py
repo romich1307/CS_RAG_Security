@@ -11,6 +11,7 @@ import streamlit as st
 from cs_rag_security.defenses import MODES
 from cs_rag_security.conversational import PROFILE as CONVERSATIONAL_PROFILE
 from cs_rag_security.conversational import PROFILE_V3
+from cs_rag_security.conversational_v4 import PROFILE as PROFILE_V4
 from cs_rag_security.demo import PROFILE, answer_demo, load_demo_index
 from cs_rag_security.pipeline import answer
 from cs_rag_security.retrieval import Index
@@ -179,10 +180,10 @@ with st.container(key='consulta'):
                     profile = PROFILE
                     if provider == 'local':
                         version = st.selectbox(
-                            'Versión conversacional', (2, 3),
-                            format_func={2: CONVERSATIONAL_PROFILE, 3: PROFILE_V3}.get,
+                            'Versión conversacional', (2, 3, 4),
+                            format_func={2: CONVERSATIONAL_PROFILE, 3: PROFILE_V3, 4: PROFILE_V4}.get,
                         )
-                        profile = PROFILE_V3 if version == 3 else CONVERSATIONAL_PROFILE
+                        profile = {2: CONVERSATIONAL_PROFILE, 3: PROFILE_V3, 4: PROFILE_V4}[version]
                     st.caption(f'Perfil {profile}. Las fuentes indican el PDF y la página del índice.')
                 else:
                     st.caption('Configuración experimental. A carece de aislamiento de instrucciones.')

@@ -6,7 +6,7 @@ from itertools import islice, zip_longest
 from pathlib import Path
 from time import perf_counter
 
-from cs_rag_security import conversational
+from cs_rag_security import conversational, conversational_v4
 from cs_rag_security.defenses import MODES, detect
 from cs_rag_security.generation import generate
 from cs_rag_security.retrieval import Index, tokens
@@ -148,14 +148,16 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
                 converse=False, version=2):
     if not 1 <= k <= 100 or provider not in ('local', 'mock'):
         raise ValueError('Configuración de demostración inválida')
-    if version not in (2, 3):
+    if version not in (2, 3, 4):
         raise ValueError('Versión conversacional inválida')
     started = perf_counter()
     converse = converse and provider == 'local'
     v3 = converse and version == 3
+    v4 = converse and version == 4
+    profiles = {2: conversational.PROFILE, 3: conversational.PROFILE_V3, 4: conversational_v4.PROFILE}
     timings = {}
     result = {'provider': provider, 'mode': MODES[2],
-              'profile': (conversational.PROFILE_V3 if v3 else conversational.PROFILE) if converse else PROFILE,
+              'profile': profiles[version] if converse else PROFILE,
               'abstained': True, 'sources': [], 'evaluated_chunks': [],
               'exposed_ids': [], 'retriever': f'{index.method}+dehyphenation_v1', 'top_k': k}
     if converse:
@@ -171,7 +173,24 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
     stage = perf_counter()
     requested = list(dict.fromkeys(name.upper() for name in DOCUMENT_ID.findall(question)))
     candidate_limit = min(5 * k, 100)
-    if requested:
+    if v4:
+        parts, _ = conversational_v4.requests_for(question)
+        rankings = []
+        for part in parts:
+            scoped = list(dict.fromkeys(name.upper() for name in DOCUMENT_ID.findall(part)))
+            search = topical_query(DOCUMENT_ID.sub(' ', part)) if scoped else topical_query(part)
+            for document in scoped or [None]:
+                if len(rankings) >= candidate_limit:
+                    break
+                rankings.append(index.search(search, candidate_limit, document_ids={document} if document else None))
+        merged = {}
+        for group in zip_longest(*rankings):
+            for hit in filter(None, group):
+                key = hit['chunk_id']
+                if key not in merged or hit['score'] > merged[key]['score']:
+                    merged[key] = hit
+        candidates = iter(merged.values())
+    elif requested:
         # An explicit subquestion can provide a more focused query for its document.
         parts = explicit_requests(question) if converse else []
         scoped_questions = {}
@@ -244,7 +263,7 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
         for number, hit in enumerate(hits, 1)
     ]
     result['exposed_ids'] = [h['chunk_id'] for h in hits]
-    draft_question, uncovered = supported_requests(question, hits) if converse and not v3 else (question, False)
+    draft_question, uncovered = supported_requests(question, hits) if converse and not (v3 or v4) else (question, False)
     timings['context'] = (perf_counter() - stage) * 1000
     if converse:
         stage = perf_counter()
@@ -258,9 +277,11 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
             result['ollama_calls'] += 1
             return generated
 
-        model_name, reason, response, sources, coverage = conversational.compose(
-            timed_generation, draft_question, hits, context, model, v3=v3,
-        )
+        if v4:
+            composed = conversational_v4.compose(timed_generation, draft_question, hits, context, model)
+        else:
+            composed = conversational.compose(timed_generation, draft_question, hits, context, model, v3=v3)
+        model_name, reason, response, sources, coverage = composed
         timings['validation_and_format'] = (perf_counter() - stage) * 1000 - sum(
             timings.get(key, 0) for key in ('draft_ollama', 'review_ollama')
         )
