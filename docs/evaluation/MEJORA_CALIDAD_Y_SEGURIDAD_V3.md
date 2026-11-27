@@ -10,7 +10,7 @@ de desarrollo proporcionadas en la solicitud.
 
 | Etapa | Evidencia y diagnóstico |
 | --- | --- |
-| Formato histórico | T17 registró 21/30 abstenciones finales por ausencia de citas canónicas reconocidas en RAW. La expresión regular histórica podía descartar contenido correcto. T18 registra 11/30 correctas RAW y 4/30 correctas FINAL. Proveedor Ollama local, `qwen2.5:3b`. |
+| Formato histórico | T17 registró 21/30 abstenciones finales sin citas canónicas reconocidas en RAW. El pareo T18 confirma que el filtro de citas descartó 7/30 respuestas RAW correctas. Hubo 11/30 correctas RAW y 4/30 correctas FINAL. Proveedor Ollama local, `qwen2.5:3b`. |
 | Recuperación histórica | Hit@5 11/13 en el benchmark T08 con TF-IDF, sin proveedor LLM. El subconjunto de cotejo T10 obtuvo 13/13 en otro protocolo. Una página recuperada no garantiza que el pasaje contenga todos los elementos necesarios. |
 | Recuperación y admisión v2 | El producto limita los pasajes por origen, OCR pendiente, alertas, duplicados y cupo. En consultas con varias preguntas y sin identificadores explícitos, una sola búsqueda TF-IDF puede concentrar el cupo en un asunto. Antes de generar, el filtro léxico de subpreguntas también puede omitir una petición con vocabulario distinto. Esto último es un riesgo deducido del código. |
 | Borrador y citas v2 | v2 ya construye citas con archivo y página del índice. En la consulta F documentada, el respaldo literal del borrador no pasó el control local. Los límites inferidos de la puntuación y las instrucciones de copiar evidencia pueden contribuir a omitir condiciones. El diagnóstico anterior no permite atribuir cada omisión a un mecanismo concreto. |
@@ -18,7 +18,7 @@ de desarrollo proporcionadas en la solicitud.
 | Detector | `heuristic_v1` marcó 5/20 controles benignos de T15 sin proveedor LLM. Las alertas se repartieron entre salida impuesta (3/20) y suplantación de rol (2/20). Eso demuestra falsos positivos en controles, con impacto sobre documentos reales por verificar. T19 registró recall del detector de 15/20 en cada condición de la corrida con Ollama. |
 | ASR histórico | En T19 con Ollama local, A obtuvo 10/20 RAW, B 0/20 y C 0/20. FINAL fue 0/20 en cada condición. T19 registró una aparición contextual del marcador en C que no cumplió el objetivo. |
 
-Fuentes. [T08](benchmark_recuperacion.md) · [T17–T19](integracion_t17_t19_20261125.md) · [Cierre funcional](CIERRE_FUNCIONAL_CSRAG_20261125.md) · [Optimización v2](OPTIMIZACION_FINAL_RAG.md) · [Detector T15](../security/detector.md)
+[T08](benchmark_recuperacion.md) · [T17–T19](integracion_t17_t19_20261125.md) · [Cierre funcional](CIERRE_FUNCIONAL_CSRAG_20261125.md) · [Optimización v2](OPTIMIZACION_FINAL_RAG.md) · [Detector T15](../security/detector.md) · [Pareo T18 verificado en T20](../../results/llm_abc_local/t20_cierre_verificado_20261125/quality_metrics.json)
 
 ## Cambios
 
@@ -46,10 +46,11 @@ permanecen como antecedentes. La muestra piloto repite asuntos conocidos.
 La muestra nueva reúne seis consultas redactadas desde las fuentes con las
 páginas de referencia fijadas antes de inferencia. Incluye una solicitud con
 dos resoluciones, una con evidencia para solo una de las partes y una de
-vigencia no certificable. No se comparó semánticamente contra todas las
-preguntas históricas, y la misma persona implementó el cambio y preparó la
-muestra. La revisión humana independiente es especialmente importante por
-esas limitaciones. El SHA-256 de la muestra congelada es
+vigencia no certificable. La muestra se preparó en la misma sesión que
+implementó el cambio. Un cotejo de enunciados normalizados encontró 0/6
+duplicados exactos frente a las 40 preguntas gold y 0/6 frente a las dos
+del piloto. La novedad semántica frente a todos los ensayos anteriores
+requiere revisión independiente. El SHA-256 de la muestra congelada es
 `d2df88c2c4187c6e3f0f85b50fce6c0d5d696ee5bc01c62f2342c67f4688bfe2`.
 
 Mismo índice, mismo proceso, ejecución serial con orden de versiones
@@ -103,6 +104,106 @@ misma rúbrica, ausencia de regresiones importantes en recuperación/citas
 y evidencia de seguridad suficiente. Una mejora técnica aislada o una
 salida aprobada por el revisor de Ollama no satisface el criterio.
 
+## Piloto exploratorio
+
+Dos preguntas por versión, Ollama local `qwen2.5:3b`. Ambos brazos
+obtuvieron Hit@1 2/2, Hit@5 2/2 y cobertura de todas las páginas de
+referencia en top-5 de 2/2. Hubo abstención FINAL en 2/2 para v2 y
+0/2 para el prototipo v3. Ambos generaron 2/2 borradores y completaron
+las 2/2 consultas sin errores del proveedor. Media y mediana de v2,
+74,33 s (n=2), y de v3, 77,86 s (n=2). La muestra es insuficiente
+para p95.
+
+P01 reprodujo la contradicción de v2 entre rechazar la respuesta y
+aceptar una afirmación. El prototipo v3 conservó la afirmación
+aceptada y añadió un aviso parcial pese a que la revisión la consideró
+completa. Antes de congelar el perfil se corrigió esa sobreindicación
+para los casos con afirmaciones válidas descartadas por el revisor.
+P02 recuperó ambas fuentes. El prototipo v3 citó una sola y marcó
+cobertura parcial. La utilidad y el sustento de las respuestas piloto
+quedan sin calificación humana. La intervención se fijó para la muestra
+nueva en el commit `d278670`.
+
+La repetición de T15 confirmó 5/20 alertas en los controles benignos de
+referencia, sin proveedor LLM. Una repetición estática sobre los cuatro
+casos positivos ya etiquetados en `experiments/attacks.jsonl` detectó
+3/4, sin proveedor LLM. Ambos son controles de regresión del mismo
+detector sobre insumos históricos. En una inspección estática del índice de
+trabajo, el detector marcó 0/254 fragmentos que admitían el origen oficial,
+la condición no histórica y el estado de OCR. El recuento aplicó
+`evaluate_chunk_filtering` en modo documental con `score=1` y sin decisión
+del detector para seleccionar esos fragmentos, y luego aplicó
+`heuristic_v1` a su texto. La inspección es independiente de la consulta y
+no aporta etiquetas nuevas de benignidad ni de ataques. Con este índice
+no se observó exclusión de pasajes elegibles atribuible al detector.
+Se conserva el detector y quedan pendientes la reducción de falsos
+positivos en controles externos, un nuevo recall etiquetado y la medición
+de ASR específica de v3.
+
+## Resultados de verificación
+
+Se completaron los seis pares el 26 de noviembre de 2026 (hora de Lima).
+Proveedor Ollama local 0.40.16, `qwen2.5:3b` con digest `357c53fb659c…`,
+CPU Ryzen 5 3400G, contexto de 4096 tokens y un pedido a la vez. El
+manifiesto registra el índice `0cf3a950092c…` y los hashes completos del
+código, el conjunto de consultas y el modelo. El árbol estaba limpio al
+comenzar la corrida en `d278670`.
+
+| Resultado técnico, Ollama local | v2 | v3 |
+| --- | ---: | ---: |
+| Borradores RAW producidos | 5/6 | 5/6 |
+| Borradores con todas las referencias numéricas formalmente válidas, sobre borradores sustantivos | 5/5 | 5/5 |
+| Abstenciones FINAL | 5/6 | 1/6 |
+| Respuestas FINAL sustantivas con citas formalmente válidas | 1/1 | 5/5 |
+| Hit@1 en pasajes admitidos | 5/5 | 5/5 |
+| Hit@5 en pasajes admitidos | 5/5 | 5/5 |
+| Todas las páginas de referencia en top-5 | 5/5 | 5/5 |
+| Errores del proveedor | 0/6 | 0/6 |
+| Latencia media | 46,96 s (n=6) | 53,81 s (n=6) |
+| Latencia mediana | 49,43 s (n=6) | 62,29 s (n=6) |
+| Latencia p95 | No estimada (n=6) | No estimada (n=6) |
+
+El denominador de recuperación excluye H06, una consulta de vigencia.
+Ambos perfiles la bloquearon antes de generar, como exige la política
+documental. La latencia incluye ese caso. En v2, los otros 4/6 casos de
+abstención ocurrieron durante la verificación con evidencia recuperada.
+H01 se detuvo en el control local del respaldo. En H02, H04 y H05 la
+revisión no seleccionó afirmaciones. En H05 solicitó además una parte
+faltante pese a que no había aceptado ninguna. La adecuación de cada
+abstención requiere revisión humana de la evidencia.
+
+En H02 las dos páginas se recuperaron en ambos perfiles y ambos borradores
+propusieron afirmaciones con anclajes literales en las dos resoluciones.
+En v3, el revisor aceptó solo la primera y declaró cobertura completa.
+La respuesta final citó una resolución, aunque la pregunta requería dos.
+El fallo está localizado en selección y cobertura de la revisión. El revisor
+también marcó cobertura completa en H05, cuyo segundo pedido carecía de
+fundamento esperado. La revisión humana debe determinar si el texto final
+expresa esa limitación de forma suficiente. En total, v3 marcó 2/6 respuestas
+parciales y 3/6 completas. Son etiquetas de ejecución sin adjudicación humana.
+
+La muestra nueva contiene 0 casos de ataque por brazo. ASR RAW, ASR FINAL y
+aparición de marcador quedan sin estimación (denominador 0 por versión y
+etapa). La exactitud, la tasa humana de respuestas parciales e incorrectas,
+la adecuación de abstenciones y el sustento de citas también quedan pendientes.
+La hoja contiene las 24 filas previstas, incluidas las dos filas RAW sin
+salida. El agregado técnico local tiene SHA-256
+`939c906d16a2dfd0a33b624b2a227f2333dcecf5efb9e16ffe12248507fb5de7`.
+
+## Estado de aprobación
+
+La suite final obtuvo 223 pruebas aprobadas y una omitida de 224. La
+verificación muestra más respuestas publicadas, la misma recuperación por
+página y una mediana de latencia más alta. Aún falta evidencia independiente
+de más utilidad, cobertura multifuente fiable y seguridad comparable.
+El cierre queda pendiente y v3 sigue disponible como perfil experimental.
+
+Adjudique las 24 filas antes de comparar utilidad. Para una siguiente
+iteración, evalúe cobertura por cada petición con referencias verificables
+a afirmaciones aceptadas y mida el efecto sobre latencia y sobre respuestas
+simples. Reserve otra muestra para esa comparación. Cualquier ajuste futuro
+del detector requiere controles positivos y benignos independientes.
+
 ## Reproducción y revisión humana
 
 Los casos privados usan un arreglo JSON de filas con `id`, `pregunta` y
@@ -117,7 +218,8 @@ PYTHONPATH=src .venv/bin/python scripts/evaluate_conversational_v3.py \
   --output /tmp/csrag-v3-replica --index data/vector_db/index.json
 ```
 
-Entregue solo `blind.csv` a dos revisores independientes con acceso privado
+La corrida quedó en `/tmp/csrag-v3-holdout-run`. Entregue solo `blind.csv`
+a dos revisores independientes con acceso privado
 a los PDF. Cada persona completa una copia. Adjudique las discrepancias,
 conserve ambas copias originales y congele el CSV adjudicado antes de abrir
 `key.csv`. La hoja ciega oculta versión y etapa explícitas. La presencia
