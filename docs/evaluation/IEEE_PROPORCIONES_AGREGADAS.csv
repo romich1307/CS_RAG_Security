@@ -268,3 +268,24 @@ holdout v3/v4,v4,FINAL,completitud humana,Ollama local qwen2.5:3b,,5,,,,pendient
 holdout v3/v4,v4,FINAL,abstenciones adecuadas,Ollama local qwen2.5:3b,,1,,,,pendiente,adecuadas según adjudicación / abstenciones,/tmp/csrag-v4-holdout-run/blind.csv
 regresión defensiva estática v4,detector compartido v3/v4,detector,recall,"Reglas locales, sin LLM",3,4,75.000000,30.064184,95.441274,observado,fragmentos marcados / fragmentos etiquetados del conjunto indicado,experiments/attacks.jsonl
 regresión defensiva estática v4,detector compartido v3/v4,detector,FPR,"Reglas locales, sin LLM",5,20,25.000000,11.186170,46.870088,observado,fragmentos marcados / fragmentos etiquetados del conjunto indicado,experiments/benign_v2.jsonl
+piloto v5 revisado,v5,recuperación,Hit@1,Ollama local qwen2.5:3b,4,4,100.000000,51.010916,100.000000,preliminar,una página objetivo en primer pasaje admitido,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,recuperación,Hit@3,Ollama local qwen2.5:3b,4,4,100.000000,51.010916,100.000000,preliminar,una página objetivo entre tres pasajes admitidos,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,recuperación,Hit@5,Ollama local qwen2.5:3b,4,4,100.000000,51.010916,100.000000,preliminar,una página objetivo entre cinco pasajes admitidos,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,recuperación,todas las páginas@5,Ollama local qwen2.5:3b,4,4,100.000000,51.010916,100.000000,preliminar,todas las páginas objetivo entre cinco pasajes admitidos,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,RAW,selección recibida,Ollama local qwen2.5:3b,4,5,80.000000,37.553463,96.377589,preliminar,se recibió una selección por consulta,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,FINAL,abstención,Ollama local qwen2.5:3b,1,5,20.000000,3.622411,62.446537,preliminar,abstenciones explícitas / consultas previstas,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,FINAL,completa automática,Ollama local qwen2.5:3b,1,5,20.000000,3.622411,62.446537,preliminar,estado automática completa / consultas previstas,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,FINAL,parcial automática,Ollama local qwen2.5:3b,3,5,60.000000,23.072428,88.237923,preliminar,estado automática parcial / consultas previstas,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,FINAL,citas formales en contexto,Ollama local qwen2.5:3b,4,4,100.000000,51.010916,100.000000,preliminar,respuestas con cita formal / respuestas sustantivas,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,FINAL,todas las páginas objetivo citadas,Ollama local qwen2.5:3b,2,4,50.000000,15.003899,84.996101,preliminar,consultas con cita FINAL de todas las páginas / consultas con páginas,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,regresión,fuente obligatoria omitida,Ollama local qwen2.5:3b,2,2,100.000000,34.238023,100.000000,preliminar,omisiones de fuente en casos multifuente de regresión,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,operación,errores de proveedor,Ollama local qwen2.5:3b,0,5,0.000000,0.000000,43.448246,preliminar,errores de proveedor / consultas previstas,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,RAW,exactitud humana,Ollama local qwen2.5:3b,,5,,,,pendiente,adjudicación pendiente,csrag-v5-pilot-revision/blind.csv
+v5 independiente,v5,RAW,ASR,Ollama local qwen2.5:3b,,0,,,,no estimable,evaluación sin ejecutar,DECISION_DE_CIERRE_V5.md
+v5 independiente,v5,RAW,exactitud humana,Ollama local qwen2.5:3b,,0,,,,pendiente,holdout reservado sin ejecutar,DECISION_DE_CIERRE_V5.md
+piloto v5 revisado,v5,FINAL,exactitud humana,Ollama local qwen2.5:3b,,5,,,,pendiente,adjudicación pendiente,csrag-v5-pilot-revision/blind.csv
+v5 independiente,v5,FINAL,ASR,Ollama local qwen2.5:3b,,0,,,,no estimable,evaluación sin ejecutar,DECISION_DE_CIERRE_V5.md
+v5 independiente,v5,FINAL,exactitud humana,Ollama local qwen2.5:3b,,0,,,,pendiente,holdout reservado sin ejecutar,DECISION_DE_CIERRE_V5.md
+piloto v5 revisado,v5,FINAL,sustento completo de citas,Ollama local qwen2.5:3b,,4,,,,pendiente,adjudicación pendiente,csrag-v5-pilot-revision/blind.csv
+regresión defensiva estática v5,v5,detector,recall,"Reglas locales, sin LLM",3,4,75.000000,30.064184,95.441274,observado,fragmentos marcados / fragmentos etiquetados,experiments/attacks.jsonl
+regresión defensiva estática v5,v5,detector,FPR,"Reglas locales, sin LLM",5,20,25.000000,11.186170,46.870088,observado,fragmentos marcados / fragmentos etiquetados,experiments/benign_v2.jsonl

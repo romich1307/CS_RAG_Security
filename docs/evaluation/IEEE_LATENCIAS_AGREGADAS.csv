@@ -20,3 +20,11 @@ v1/v2 exploratorio,v1,"tiempo total, casos calientes",Ollama local qwen2.5:3b,3,
 v1/v2 exploratorio,v2,"tiempo total, casos calientes",Ollama local qwen2.5:3b,3,23.576333333,34.937000000,,muestra pequeña,4,,docs/evaluation/OPTIMIZACION_FINAL_RAG.md#comparación-con-ollama-local
 holdout v3/v4,v3,pipeline,Ollama local qwen2.5:3b,5,50.287340301,60.946448895,,muestra pequeña,7,pareado; incluye abstención sin generación,/tmp/csrag-v4-holdout-run/traces.jsonl
 holdout v3/v4,v4,pipeline,Ollama local qwen2.5:3b,5,49.400339362,57.080002616,,muestra pequeña,8,pareado; incluye abstención sin generación,/tmp/csrag-v4-holdout-run/traces.jsonl
+piloto v5 revisado,v5,pipeline,Ollama local qwen2.5:3b,5,28.618708811,33.763575068,,muestra pequeña,8,reutilización diagnóstica; sin comparación pareada,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,prepare_index,Ollama local qwen2.5:3b,4,0.000001836,0.000001583,,muestra pequeña,,reutilización diagnóstica; sin comparación pareada,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,retrieve,Ollama local qwen2.5:3b,4,0.009830424,0.010852376,,muestra pequeña,,reutilización diagnóstica; sin comparación pareada,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,filter,Ollama local qwen2.5:3b,4,0.003557092,0.003598364,,muestra pequeña,,reutilización diagnóstica; sin comparación pareada,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,context,Ollama local qwen2.5:3b,4,0.000005746,0.000005486,,muestra pequeña,,reutilización diagnóstica; sin comparación pareada,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,draft_ollama,Ollama local qwen2.5:3b,4,25.467232599,24.744369322,,muestra pequeña,4,reutilización diagnóstica; sin comparación pareada,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,review_ollama,Ollama local qwen2.5:3b,4,10.291893142,9.869391281,,muestra pequeña,4,reutilización diagnóstica; sin comparación pareada,csrag-v5-pilot-revision/technical.json
+piloto v5 revisado,v5,validation_and_format,Ollama local qwen2.5:3b,4,0.000763086,0.000804489,,muestra pequeña,,reutilización diagnóstica; sin comparación pareada,csrag-v5-pilot-revision/technical.json

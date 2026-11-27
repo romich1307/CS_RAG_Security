@@ -1,5 +1,9 @@
 # Informe final de métricas para el artículo IEEE
 
+**Estado v5: PRELIMINAR.** La puerta automática se detuvo en el piloto.
+El conjunto independiente quedó reservado y sin inferencia. Las cifras
+históricas mantienen sus denominadores y procedencia. [Decisión v5](DECISION_DE_CIERRE_V5.md) · [Matriz de evidencia](MATRIZ_EVIDENCIA_IEEE.md)
+
 ## 1. Resumen ejecutivo
 
 CS_RAG_Security es un RAG documental para resoluciones de la UNSA, implementado en Python y Streamlit, con recuperación local y generación opcional vía Ollama. El corpus piloto incluye 11 PDF oficiales y un PDF histórico, 137 páginas piloto y 115 páginas OCR. La respuesta documental no certifica vigencia normativa.
@@ -196,17 +200,56 @@ Latencia de pipeline media v3 50.29 s y v4 49.40 s. Mediana v3 60.95 s y v4 57.0
 
 La comprobación defensiva estática mantuvo recall 3/4 y FPR 5/20, sin LLM, sobre controles históricos. Una prueba verifica exclusión previa a la llamada en ambos perfiles. La batería nueva contiene cero casos de ataque por brazo y no permite estimar ASR o equivalencia de protección. [Positivos](../../experiments/attacks.jsonl) · [Benignos](../../experiments/benign_v2.jsonl) · [Regresión](../../tests/test_demo.py)
 
-## 10. Calidad de software
+## 10. v5 en diagnóstico de desarrollo
+
+| Indicador, Ollama local `qwen2.5:3b` | Segundo piloto v5 |
+| --- | --- |
+| Selecciones RAW recibidas / consultas | 4/5 (80,00 %) |
+| Hit@1, Hit@3 y Hit@5 | 4/4 (100,00 %) en cada corte |
+| Todas las páginas objetivo admitidas en top-5 | 4/4 (100,00 %) |
+| Todas las páginas objetivo citadas en FINAL | 2/4 (50,00 %) |
+| Respuestas sustantivas FINAL con citas formales | 4/4 (100,00 %) |
+| Abstenciones FINAL | 1/5 (20,00 %) |
+| Completas automáticas / parciales automáticas | 1/5 (20,00 %) / 3/5 (60,00 %) |
+| Casos multifuente con omisión de fuente obligatoria | 2/2 (100,00 %) |
+| Exactitud humana y sustento | Pendientes |
+| ASR RAW y FINAL de v5 | Sin estimación, cero casos positivos evaluados |
+
+Las cinco consultas de diagnóstico provienen de la comparación anterior v3/v4.
+El denominador de recuperación excluye la consulta sin página de vigencia.
+Citas formales usa solo respuestas sustantivas. Se conservó el plazo literal
+en el caso temporal y se omitió la presuposición falsa. El segundo piloto
+mostró que disponer de las dos páginas admitidas no garantiza que el
+selector produzca evidencia para ambas peticiones. La respuesta de v5
+se construyó con pasajes literales. En RAW se observan seleccionadores,
+por lo que sus etiquetas no son directamente comparables con borradores
+de prosa de los otros perfiles. [Causas y trazas](CIERRE_V5_DIAGNOSTICO_Y_CAMBIOS.md)
+
+Latencia media 28,62 s, mediana 33,76 s y ocho llamadas en cinco consultas
+del piloto revisado. Medianas por llamada de 24,74 s en selección y 9,87 s
+en revisión, n=4 por etapa. p95 sin estimación. El valor histórico de v4
+en su corrida no es una comparación controlada de caché frente a este piloto.
+Los CSV usan el identificador del expediente privado, sin datos de respuesta.
+
+El detector compartido mantiene recall 3/4 y FPR 5/20 en la comprobación
+estática de los controles históricos, sin LLM. Se verificó exclusión de un
+control marcado antes de invocar inferencia. La prueba no estima resistencia
+de v5 frente a ataques ni reduce la incidencia de alertas benignas.
+La decisión de trabajar con evidencias válidas históricas para el artículo
+conserva la interpretación RAW/FINAL de T18 y T19. [Decisión de cierre](DECISION_DE_CIERRE_V5.md)
+
+## 11. Calidad de software
 
 | Código | Ejecución local | Aprobadas | Fallidas | Omitidas |
 | --- | --- | ---: | ---: | ---: |
 | `main` a96f64d | Instantánea Git en directorio temporal, mismo entorno Python y mismos insumos locales | 219/220 | 0/220 | 1/220 |
 | Rama v3 4d3b0dc | `PYTHONPATH=src .venv/bin/python -m pytest` | 223/224 | 0/224 | 1/224 |
 | Rama v4 | `PYTHONPATH=src .venv/bin/python -m pytest` | 237/238 | 0/238 | 1/238 |
+| Rama v5 | `PYTHONPATH=src .venv/bin/python -m pytest` | 249/250 | 0/250 | 1/250 |
 
 La prueba omitida requiere `RAG_EMBEDDING_MODEL`. En una primera ejecución aislada de `main` faltó enlazar el CSV T12 y se omitió también esa prueba. Los valores de la tabla corresponden a la repetición con ambos árboles provistos de los mismos insumos locales. La batería prueba lógica, integridad y casos controlados. Los dobles de proveedor se usan en las pruebas funcionales. Los conteos no acreditan exactitud del LLM ni protección general. [Prueba MiniLM opcional](../../tests/test_retrieval_benchmark.py) · [Pruebas de demo](../../tests/test_demo.py) · [Pruebas de calidad](../../tests/test_quality_metrics.py)
 
-## 11. Incertidumbre, publicación y conclusión
+## 12. Incertidumbre, publicación y conclusión
 
 La tabla larga [IEEE_PROPORCIONES_AGREGADAS.csv](IEEE_PROPORCIONES_AGREGADAS.csv) guarda numerador, denominador, método, procedencia y límites Wilson bilaterales al 95% para las tasas observadas con denominador positivo. Para proporción p = x/n y z = 1,959964, el centro es (p + z²/2n)/(1 + z²/n) y la semiamplitud es z·sqrt(p(1−p)/n + z²/4n²)/(1 + z²/n). Ejemplos: Hit@5 T08 11/13, 84,62% (57,77–95,67%); ASR RAW A 10/20, 50,00% (29,93–70,07%); un 0/20 admite 0,00–16,11%; recall 15/20, 75,00% (53,13–88,81%). Wilson resume incertidumbre marginal bajo un modelo binomial y no demuestra superioridad. Una comparación entre tratamientos sobre las mismas preguntas requiere los pares discordantes y una prueba o intervalo pareado preespecificado. Tampoco hay muestra aleatoria de todas las consultas o ataques posibles. [IEEE_LATENCIAS_AGREGADAS.csv](IEEE_LATENCIAS_AGREGADAS.csv) contiene segundos y tamaños de muestra. Una celda vacía distingue ausencia de estimación de un cero observado.
 
@@ -217,6 +260,8 @@ La tabla larga [IEEE_PROPORCIONES_AGREGADAS.csv](IEEE_PROPORCIONES_AGREGADAS.csv
 **Amenazas principales.** Una universidad, modelo pequeño único, OCR pendiente y falta de vigencia certificada. Las muestras primarias son pequeñas y seleccionadas; los 13 casos T08 se solapan con los 40. Las etapas RAW/FINAL y los brazos A/B/C comparten consultas. Las 60 ejecuciones T19 representan 20 casos únicos, con objetivos de laboratorio y medición de exposición incompleta. La anotación T18 carece de medida de acuerdo independiente. Los holdouts v3 y v4 se prepararon en sus respectivas sesiones de desarrollo. El contraste de novedad fue textual. Los revisores de v3 y v4 usan el mismo modelo que sus borradores. La latencia depende de hardware, caché, inicialización, longitud de contexto y de si hubo llamada. Las comparaciones entre protocolos no identifican causalidad ni rendimiento general.
 
 **Equilibrio seguridad-utilidad.** T19 respalda una reducción del éxito RAW en la batería histórica. Las salidas FINAL de T19 registraron 0/20 éxitos en cada brazo con el filtro activo. T18 muestra el costo del filtro en utilidad. El diseño v4 conserva las barreras y reduce pérdidas técnicas por recuperación y formato; los avisos parciales se volvieron más frecuentes. Esa evidencia no demuestra mejora de exactitud ni seguridad comparable. Conviene mantener v4 como experimental hasta adjudicar utilidad y evaluar seguridad por separado.
+
+**Cierre v5.** El piloto justifica conservar la salida extractiva para estudio, pero el selector aún omite evidencia en casos multifuente. v2 permanece predeterminada. Las cifras de v5 se publican únicamente como diagnóstico y el holdout queda reservado.
 
 **Pruebas pendientes.** Las cifras históricas verificadas se pueden consolidar sin repetir inferencia. Para afirmar mejora de utilidad en v3 o v4, completar los dos dictámenes ciegos, adjudicar y después replicar con más consultas independientes, incluidas multifuente. Para afirmar seguridad comparable de v3 o v4 se requiere una evaluación defensiva pareada con positivos y benignos etiquetados, registro de recuperación, filtrado y exposición, y adjudicación de éxito efectiva por etapa. Para publicar percentiles de cola comparables conviene ampliar observaciones y fijar estado de caché y definición de tiempo. Los manuales y trazas deben conservar revisión y acceso adecuados para compartir evidencia con el equipo.
 
