@@ -6,7 +6,7 @@ from itertools import islice, zip_longest
 from pathlib import Path
 from time import perf_counter
 
-from cs_rag_security import conversational, conversational_v4
+from cs_rag_security import conversational, conversational_v4, conversational_v5
 from cs_rag_security.defenses import MODES, detect
 from cs_rag_security.generation import generate
 from cs_rag_security.retrieval import Index, tokens
@@ -148,13 +148,15 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
                 converse=False, version=2):
     if not 1 <= k <= 100 or provider not in ('local', 'mock'):
         raise ValueError('Configuración de demostración inválida')
-    if version not in (2, 3, 4):
+    if version not in (2, 3, 4, 5):
         raise ValueError('Versión conversacional inválida')
     started = perf_counter()
     converse = converse and provider == 'local'
     v3 = converse and version == 3
     v4 = converse and version == 4
-    profiles = {2: conversational.PROFILE, 3: conversational.PROFILE_V3, 4: conversational_v4.PROFILE}
+    v5 = converse and version == 5
+    profiles = {2: conversational.PROFILE, 3: conversational.PROFILE_V3,
+                4: conversational_v4.PROFILE, 5: conversational_v5.PROFILE}
     timings = {}
     result = {'provider': provider, 'mode': MODES[2],
               'profile': profiles[version] if converse else PROFILE,
@@ -173,7 +175,7 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
     stage = perf_counter()
     requested = list(dict.fromkeys(name.upper() for name in DOCUMENT_ID.findall(question)))
     candidate_limit = min(5 * k, 100)
-    if v4:
+    if v4 or v5:
         parts, _ = conversational_v4.requests_for(question)
         rankings = []
         for part in parts:
@@ -222,6 +224,8 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
         key = (chunk['archivo_pdf'], chunk['pagina_pdf'], normalize(chunk['texto']))
         if chunk.get('origen') != 'oficial_piloto':
             reasons.append('origen_no_admitido')
+        if v5 and not reasons and conversational_v5.excerpt(chunk) is None:
+            reasons.append('extracto_no_publicable')
         if not reasons and key in seen:
             reasons.append('duplicado')
         if not reasons and len(hits) >= k:
@@ -263,7 +267,7 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
         for number, hit in enumerate(hits, 1)
     ]
     result['exposed_ids'] = [h['chunk_id'] for h in hits]
-    draft_question, uncovered = supported_requests(question, hits) if converse and not (v3 or v4) else (question, False)
+    draft_question, uncovered = supported_requests(question, hits) if converse and not (v3 or v4 or v5) else (question, False)
     timings['context'] = (perf_counter() - stage) * 1000
     if converse:
         stage = perf_counter()
@@ -271,13 +275,17 @@ def answer_demo(index, question, provider='local', k=5, documental=True, model=N
         def timed_generation(messages, *args, **kwargs):
             begin = perf_counter()
             generated = generate(messages, *args, **kwargs)
-            key = ('review_ollama' if messages[0]['content'].startswith(conversational.REVIEW_CRITERIA)
+            is_review = (messages[0]['content'] == conversational_v5.REVIEW if v5 else
+                         messages[0]['content'].startswith(conversational.REVIEW_CRITERIA))
+            key = ('review_ollama' if is_review
                    else 'draft_ollama')
             timings[key] = (perf_counter() - begin) * 1000
             result['ollama_calls'] += 1
             return generated
 
-        if v4:
+        if v5:
+            composed = conversational_v5.compose(timed_generation, draft_question, hits, context, model)
+        elif v4:
             composed = conversational_v4.compose(timed_generation, draft_question, hits, context, model)
         else:
             composed = conversational.compose(timed_generation, draft_question, hits, context, model, v3=v3)

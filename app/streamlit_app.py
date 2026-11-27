@@ -12,6 +12,7 @@ from cs_rag_security.defenses import MODES
 from cs_rag_security.conversational import PROFILE as CONVERSATIONAL_PROFILE
 from cs_rag_security.conversational import PROFILE_V3
 from cs_rag_security.conversational_v4 import PROFILE as PROFILE_V4
+from cs_rag_security.conversational_v5 import PROFILE as PROFILE_V5
 from cs_rag_security.demo import PROFILE, answer_demo, load_demo_index
 from cs_rag_security.pipeline import answer
 from cs_rag_security.retrieval import Index
@@ -105,6 +106,10 @@ def show_result(response, sources, trace):
                 for item in sources:
                     st.text(f"{item['archivo']}, página {item['pagina']}")
         with source:
+            if trace.get('profile') == PROFILE_V5:
+                st.subheader('Cobertura documental', anchor=False)
+                st.text('Las citas indican los pasajes admitidos que respaldan la respuesta.')
+                return
             st.subheader('Fuente en JSON', anchor=False)
             with st.container(key='fuente-json'):
                 st.code(json.dumps(trace, ensure_ascii=False, indent=2),
@@ -180,10 +185,10 @@ with st.container(key='consulta'):
                     profile = PROFILE
                     if provider == 'local':
                         version = st.selectbox(
-                            'Versión conversacional', (2, 3, 4),
-                            format_func={2: CONVERSATIONAL_PROFILE, 3: PROFILE_V3, 4: PROFILE_V4}.get,
+                            'Versión conversacional', (2, 3, 4, 5),
+                            format_func={2: CONVERSATIONAL_PROFILE, 3: PROFILE_V3, 4: PROFILE_V4, 5: PROFILE_V5}.get,
                         )
-                        profile = {2: CONVERSATIONAL_PROFILE, 3: PROFILE_V3, 4: PROFILE_V4}[version]
+                        profile = {2: CONVERSATIONAL_PROFILE, 3: PROFILE_V3, 4: PROFILE_V4, 5: PROFILE_V5}[version]
                     st.caption(f'Perfil {profile}. Las fuentes indican el PDF y la página del índice.')
                 else:
                     st.caption('Configuración experimental. A carece de aislamiento de instrucciones.')

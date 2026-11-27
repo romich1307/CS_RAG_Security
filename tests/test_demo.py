@@ -631,3 +631,113 @@ def test_conversational_filters_existing_flagged_fixture_before_generation(monke
     assert result['abstained'] and not result['exposed_ids']
     assert result['evaluated_chunks'][0]['detector_suspicious']
     generator.assert_not_called()
+
+
+def v5_generation(monkeypatch, selections, decisions):
+    grouped = {key: [] for key in decisions}
+    for item in selections:
+        grouped[str(item['peticion'])].append(item['pasaje'])
+    generator = Mock(side_effect=[
+        {'metadata': {'model': 'fixture'}, 'text': json.dumps({'selecciones': grouped})},
+        {'text': json.dumps(decisions)},
+    ])
+    monkeypatch.setattr(demo, 'generate', generator)
+    return generator
+
+
+def test_v5_returns_exact_temporal_and_quantitative_evidence(monkeypatch):
+    source = 'En la siguiente clase programada, la docente dará retroalimentación de las cuatro actividades.'
+    v5_generation(monkeypatch, [{'peticion': 1, 'pasaje': 1}],
+                  {'1': {'estado': 'completa', 'pasajes': [1]}})
+    result = demo.answer_demo(Index([chunk('norma', source)]), '¿Cuándo habrá retroalimentación?',
+                              converse=True, version=5)
+    assert result['coverage'] == 'completa'
+    assert result['response'] == f'{source} [norma.pdf p. 3]'
+
+
+def test_v5_renders_complete_multisource_with_literal_actors_and_exceptions(monkeypatch):
+    first = 'La Jefatura designará coordinadores, salvo cuando el cargo esté vacante.'
+    second = 'El departamento académico aprueba los instrumentos con respaldo de validez.'
+    index = Index([chunk('a', first, documento_id='RCU-0127-2020'),
+                   chunk('b', second, documento_id='RCU-0320-2022')])
+    v5_generation(monkeypatch, [{'peticion': 1, 'pasaje': 1}, {'peticion': 2, 'pasaje': 2}],
+                  {'1': {'estado': 'completa', 'pasajes': [1]}, '2': {'estado': 'completa', 'pasajes': [2]}})
+    result = demo.answer_demo(index, '¿Quién designará coordinadores según RCU-0127-2020? '
+                              '¿Quién aprueba instrumentos según RCU-0320-2022?', converse=True, version=5)
+    assert result['coverage'] == 'completa' and first in result['response'] and second in result['response']
+
+
+def test_v5_preserves_supported_part_and_does_not_echo_false_premise(monkeypatch):
+    source = 'La inasistencia justificada requiere documentación y la aprobación se registra en el sistema.'
+    v5_generation(monkeypatch, [{'peticion': 1, 'pasaje': 1}],
+                  {'1': {'estado': 'completa', 'pasajes': [1]}, '2': {'estado': 'sin_evidencia', 'pasajes': []}})
+    result = demo.answer_demo(Index([chunk('norma', source)]),
+                              '¿Dónde se registra la aprobación y qué planta debe llevar por inasistencia?',
+                              converse=True, version=5)
+    assert result['coverage'] == 'parcial'
+    assert 'petición 2' in result['response'].lower()
+    assert 'planta' not in result['response']
+
+
+@pytest.mark.parametrize(('stage', 'value', 'reason'), [
+    (0, '{"selecciones":{"1":[99]}}', 'salida_formato_o_anclaje_invalido'),
+    (0, 'texto sin cita', 'salida_formato_o_anclaje_invalido'),
+    (1, '{"1":{"estado":"completa","pasajes":[true]}}', 'revision_no_verificable'),
+    (1, '{"1":{"estado":"completa","pasajes":[]}}', 'revision_no_verificable'),
+])
+def test_v5_never_renders_raw_or_fabricated_references(monkeypatch, stage, value, reason):
+    gen = v5_generation(monkeypatch, [{'peticion': 1, 'pasaje': 1}],
+                        {'1': {'estado': 'completa', 'pasajes': [1]}})
+    outputs = [{'metadata': {'model': 'fixture'}, 'text': '{"selecciones":{"1":[1]}}'},
+               {'text': '{"1":{"estado":"completa","pasajes":[1]}}'}]
+    outputs[stage]['text'] = value
+    gen.side_effect = outputs
+    result = demo.answer_demo(Index([chunk('a', 'La matrícula exige una solicitud.')]),
+                              '¿Qué exige la matrícula?', converse=True, version=5)
+    assert result['reason'] == reason and result['abstained']
+    assert not result['sources'] and value not in result['response']
+
+
+def test_v5_certified_vigencia_is_not_inferred(monkeypatch):
+    generator = Mock()
+    monkeypatch.setattr(demo, 'generate', generator)
+    result = demo.answer_demo(Index([]), '¿Qué plazo vigente se aplica?', converse=True, version=5)
+    assert result['reason'] == 'vigencia_no_certificada'
+    generator.assert_not_called()
+
+
+def test_v5_filters_existing_flagged_fixture_before_prompt(monkeypatch):
+    record = next(r for r in map(json.loads, Path('experiments/attacks.jsonl').read_text().splitlines())
+                  if r['id'] == 'a3')
+    generator = Mock()
+    monkeypatch.setattr(demo, 'generate', generator)
+    result = demo.answer_demo(Index([chunk('fixture', 'Trámite académico. ' + record['text'])]),
+                              '¿Qué indica el trámite académico?', converse=True, version=5)
+    assert result['abstained'] and not result['exposed_ids']
+    assert result['evaluated_chunks'][0]['detector_suspicious']
+    generator.assert_not_called()
+
+
+def test_v5_accepts_legitimate_documentary_obligation(monkeypatch):
+    source = 'El estudiante deberá presentar la constancia y la solicitud dentro de cinco días.'
+    v5_generation(monkeypatch, [{'peticion': 1, 'pasaje': 1}],
+                  {'1': {'estado': 'completa', 'pasajes': [1]}})
+    result = demo.answer_demo(Index([chunk('tramite', source)]), '¿Qué debe presentar el estudiante?',
+                              converse=True, version=5)
+    assert source in result['response']
+
+
+def test_v5_cli_prints_public_fields_only(monkeypatch, capsys):
+    from cs_rag_security.cli import main
+
+    monkeypatch.setattr(demo, 'load_demo_index', lambda path: Index([]))
+    monkeypatch.setattr(demo, 'answer_demo', Mock(return_value={
+        'profile': 'demo_conversacional_v5', 'response': 'Respuesta pública.',
+        'sources': [], 'abstained': False, 'raw_response': 'privado', 'timings_ms': {},
+    }))
+    monkeypatch.setattr('sys.argv', ['unsa-rag', 'chat', '--demo', '--demo-version', '5', '--provider', 'local'])
+    main()
+    assert demo.answer_demo.call_args.kwargs['version'] == 5
+    result = json.loads(capsys.readouterr().out)
+    assert result == {'profile': 'demo_conversacional_v5', 'response': 'Respuesta pública.',
+                      'sources': [], 'abstained': False}

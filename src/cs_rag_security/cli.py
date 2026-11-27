@@ -16,7 +16,7 @@ def main():
     p.add_argument('--provider', choices=['mock', 'local', 'api'], default='mock')
     p.add_argument('--audit-raw', action='store_true', help='Salida privada de chat experimental para auditoría local')
     p.add_argument('--demo', action='store_true', help='Perfil documental C para chat local o mock')
-    p.add_argument('--demo-version', type=int, choices=(2, 3, 4), default=2,
+    p.add_argument('--demo-version', type=int, choices=(2, 3, 4, 5), default=2,
                    help='Versión del perfil conversacional de --demo con proveedor local')
     p.add_argument('--documental', action='store_true')
     p.add_argument('--output', default='results/offline')
@@ -59,6 +59,9 @@ def main():
                     result['response'] = 'Me abstengo: el modelo rechazó la consulta.'
                 for key in ('retrieved', 'evaluated_chunks', 'discarded_chunks'):
                     result[key] = [sanitize_chunk_dict(chunk) for chunk in result[key]]
+        if result.get('profile') == 'demo_conversacional_v5':
+            from cs_rag_security.conversational_v5 import public_result
+            result = public_result(result)
         print(json.dumps(result, ensure_ascii=False, indent=2))
     elif args.command == 'quality':
         from cs_rag_security.evaluation import evaluate_quality

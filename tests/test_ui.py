@@ -194,3 +194,22 @@ def test_redesigned_mock_renders_only_the_validated_excerpt():
         assert 'rechazado' in app.code[0].value
         app.selectbox(key='top-k').select(4).run()
         assert not app.code
+
+
+def test_v5_streamlit_does_not_render_internal_json():
+    result = {
+        'profile': 'demo_conversacional_v5', 'response': 'Respuesta pública.',
+        'provider': 'local', 'mode': 'C_defensa_propuesta', 'abstained': False,
+        'sources': [], 'evaluated_chunks': [], 'raw_response': 'privado',
+    }
+    with patch('cs_rag_security.retrieval.Index.load', return_value=Index([])), \
+         patch('cs_rag_security.demo.answer_demo', return_value=result) as answer:
+        app = AppTest.from_file('app/streamlit_app.py').run()
+        app.selectbox(key='proveedor').select('local').run()
+        next(el for el in app.selectbox if el.label == 'Versión conversacional').set_value(5)
+        app.text_input[0].set_value('¿Qué indica el documento?')
+        app.button[0].click().run()
+        assert not app.exception
+        assert answer.call_args.kwargs['version'] == 5
+        assert not app.code
+        assert 'Respuesta pública.' in [item.value for item in app.text]
