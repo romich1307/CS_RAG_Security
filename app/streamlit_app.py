@@ -10,6 +10,8 @@ import streamlit as st
 
 from cs_rag_security.defenses import MODES
 from cs_rag_security.conversational import PROFILE as CONVERSATIONAL_PROFILE
+from cs_rag_security.conversational import PROFILE_V3
+from cs_rag_security.conversational_v4 import PROFILE as PROFILE_V4
 from cs_rag_security.demo import PROFILE, answer_demo, load_demo_index
 from cs_rag_security.pipeline import answer
 from cs_rag_security.retrieval import Index
@@ -89,7 +91,7 @@ def show_result(response, sources, trace):
     with st.container(key='resultados'):
         fragments, source = st.columns([815, 525], gap='large')
         with fragments:
-            st.subheader('Respuesta del asistente' if trace.get('profile') == 'demo_conversacional_v1' else 'Fragmentos recuperados', anchor=False)
+            st.subheader('Respuesta del asistente' if str(trace.get('profile')).startswith('demo_conversacional_') else 'Fragmentos recuperados', anchor=False)
             if passages is None:
                 st.text(response)
                 rows = accepted if not trace['abstained'] else []
@@ -173,8 +175,15 @@ with st.container(key='consulta'):
                     'Consulta documental provisional', value=True, key='documental',
                     help='Desmarque esta opción para solicitar una comprobación de vigencia.',
                 )
+                version = 2
                 if demo:
-                    profile = CONVERSATIONAL_PROFILE if provider == 'local' else PROFILE
+                    profile = PROFILE
+                    if provider == 'local':
+                        version = st.selectbox(
+                            'Versión conversacional', (2, 3, 4),
+                            format_func={2: CONVERSATIONAL_PROFILE, 3: PROFILE_V3, 4: PROFILE_V4}.get,
+                        )
+                        profile = {2: CONVERSATIONAL_PROFILE, 3: PROFILE_V3, 4: PROFILE_V4}[version]
                     st.caption(f'Perfil {profile}. Las fuentes indican el PDF y la página del índice.')
                 else:
                     st.caption('Configuración experimental. A carece de aislamiento de instrucciones.')
@@ -188,7 +197,7 @@ with st.container(key='consulta'):
                         st.caption('Las condiciones históricas usan el modelo configurado en RAG_LOCAL_MODEL.')
 
 
-query_settings = (question, mode, demo, provider, k, documental, model)
+query_settings = (question, mode, demo, provider, k, documental, model, version)
 if submitted:
     st.session_state.pop('consulta_resultado', None)
     if not question.strip():
@@ -206,7 +215,10 @@ if submitted:
             try:
                 with st.spinner('Buscando evidencia documental…'):
                     if demo:
-                        result = answer_demo(index, question, provider, k, documental, model.strip() if model else None, converse=True)
+                        result = answer_demo(
+                            index, question, provider, k, documental, model.strip() if model else None,
+                            converse=True, version=version,
+                        )
                     else:
                         result = answer(index, question, mode, provider, k, documental)
                 if demo and 'timings_ms' in result:

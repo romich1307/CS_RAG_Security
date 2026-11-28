@@ -5,6 +5,7 @@ import re
 from cs_rag_security.defenses import detect
 
 PROFILE = 'demo_conversacional_v2'
+PROFILE_V3 = 'demo_conversacional_v3'
 DOCUMENT_ID = re.compile(r'\bRCU-\d{4}-\d{4}\b', re.IGNORECASE)
 MULTIPLE_REQUESTS = re.compile(r'\b(?:y|además|también|compara|diferencias)\b', re.IGNORECASE)
 PARTIAL_NOTICE = 'Evidencia parcial. Esta respuesta cubre solo parte de la consulta.'
@@ -41,6 +42,13 @@ REVIEW_COMPOUND = REVIEW_CRITERIA + (
     ' Si ninguna frase pasa, devuelve aceptadas vacío. Si alguna pasa pero hay una '
     'petición sin responder, elige su texto en falta. Si cubre todo o ninguna frase '
     'pasa, usa falta vacío.'
+)
+REVIEW_V3 = REVIEW_CRITERIA + (
+    ' Evalúa cada afirmación por separado. Usa también el pasaje numerado para comprobar '
+    'el supuesto y las excepciones. Un respaldo literal puede demostrar una paráfrasis. '
+    'Una afirmación puede ser útil aunque otras partes de la consulta queden sin respuesta. '
+    'Marca incompleta verdadero si las afirmaciones aceptadas dejan sin responder un '
+    'requisito de la pregunta. No exijas citar elementos que la pregunta no solicita.'
 )
 
 def object_schema(properties):
@@ -131,8 +139,23 @@ def validate_review(raw, question, count, schema):
     return state, accepted
 
 
-def compose(generate, question, hits, context, model):
+def review_v3(raw, count):
+    review = json.loads(raw)
+    if (not isinstance(review, dict) or set(review) != {'aceptadas', 'incompleta'}
+            or type(review['incompleta']) is not bool):
+        raise ValueError('Revisión inválida')
+    accepted = review['aceptadas']
+    if (not isinstance(accepted, list)
+            or any(type(n) is not int or not 1 <= n <= count for n in accepted)
+            or len(accepted) != len(set(accepted))):
+        raise ValueError('Selección de revisión inválida')
+    return ('parcial' if review['incompleta'] else 'completa'), accepted
+
+
+def compose(generate, question, hits, context, model, *, v3=False):
     limit = 1 if question.count('?') == 1 and not MULTIPLE_REQUESTS.search(question) else 3
+    if v3:
+        limit = 3
     draft_schema = object_schema({'afirmaciones': {
         'type': 'array', 'maxItems': limit, 'items': object_schema({
             'texto': STRING, 'pasaje': {'type': 'integer', 'minimum': 1, 'maximum': len(hits)},
@@ -140,9 +163,16 @@ def compose(generate, question, hits, context, model):
         }),
     }})
     draft_system = DRAFT if limit > 1 else DRAFT + ' Devuelve como máximo una afirmación completa.'
+    if v3:
+        draft_system += (
+            ' Trata por separado cada punto solicitado y cada resolución pertinente. '
+            'Puedes parafrasear en texto. En respaldo copia literalmente un tramo '
+            'continuo del pasaje sin reparar OCR, guiones o puntuación.'
+        )
     draft = request(generate, draft_system, {'pregunta': question, 'pasajes_no_confiables': context},
                     hits, draft_schema, model, output_limit=320 if limit == 1 else 640)
     model_name = draft['metadata']['model']
+    failure = 'salida_formato_o_anclaje_invalido' if v3 else 'salida_no_verificable'
     try:
         claims = validate_claims(draft['text'], hits, limit)
         if not claims:
@@ -150,6 +180,13 @@ def compose(generate, question, hits, context, model):
         selected = dict.fromkeys(claim['pasaje'] for claim in claims)
         schema = review_schema(question, len(claims))
         review_system = REVIEW_BATCH if 'estado' in schema['required'] else REVIEW_COMPOUND
+        if v3:
+            failure = 'revision_no_verificable'
+            schema = object_schema({
+                'aceptadas': schema['properties']['aceptadas'],
+                'incompleta': {'type': 'boolean'},
+            })
+            review_system = REVIEW_V3
         review = request(generate, review_system, {
             'pregunta': question,
             'afirmaciones': [
@@ -157,11 +194,18 @@ def compose(generate, question, hits, context, model):
             ],
             'pasajes_no_confiables': [context[number - 1] for number in selected],
         }, hits, schema, model, output_limit=160)
-        coverage, accepted = validate_review(review['text'], question, len(claims), schema)
-        if coverage == 'rechazar':
+        if v3:
+            coverage, accepted = review_v3(review['text'], len(claims))
+            if len(claims) < len(json.loads(draft['text'])['afirmaciones']):
+                coverage = 'parcial'
+        else:
+            coverage, accepted = validate_review(review['text'], question, len(claims), schema)
+        if not accepted or coverage == 'rechazar':
+            if v3:
+                failure = 'revision_sin_afirmaciones'
             raise ValueError('La revisión rechazó la respuesta')
     except (ValueError, TypeError):
-        return model_name, 'salida_no_verificable', None, [], None
+        return model_name, failure, None, [], None
 
     # Group identical claims while retaining all their independently verified citations.
     statements, sources, documents = {}, {}, set()

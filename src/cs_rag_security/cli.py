@@ -16,6 +16,8 @@ def main():
     p.add_argument('--provider', choices=['mock', 'local', 'api'], default='mock')
     p.add_argument('--audit-raw', action='store_true', help='Salida privada de chat experimental para auditoría local')
     p.add_argument('--demo', action='store_true', help='Perfil documental C para chat local o mock')
+    p.add_argument('--demo-version', type=int, choices=(2, 3, 4), default=2,
+                   help='Versión del perfil conversacional de --demo con proveedor local')
     p.add_argument('--documental', action='store_true')
     p.add_argument('--output', default='results/offline')
     p.add_argument('--annotations', default=None, help='Ruta a archivo CSV o JSON de anotaciones')
@@ -44,7 +46,7 @@ def main():
                 p.error('--demo requiere defensa C y proveedor local o mock')
             result = answer_demo(
                 load_demo_index(args.index), args.question, args.provider, args.top_k,
-                args.documental, converse=True,
+                args.documental, converse=True, version=args.demo_version,
             )
         else:
             result = answer(Index.load(args.index), args.question, args.mode,
